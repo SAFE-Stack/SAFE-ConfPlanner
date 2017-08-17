@@ -1,14 +1,21 @@
-module CommandHandler
+module CommandHandlers
 
 open Chessie.ErrorHandling
 open Domain
 open Commands
 open Events
 open States
+open Errors
 
 
-let execute state command =
+let handleFinishVotingPeriod state =
+  match state.VotingPeriod with
+  | InProgess -> [VotingPeriodWasFinished] |> ok
+  | _ -> VotingPeriodAlreadyFinished |> fail
+
+let execute (state: State) (command: Command) : Result<Event list, Error> =
   match command with
+  | FinishVotingPeriod -> handleFinishVotingPeriod state
   | _ -> [] |> ok
 
 let evolve (state : State) (command : Command) =

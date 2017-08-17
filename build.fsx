@@ -2,11 +2,14 @@
 #r "./packages/FAKE/tools/FakeLib.dll"
 
 open Fake
+open Fake.Testing.NUnit3
 
 // Directories
 let buildDir  = "./build/"
 let deployDir = "./deploy/"
+let testDir = "./tests/"
 
+let nunitRunnerPath = "packages/NUnit.ConsoleRunner/tools/nunit3-console.exe"
 
 // Filesets
 let appReferences  =
@@ -33,10 +36,24 @@ Target "Deploy" (fun _ ->
     |> Zip buildDir (deployDir + "ApplicationName." + version + ".zip")
 )
 
+Target "BuildTests" (fun _ ->
+    !! "src/**/*.Tests.fsproj"
+    |> MSBuildDebug testDir "Build"
+    |> Log "BuildTests-Output: "
+)
+
+Target "RunUnitTests" (fun _ ->
+    !! (testDir + "*.Tests.dll")
+    |> NUnit3 (fun p ->
+                      {p with ToolPath = nunitRunnerPath})
+)
+
 // Build order
 "Clean"
   ==> "Build"
+  ==> "BuildTests"
+  ==> "RunUnitTests"
   ==> "Deploy"
 
 // start build
-RunTargetOrDefault "Build"
+RunTargetOrDefault "RunUnitTests"

@@ -2,7 +2,6 @@ module Domain
 
 open System
 
-
 type SpeakerId = Speaker of Guid
 type Speaker = {
   Id : SpeakerId
@@ -21,19 +20,20 @@ type AbstractData = {
 
 type Abstract =
   | Proposed of ProposedAbstract
+  | Accepted of AcceptedAbstract
 
-type ProposedAbstract =
+and ProposedAbstract =
   | Talk of AbstractData
   | HandsOnSession of AbstractData
 
-type AcceptedAbstract =
+and AcceptedAbstract =
   | Talk of AbstractData
   | HandsOnSession of AbstractData
 
 type OrganizerId = OrganizerId of Guid
 
 type Organizer = {
-  Id : Organizer
+  Id : OrganizerId
   Firstname : string
   Lastname : string
 }
@@ -44,15 +44,28 @@ type Voting =
 
 type VotingResults = Voting list
 
-type AcceptAbstract = ProposedAbstract -> AcceptedAbstract
+type Abstracts = Abstract list
 
-type Voter = Voting -> VotingResults -> VotingResults
+// type AcceptAbstract = ProposedAbstract -> AcceptedAbstract
 
-let voter voting results =
-  voting :: results
+// type Voter = Voting -> VotingResults -> VotingResults
 
+type CallForPapers =
+  | NotOpened
+  | Open
+  | Closed
 
-type VotingService = {
-  AcceptAbstract : AcceptAbstract
-  Voter : Voter
+type VotingPeriod =
+  | InProgess
+  | Finished
+
+type ConferenceId = ConferenceId of Guid
+
+type Conference = {
+  Id : ConferenceId
+  CallForPapers : CallForPapers
+  VotingPeriod : VotingPeriod
+  Abstracts : Abstracts
+  VotingResults : VotingResults
+  Organizers : Organizer list
 }

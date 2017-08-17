@@ -4,17 +4,17 @@ open Domain
 open Events
 
 type State =
-  | CallForPapersOpen
-  | CallForPapersClosed
-  | VotingPeriodInProgress
-  | VotingPeriodFinished
+  Conference
 
+// Events kommen an, also hier keine Validierung etc mehr
 
-type State2 = {
-  Voting
-}
+let apply (state : State) event : State =
 
-let apply state event =
-  match state,event with
-  | VotingPeriodInProgress, VotingWasIssued _ ->
-      VotingPeriodInProgress
+  match event with
+    VotingPeriodWasFinished ->
+      match state.VotingPeriod with
+      | InProgess ->
+          { state with VotingPeriod = Finished }
+      | Finished ->
+          state
+
