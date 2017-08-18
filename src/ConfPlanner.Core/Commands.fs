@@ -3,7 +3,7 @@ module Commands
 open Domain
 
 type Command =
-  | SubmitAbstract of ProposedAbstract
+  | ProposeAbstract of ProposedAbstract
   | Vote of Voting
   | RevokeVoting of Voting
   | OpenVotingPeriod

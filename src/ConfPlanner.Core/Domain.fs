@@ -18,17 +18,17 @@ type AbstractData = {
   Text : String
 }
 
-type Abstract =
-  | Proposed of ProposedAbstract
-  | Accepted of AcceptedAbstract
-
-and ProposedAbstract =
+type ProposedAbstract =
   | Talk of AbstractData
-  | HandsOnSession of AbstractData
+  | HandsOn of AbstractData
 
-and AcceptedAbstract =
+type AcceptedAbstract =
   | Talk of AbstractData
-  | HandsOnSession of AbstractData
+  | HandsOn of AbstractData
+
+type RejectedAbstract =
+  | Talk of AbstractData
+  | HandsOn of AbstractData
 
 type OrganizerId = OrganizerId of Guid
 
@@ -44,7 +44,6 @@ type Voting =
 
 type VotingResults = Voting list
 
-type Abstracts = Abstract list
 
 // type AcceptAbstract = ProposedAbstract -> AcceptedAbstract
 
@@ -65,7 +64,9 @@ type Conference = {
   Id : ConferenceId
   CallForPapers : CallForPapers
   VotingPeriod : VotingPeriod
-  Abstracts : Abstracts
+  ProposedAbstracts : ProposedAbstract list
+  AcceptedAbstracts : AcceptedAbstract list
+  RejectedAbstracts : RejectedAbstract list
   VotingResults : VotingResults
   Organizers : Organizer list
 }

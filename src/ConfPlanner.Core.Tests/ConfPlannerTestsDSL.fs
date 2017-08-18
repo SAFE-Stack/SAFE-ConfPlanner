@@ -11,7 +11,7 @@ open Errors
 
 let Given (state : State) = state
 
-let When command state = (command, state)
+let When command state : Command*State = (command, state)
 
 let ThenStateShouldBe expectedState (command, state) =
   match evolve state command with

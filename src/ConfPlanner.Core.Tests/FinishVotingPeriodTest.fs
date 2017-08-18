@@ -13,7 +13,7 @@ open TestData
 
 [<Test>]
 let ``Can finish voting period`` () =
-  let conference = conference()
+  let conference = conference
   Given conference
   |> When FinishVotingPeriod
   |> ThenStateShouldBe {conference with VotingPeriod = Finished}
@@ -21,7 +21,7 @@ let ``Can finish voting period`` () =
 
 [<Test>]
 let ``Cannot finish an already finished voting period`` () =
-  let conference = conference() |> withFinishedVotingPeriod
+  let conference = conference |> withFinishedVotingPeriod
   Given conference
   |> When FinishVotingPeriod
   |> ShouldFailWith VotingPeriodAlreadyFinished
