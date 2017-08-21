@@ -76,6 +76,24 @@ let ``Can not vote when voter already voted max number of times`` () =
   |> ShouldFailWith MaxNumberOfVotesExceeded
 
 [<Test>]
+let ``Can not issue veto when voter already vetoed max number of times`` () =
+  let proposedAbstract1 = proposedAbstract()
+  let proposedAbstract2 = proposedAbstract()
+  let voter = organizer1
+  let veto = Voting.Veto (proposedAbstract2,voter.Id)
+  let conference =
+    conference
+    |> withVotingPeriodInProgress
+    |> withProposedAbstract proposedAbstract1
+    |> withOrganizer voter
+    |> withMaxVetosPerOrganizer 1
+    |> withVoting (Voting.Veto (proposedAbstract1,voter.Id))
+
+  Given conference
+  |> When (Vote veto)
+  |> ShouldFailWith MaxNumberOfVetosExceeded
+
+[<Test>]
 let ``Can vote when constraints are fulfilled`` () =
   let proposedAbstract = proposedAbstract()
   let organizer = organizer1
@@ -90,5 +108,21 @@ let ``Can vote when constraints are fulfilled`` () =
   |> When (Vote voting)
   |> ThenStateShouldBe { conference with VotingResults = voting :: conference.VotingResults }
   |> WithEvents [VotingWasIssued voting]
+
+[<Test>]
+let ``Can issue a veto when constraints are fulfilled`` () =
+  let proposedAbstract = proposedAbstract()
+  let organizer = organizer1
+  let veto = Voting.Veto (proposedAbstract,organizer.Id)
+  let conference =
+    conference
+    |> withVotingPeriodInProgress
+    |> withOrganizer organizer
+    |> withProposedAbstract proposedAbstract
+
+  Given conference
+  |> When (Vote veto)
+  |> ThenStateShouldBe { conference with VotingResults = veto :: conference.VotingResults }
+  |> WithEvents [VotingWasIssued veto]
 
 

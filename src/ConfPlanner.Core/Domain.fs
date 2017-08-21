@@ -66,6 +66,7 @@ type VotingPeriod =
 type ConferenceId = ConferenceId of Guid
 
 type MaxVotesPerOrganizer = MaxVotesPerOrganizer of int
+type MaxVetosPerOrganizer = MaxVetosPerOrganizer of int
 
 type Conference = {
   Id : ConferenceId
@@ -77,4 +78,5 @@ type Conference = {
   VotingResults : VotingResults
   Organizers : Organizer list
   MaxVotesPerOrganizer : MaxVotesPerOrganizer
+  MaxVetosPerOrganizer : MaxVetosPerOrganizer
 }

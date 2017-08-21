@@ -37,6 +37,19 @@ let (|OrganizerExceededMaxNumbersOfVotes|_|) votingResults (MaxVotesPerOrganizer
   match number >= maxVotes with
   | true -> Some voting
   | false -> None
+let (|OrganizerExceededMaxNumbersOfVetos|_|) votingResults (MaxVetosPerOrganizer maxVetos) (voting : Voting) =
+  let isVetoOfVoter voterId  = function
+    | Voting.Veto (_,id) -> id = voterId
+    | _ -> false
+
+  let number =
+    votingResults
+    |> List.filter (isVetoOfVoter <| extractVoterId voting)
+    |> List.length
+
+  match number >= maxVetos with
+  | true -> Some voting
+  | false -> None
 
 let handleProposeAbstract state proposed =
   match state.CallForPapers with
@@ -63,6 +76,9 @@ let handleVoting state voting =
 
       | OrganizerExceededMaxNumbersOfVotes state.VotingResults state.MaxVotesPerOrganizer _ ->
           MaxNumberOfVotesExceeded |> fail
+
+      | OrganizerExceededMaxNumbersOfVetos state.VotingResults state.MaxVetosPerOrganizer _ ->
+          MaxNumberOfVetosExceeded |> fail
 
       | _ ->
           [VotingWasIssued voting] |> ok

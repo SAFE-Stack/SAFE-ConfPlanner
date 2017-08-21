@@ -12,6 +12,7 @@ let conference = {
   VotingResults = []
   Organizers = []
   MaxVotesPerOrganizer = MaxVotesPerOrganizer 3
+  MaxVetosPerOrganizer = MaxVetosPerOrganizer 1
 }
 
 let organizer1 = {
@@ -61,3 +62,6 @@ let withVoting voting conference =
 
 let withMaxVotesPerOrganizer max conference =
   { conference with MaxVotesPerOrganizer = MaxVotesPerOrganizer max }
+
+let withMaxVetosPerOrganizer max conference =
+  { conference with MaxVetosPerOrganizer = MaxVetosPerOrganizer max }

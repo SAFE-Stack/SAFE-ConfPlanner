@@ -9,6 +9,7 @@ type Error =
   | VotingAlreadyIssued
   | VoterIsNotAnOrganizer
   | MaxNumberOfVotesExceeded
+  | MaxNumberOfVetosExceeded
 
 let toErrorString = function
 | CallForPapersNotOpened -> "Call For Papers Not Opened"
@@ -17,3 +18,4 @@ let toErrorString = function
 | VotingAlreadyIssued -> "Voting Already Issued"
 | VoterIsNotAnOrganizer -> "Voter Is Not An Organizer"
 | MaxNumberOfVotesExceeded -> "Max Number Of Votes Exceeded"
+| MaxNumberOfVetosExceeded -> "Max Number Of Vetos Exceeded"
