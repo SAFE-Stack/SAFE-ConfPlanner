@@ -48,6 +48,7 @@
     <Compile Include="TestData.fs" />
     <Compile Include="FinishVotingPeriodTest.fs" />
     <Compile Include="ProposeAbstractTest.fs" />
+    <Compile Include="VoteTest.fs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <Choose>

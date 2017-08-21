@@ -44,6 +44,11 @@ type Voting =
 
 type VotingResults = Voting list
 
+let extractVoterId voting =
+  match voting with
+  | Vote (_,id) -> id
+  | Veto (_,id) -> id
+
 
 // type AcceptAbstract = ProposedAbstract -> AcceptedAbstract
 
@@ -60,6 +65,8 @@ type VotingPeriod =
 
 type ConferenceId = ConferenceId of Guid
 
+type MaxVotesPerOrganizer = MaxVotesPerOrganizer of int
+
 type Conference = {
   Id : ConferenceId
   CallForPapers : CallForPapers
@@ -69,4 +76,5 @@ type Conference = {
   RejectedAbstracts : RejectedAbstract list
   VotingResults : VotingResults
   Organizers : Organizer list
+  MaxVotesPerOrganizer : MaxVotesPerOrganizer
 }

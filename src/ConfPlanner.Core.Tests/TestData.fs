@@ -11,10 +11,16 @@ let conference = {
   RejectedAbstracts = []
   VotingResults = []
   Organizers = []
+  MaxVotesPerOrganizer = MaxVotesPerOrganizer 3
 }
 
+let organizer1 = {
+  Id = OrganizerId <| Guid.NewGuid()
+  Firstname = "Roman"
+  Lastname = "Sachse"
+}
 
-let abstractData =
+let abstractData() =
   {
   Id = AbstractId <| Guid.NewGuid()
   Duration = 45.
@@ -22,8 +28,8 @@ let abstractData =
   Text = "bla"
   }
 
-let proposedAbstract =
-  abstractData
+let proposedAbstract() =
+  abstractData()
   |> ProposedAbstract.Talk
 
 let withFinishedVotingPeriod conference =
@@ -37,3 +43,21 @@ let withCallForPapersOpen conference =
 
 let withCallForPapersClosed conference =
   { conference with CallForPapers = Closed }
+
+let withVotingPeriodInProgress conference =
+  { conference with VotingPeriod = InProgess }
+
+let withVotingPeriodFinished conference =
+  { conference with VotingPeriod = Finished }
+
+let withOrganizer organizer conference =
+  { conference with Organizers = organizer :: conference.Organizers }
+
+let withProposedAbstract proposedAbstract conference =
+  { conference with ProposedAbstracts = proposedAbstract :: conference.ProposedAbstracts }
+
+let withVoting voting conference =
+  { conference with VotingResults = voting :: conference.VotingResults }
+
+let withMaxVotesPerOrganizer max conference =
+  { conference with MaxVotesPerOrganizer = MaxVotesPerOrganizer max }

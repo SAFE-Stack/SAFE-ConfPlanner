@@ -10,18 +10,15 @@ type State =
 
 let apply (state : State) event : State =
   match event with
-    | AbstractWasProposed proposed->
-        match state.CallForPapers with
-        | Open ->
-            { state with ProposedAbstracts = proposed :: state.ProposedAbstracts }
-        | _ ->
-            state
+    | AbstractWasProposed proposed ->
+        { state with ProposedAbstracts = proposed :: state.ProposedAbstracts }
+
     | VotingPeriodWasFinished ->
-      match state.VotingPeriod with
-      | InProgess ->
-          { state with VotingPeriod = Finished }
-      | Finished ->
-          state
+        { state with VotingPeriod = Finished }
+
+    | VotingWasIssued voting ->
+         { state with VotingResults = voting :: state.VotingResults }
+
 
 
 
