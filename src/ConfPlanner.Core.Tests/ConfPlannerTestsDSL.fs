@@ -23,10 +23,23 @@ let ThenStateShouldBe expectedState (command, state) =
       |> Assert.Fail
       None
 
+let ThenIgnoreState expectedState (command, state) =
+  match evolve state command with
+  | Ok((actualState,events),_) ->
+      events |> Some
+  | Bad errs ->
+      sprintf "Expected : %A, But Actual : %A" expectedState errs.Head
+      |> Assert.Fail
+      None
+
+
+let eventEquals expected actual =
+  set expected = set actual
+
 let WithEvents expectedEvents actualEvents =
   match actualEvents with
   | Some (actualEvents) ->
-    actualEvents |> should equal expectedEvents
+    actualEvents |> eventEquals expectedEvents |> should be True
   | None -> None |> should equal expectedEvents
 
 let ShouldFailWith (expectedError : Error) (command, state) =
