@@ -6,32 +6,29 @@ let conference = {
   Id = ConferenceId <| Guid.NewGuid()
   CallForPapers = NotOpened
   VotingPeriod = InProgess
-  ProposedAbstracts = []
-  AcceptedAbstracts = []
-  RejectedAbstracts = []
+  Abstracts = []
   VotingResults = []
   Organizers = []
   MaxVotesPerOrganizer = MaxVotesPerOrganizer 3
   MaxVetosPerOrganizer = MaxVetosPerOrganizer 1
+  AvailableSlotsForTalks = 2
 }
 
-let organizer1 = {
+let organizer() = {
   Id = OrganizerId <| Guid.NewGuid()
-  Firstname = "Roman"
-  Lastname = "Sachse"
+  Firstname = ""
+  Lastname = ""
 }
 
-let abstractData() =
-  {
-  Id = AbstractId <| Guid.NewGuid()
-  Duration = 45.
-  Speakers = []
-  Text = "bla"
-  }
-
-let proposedAbstract() =
-  abstractData()
-  |> ProposedAbstract.Talk
+let proposedTalk() =
+   {
+      Id = AbstractId <| Guid.NewGuid()
+      Duration = 45.
+      Speakers = []
+      Text = "bla"
+      Status = Proposed
+      Type = Talk
+   }
 
 let withFinishedVotingPeriod conference =
   { conference with VotingPeriod = Finished }
@@ -54,14 +51,27 @@ let withVotingPeriodFinished conference =
 let withOrganizer organizer conference =
   { conference with Organizers = organizer :: conference.Organizers }
 
-let withProposedAbstract proposedAbstract conference =
-  { conference with ProposedAbstracts = proposedAbstract :: conference.ProposedAbstracts }
+let withOrganizers organizers conference =
+  { conference with Organizers = organizers }
+
+let withAbstract conferenceAbstract conference =
+  { conference with Abstracts = conferenceAbstract :: conference.Abstracts }
+
+let withAbstracts conferenceAbstracts conference =
+  { conference with Abstracts = conferenceAbstracts }
 
 let withVoting voting conference =
   { conference with VotingResults = voting :: conference.VotingResults }
+
+let withVotings votings conference =
+  { conference with VotingResults = votings }
 
 let withMaxVotesPerOrganizer max conference =
   { conference with MaxVotesPerOrganizer = MaxVotesPerOrganizer max }
 
 let withMaxVetosPerOrganizer max conference =
   { conference with MaxVetosPerOrganizer = MaxVetosPerOrganizer max }
+
+let withAvailableSlotsForTalks number conference =
+  { conference with AvailableSlotsForTalks = number }
+

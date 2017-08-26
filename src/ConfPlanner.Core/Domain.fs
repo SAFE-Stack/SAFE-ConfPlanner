@@ -11,24 +11,23 @@ type Speaker = {
 
 type AbstractId = AbstractId of Guid
 
-type AbstractData = {
+type AbstractStatus =
+  | Proposed
+  | Accepted
+  | Rejected
+
+type AbstractType =
+  | Talk
+  | HandsOn
+
+type ConferenceAbstract = {
   Id : AbstractId
   Duration : float
   Speakers : Speaker list
   Text : String
+  Status : AbstractStatus
+  Type : AbstractType
 }
-
-type ProposedAbstract =
-  | Talk of AbstractData
-  | HandsOn of AbstractData
-
-type AcceptedAbstract =
-  | Talk of AbstractData
-  | HandsOn of AbstractData
-
-type RejectedAbstract =
-  | Talk of AbstractData
-  | HandsOn of AbstractData
 
 type OrganizerId = OrganizerId of Guid
 
@@ -39,8 +38,8 @@ type Organizer = {
 }
 
 type Voting =
-  | Vote of ProposedAbstract*OrganizerId
-  | Veto of ProposedAbstract*OrganizerId
+  | Vote of AbstractId*OrganizerId
+  | Veto of AbstractId*OrganizerId
 
 type VotingResults = Voting list
 
@@ -49,8 +48,12 @@ let extractVoterId voting =
   | Vote (_,id) -> id
   | Veto (_,id) -> id
 
+let extractAbstractId voting =
+  match voting with
+  | Vote (id,_) -> id
+  | Veto (id,_) -> id
 
-// type AcceptAbstract = ProposedAbstract -> AcceptedAbstract
+// type AcceptAbstract = proposedTalk -> AcceptedAbstract
 
 // type Voter = Voting -> VotingResults -> VotingResults
 
@@ -72,11 +75,10 @@ type Conference = {
   Id : ConferenceId
   CallForPapers : CallForPapers
   VotingPeriod : VotingPeriod
-  ProposedAbstracts : ProposedAbstract list
-  AcceptedAbstracts : AcceptedAbstract list
-  RejectedAbstracts : RejectedAbstract list
-  VotingResults : VotingResults
+  Abstracts : ConferenceAbstract list
+  VotingResults : Voting list
   Organizers : Organizer list
   MaxVotesPerOrganizer : MaxVotesPerOrganizer
   MaxVetosPerOrganizer : MaxVetosPerOrganizer
+  AvailableSlotsForTalks : int
 }

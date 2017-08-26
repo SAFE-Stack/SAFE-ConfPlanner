@@ -6,6 +6,6 @@ type Event =
   | VotingWasIssued of Voting
   | VotingWasRevoked of Voting
   | VotingPeriodWasFinished
-  | AbstractWasProposed of ProposedAbstract
-  | AbstractWasAccepted of ProposedAbstract
-  | AbstractWasRejected of ProposedAbstract
+  | AbstractWasProposed of ConferenceAbstract
+  | AbstractWasAccepted of AbstractId
+  | AbstractWasRejected of AbstractId

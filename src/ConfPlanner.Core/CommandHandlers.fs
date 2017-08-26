@@ -13,6 +13,11 @@ let (|AlreadyVotedForAbstract|_|) votingResults voting =
   | true -> Some voting
   | false -> None
 
+let (|DidNotVoteForAbstract|_|) votingResults voting =
+  match not <| List.contains voting votingResults with
+  | true -> Some voting
+  | false -> None
+
 let (|VoterIsNotAnOrganizer|_|) (organizers: Organizer list) (voting : Voting) =
   let isNotOrganizer voting =
     organizers
@@ -21,6 +26,16 @@ let (|VoterIsNotAnOrganizer|_|) (organizers: Organizer list) (voting : Voting) =
     |> not
 
   match isNotOrganizer voting with
+  | true -> Some voting
+  | false -> None
+
+let numberOfVotesExceeded votingResults getVote (voting : Voting) max =
+  let number =
+    votingResults
+    |> List.filter (getVote <| extractVoterId voting)
+    |> List.length
+
+  match number >= max with
   | true -> Some voting
   | false -> None
 
@@ -37,6 +52,7 @@ let (|OrganizerExceededMaxNumbersOfVotes|_|) votingResults (MaxVotesPerOrganizer
   match number >= maxVotes with
   | true -> Some voting
   | false -> None
+
 let (|OrganizerExceededMaxNumbersOfVetos|_|) votingResults (MaxVetosPerOrganizer maxVetos) (voting : Voting) =
   let isVetoOfVoter voterId  = function
     | Voting.Veto (_,id) -> id = voterId
@@ -57,12 +73,53 @@ let handleProposeAbstract state proposed =
   | NotOpened -> CallForPapersNotOpened |> fail
   | Closed -> CallForPapersClosed |> fail
 
-let handleFinishVotingPeriod state =
-  match state.VotingPeriod with
-  | InProgess -> [VotingPeriodWasFinished] |> ok
-  | _ -> VotingPeriodAlreadyFinished |> fail
+let score m (abstr : AbstractId) =
+    match m |> Map.tryFind abstr with
+    | Some value -> m |> Map.add abstr (value + 1)
+    | None -> m |> Map.add abstr 1
 
-let handleVoting state voting =
+let scoreAbstracts state =
+  let votes,vetos =
+    state.VotingResults
+    |> List.partition (function | Voting.Vote _ -> true | _ -> false)
+
+  let abstractsWithVetos =
+    vetos
+    |> List.map extractAbstractId
+
+  let accepted =
+    votes
+    |> List.map extractAbstractId
+    |> List.fold score Map.empty
+    |> Map.toList
+    |> List.sortBy (fun (_, votes) -> printfn "votes %i" votes; votes)
+    |> List.map fst
+    |> List.filter (fun abstractId -> abstractsWithVetos |> List.contains abstractId |> not)
+    |> List.rev
+    |> Seq.truncate state.AvailableSlotsForTalks
+    |> Seq.toList
+    |> List.map (fun abstractId -> abstractId |> AbstractWasAccepted)
+
+  accepted
+
+let handleFinishVotingPeriod state =
+  match state.CallForPapers,state.VotingPeriod with
+  | Closed,InProgess ->
+      let events =
+        [VotingPeriodWasFinished]
+        |> (@) (scoreAbstracts state)
+
+      printfn "actual %A" events
+      events
+      |> ok
+
+  | Closed,Finished ->
+      VotingPeriodAlreadyFinished |> fail
+
+  | _,_ ->
+      CallForPapersNotClosed |> fail
+
+let handleVote state voting =
   match state.VotingPeriod with
   | Finished ->
       VotingPeriodAlreadyFinished |> fail
@@ -83,12 +140,25 @@ let handleVoting state voting =
       | _ ->
           [VotingWasIssued voting] |> ok
 
+let handleRevokeVoting state voting =
+  match state.VotingPeriod with
+  | Finished ->
+      VotingPeriodAlreadyFinished |> fail
+  | InProgress ->
+      match voting with
+      | DidNotVoteForAbstract state.VotingResults _ ->
+          OrganizerDidNotVoteForAbstract |> fail
+
+      | _ ->
+          [VotingWasRevoked voting] |> ok
+
 
 let execute (state: State) (command: Command) : Result<Event list, Error> =
   match command with
   | ProposeAbstract proposed -> handleProposeAbstract state proposed
   | FinishVotingPeriod -> handleFinishVotingPeriod state
-  | Vote voting -> handleVoting state voting
+  | Vote voting -> handleVote state voting
+  | RevokeVoting voting -> handleRevokeVoting state voting
 
 
 let evolve (state : State) (command : Command) =
