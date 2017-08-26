@@ -79,6 +79,10 @@ let score m (abstr : AbstractId) =
     | None -> m |> Map.add abstr 1
 
 let scoreAbstracts state =
+  let talks,handsOns =
+    state.Abstracts
+    |> List.partition (fun abstr -> abstr.Type = Talk)
+
   let votes,vetos =
     state.VotingResults
     |> List.partition (function | Voting.Vote _ -> true | _ -> false)
@@ -87,7 +91,7 @@ let scoreAbstracts state =
     vetos
     |> List.map extractAbstractId
 
-  let accepted =
+  let withoutVetos =
     votes
     |> List.map extractAbstractId
     |> List.fold score Map.empty
@@ -96,11 +100,20 @@ let scoreAbstracts state =
     |> List.map fst
     |> List.filter (fun abstractId -> abstractsWithVetos |> List.contains abstractId |> not)
     |> List.rev
+
+  let accepted =
+    withoutVetos
     |> Seq.truncate state.AvailableSlotsForTalks
     |> Seq.toList
-    |> List.map (fun abstractId -> abstractId |> AbstractWasAccepted)
+
+  let rejected =
+    talks
+    |> List.map (fun abstr -> abstr.Id)
+    |> List.filter (fun id -> accepted |> List.contains id |> not)
 
   accepted
+  |> List.map AbstractWasAccepted
+  |> (@) (rejected |> List.map AbstractWasRejected)
 
 let handleFinishVotingPeriod state =
   match state.CallForPapers,state.VotingPeriod with
@@ -109,7 +122,7 @@ let handleFinishVotingPeriod state =
         [VotingPeriodWasFinished]
         |> (@) (scoreAbstracts state)
 
-      printfn "actual %A" events
+      // printfn "actual %A" events
       events
       |> ok
 

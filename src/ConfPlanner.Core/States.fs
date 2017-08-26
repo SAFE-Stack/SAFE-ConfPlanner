@@ -16,6 +16,9 @@ let apply (state : State) event : State =
     | AbstractWasAccepted _ ->
         state
 
+    | AbstractWasRejected _ ->
+        state
+
     | VotingPeriodWasFinished ->
         { state with VotingPeriod = Finished }
 

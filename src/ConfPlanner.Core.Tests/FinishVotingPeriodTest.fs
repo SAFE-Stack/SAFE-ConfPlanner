@@ -72,7 +72,7 @@ let ``Voting top x abstracts will be accepted, others will be rejected`` () =
         AbstractWasAccepted proposedTalk3.Id
         AbstractWasAccepted proposedTalk2.Id
         VotingPeriodWasFinished
-        // AbstractWasRejected proposedTalk1.Id
+        AbstractWasRejected proposedTalk1.Id
       ]
 
   printfn "expected %A" events
