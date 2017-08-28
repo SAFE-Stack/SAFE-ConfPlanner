@@ -29,10 +29,10 @@ let apply (state : State) event : State =
         { state with VotingPeriod = Finished }
 
     | VotingWasIssued voting ->
-         { state with VotingResults = voting :: state.VotingResults }
+         { state with Votings = voting :: state.Votings }
 
     | VotingWasRevoked voting ->
-         { state with VotingResults = state.VotingResults |> List.filter (fun v -> voting <> v) }
+         { state with Votings = state.Votings |> List.filter (fun v -> voting <> v) }
 
 
 

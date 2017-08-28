@@ -14,11 +14,11 @@ open TestData
 [<Test>]
 let ``Can propose an abstract when Call for Papers is open`` () =
   let conference = conference |> withCallForPapersOpen
-  let proposedTalk = proposedTalk()
+  let talk = proposedTalk()
   Given conference
-  |> When (ProposeAbstract proposedTalk)
-  |> ThenStateShouldBe (conference |> withAbstracts [proposedTalk])
-  |> WithEvents [AbstractWasProposed proposedTalk]
+  |> When (ProposeAbstract talk)
+  |> ThenStateShouldBe (conference |> withAbstract talk)
+  |> WithEvents [AbstractWasProposed talk]
 
 [<Test>]
 let ``Can not propose an abstract when Call for Papers is not opened yet`` () =

@@ -7,7 +7,7 @@ let conference = {
   CallForPapers = NotOpened
   VotingPeriod = InProgess
   Abstracts = []
-  VotingResults = []
+  Votings = []
   Organizers = []
   MaxVotesPerOrganizer = MaxVotesPerOrganizer 3
   MaxVetosPerOrganizer = MaxVetosPerOrganizer 1
@@ -61,10 +61,10 @@ let withAbstracts conferenceAbstracts conference =
   { conference with Abstracts = conferenceAbstracts }
 
 let withVoting voting conference =
-  { conference with VotingResults = voting :: conference.VotingResults }
+  { conference with Votings = voting :: conference.Votings }
 
 let withVotings votings conference =
-  { conference with VotingResults = votings }
+  { conference with Votings = votings }
 
 let withMaxVotesPerOrganizer max conference =
   { conference with MaxVotesPerOrganizer = MaxVotesPerOrganizer max }

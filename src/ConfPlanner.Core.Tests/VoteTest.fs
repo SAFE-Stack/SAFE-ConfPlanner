@@ -14,14 +14,14 @@ open TestData
 
 [<Test>]
 let ``Can not vote when voting period is already finished`` () =
-  let proposedTalk = proposedTalk()
+  let talk = proposedTalk()
   let voter = organizer()
-  let voting = Voting.Vote (proposedTalk.Id,voter.Id)
+  let voting = Voting.Vote (talk.Id,voter.Id)
   let conference =
     conference
     |> withVotingPeriodFinished
     |> withOrganizer voter
-    |> withAbstract proposedTalk
+    |> withAbstract talk
 
   Given conference
   |> When (Vote voting)
@@ -29,14 +29,14 @@ let ``Can not vote when voting period is already finished`` () =
 
 [<Test>]
 let ``Can not vote when organizer already voted for abstract`` () =
-  let proposedTalk = proposedTalk()
+  let talk = proposedTalk()
   let voter = organizer()
-  let voting = vote proposedTalk voter
+  let voting = vote talk voter
   let conference =
     conference
     |> withVotingPeriodInProgress
     |> withOrganizer voter
-    |> withAbstract proposedTalk
+    |> withAbstract talk
     |> withVoting voting
 
   Given conference
@@ -45,13 +45,13 @@ let ``Can not vote when organizer already voted for abstract`` () =
 
 [<Test>]
 let ``Can not vote when voter is not organizer of conference`` () =
-  let proposedTalk = proposedTalk()
+  let talk = proposedTalk()
   let voter = organizer()
-  let voting = vote proposedTalk voter
+  let voting = vote talk voter
   let conference =
     conference
     |> withVotingPeriodInProgress
-    |> withAbstract proposedTalk
+    |> withAbstract talk
 
   Given conference
   |> When (Vote voting)
@@ -59,17 +59,17 @@ let ``Can not vote when voter is not organizer of conference`` () =
 
 [<Test>]
 let ``Can not vote when voter already voted max number of times`` () =
-  let proposedTalk1 = proposedTalk()
-  let proposedTalk2 = proposedTalk()
+  let talk1 = proposedTalk()
+  let talk2 = proposedTalk()
   let voter = organizer()
-  let voting = vote proposedTalk1 voter
+  let voting = vote talk1 voter
   let conference =
     conference
     |> withVotingPeriodInProgress
-    |> withAbstract proposedTalk1
+    |> withAbstract talk1
     |> withOrganizer voter
     |> withMaxVotesPerOrganizer 1
-    |> withVoting (vote proposedTalk2 voter)
+    |> withVoting (vote talk2 voter)
 
   Given conference
   |> When (Vote voting)
@@ -77,51 +77,51 @@ let ``Can not vote when voter already voted max number of times`` () =
 
 [<Test>]
 let ``Can not issue veto when voter already vetoed max number of times`` () =
-  let proposedTalk1 = proposedTalk()
-  let proposedTalk2 = proposedTalk()
+  let talk1 = proposedTalk()
+  let talk2 = proposedTalk()
   let voter = organizer()
   let conference =
     conference
     |> withVotingPeriodInProgress
-    |> withAbstract proposedTalk1
+    |> withAbstract talk1
     |> withOrganizer voter
     |> withMaxVetosPerOrganizer 1
-    |> withVoting (veto proposedTalk1 voter)
+    |> withVoting (veto talk1 voter)
 
   Given conference
-  |> When (Vote (veto proposedTalk2 voter))
+  |> When (Vote (veto talk2 voter))
   |> ShouldFailWith MaxNumberOfVetosExceeded
 
 [<Test>]
 let ``Can vote when constraints are fulfilled`` () =
-  let proposedTalk = proposedTalk()
+  let talk = proposedTalk()
   let voter = organizer()
-  let voting = vote proposedTalk voter
+  let voting = vote talk voter
   let conference =
     conference
     |> withVotingPeriodInProgress
     |> withOrganizer voter
-    |> withAbstract proposedTalk
+    |> withAbstract talk
 
   Given conference
   |> When (Vote voting)
-  |> ThenStateShouldBe { conference with VotingResults = voting :: conference.VotingResults }
+  |> ThenStateShouldBe (conference |> withVoting voting)
   |> WithEvents [VotingWasIssued voting]
 
 [<Test>]
 let ``Can issue a veto when constraints are fulfilled`` () =
-  let proposedTalk = proposedTalk()
+  let talk = proposedTalk()
   let voter = organizer()
-  let veto = vote proposedTalk voter
+  let veto = vote talk voter
   let conference =
     conference
     |> withVotingPeriodInProgress
     |> withOrganizer voter
-    |> withAbstract proposedTalk
+    |> withAbstract talk
 
   Given conference
   |> When (Vote veto)
-  |> ThenStateShouldBe { conference with VotingResults = veto :: conference.VotingResults }
+  |> ThenStateShouldBe (conference |> withVoting veto)
   |> WithEvents [VotingWasIssued veto]
 
 

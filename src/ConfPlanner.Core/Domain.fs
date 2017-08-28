@@ -41,8 +41,6 @@ type Voting =
   | Vote of AbstractId*OrganizerId
   | Veto of AbstractId*OrganizerId
 
-type VotingResults = Voting list
-
 let extractVoterId voting =
   match voting with
   | Vote (_,id) -> id
@@ -76,7 +74,7 @@ type Conference = {
   CallForPapers : CallForPapers
   VotingPeriod : VotingPeriod
   Abstracts : ConferenceAbstract list
-  VotingResults : Voting list
+  Votings : Voting list
   Organizers : Organizer list
   MaxVotesPerOrganizer : MaxVotesPerOrganizer
   MaxVetosPerOrganizer : MaxVetosPerOrganizer

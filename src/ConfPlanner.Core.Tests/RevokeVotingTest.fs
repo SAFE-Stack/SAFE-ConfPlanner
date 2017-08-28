@@ -13,14 +13,14 @@ open TestData
 
 [<Test>]
 let ``Can not revoke voting when voting period is already finished`` () =
-  let proposedTalk = proposedTalk()
+  let talk = proposedTalk()
   let voter = organizer()
-  let voting = vote proposedTalk voter
+  let voting = vote talk voter
   let conference =
     conference
     |> withVotingPeriodFinished
     |> withOrganizer voter
-    |> withAbstract proposedTalk
+    |> withAbstract talk
     |> withVoting voting
 
   Given conference
@@ -29,14 +29,14 @@ let ``Can not revoke voting when voting period is already finished`` () =
 
 [<Test>]
 let ``Can not revoke voting when organizer did not vote for abstract`` () =
-  let proposedTalk = proposedTalk()
+  let talk = proposedTalk()
   let voter = organizer()
-  let voting = vote proposedTalk voter
+  let voting = vote talk voter
   let conference =
     conference
     |> withVotingPeriodInProgress
     |> withOrganizer voter
-    |> withAbstract proposedTalk
+    |> withAbstract talk
 
   Given conference
   |> When (RevokeVoting voting)
@@ -44,19 +44,19 @@ let ``Can not revoke voting when organizer did not vote for abstract`` () =
 
 [<Test>]
 let ``Can revoke voting when constraints are fulfilled`` () =
-  let proposedTalk = proposedTalk()
+  let talk = proposedTalk()
   let voter = organizer()
-  let voting = vote proposedTalk voter
+  let voting = vote talk voter
   let conference =
     conference
     |> withVotingPeriodInProgress
     |> withOrganizer voter
-    |> withAbstract proposedTalk
+    |> withAbstract talk
     |> withVoting voting
 
   Given conference
   |> When (RevokeVoting voting)
-  |> ThenStateShouldBe { conference with VotingResults = [] }
+  |> ThenStateShouldBe (conference |> withVotings [])
   |> WithEvents [VotingWasRevoked voting]
 
 

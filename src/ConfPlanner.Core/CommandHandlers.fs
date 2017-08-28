@@ -84,7 +84,7 @@ let scoreAbstracts state =
     |> List.partition (fun abstr -> abstr.Type = Talk)
 
   let votes,vetos =
-    state.VotingResults
+    state.Votings
     |> List.partition (function | Voting.Vote _ -> true | _ -> false)
 
   let abstractsWithVetos =
@@ -141,13 +141,13 @@ let handleVote state voting =
       | VoterIsNotAnOrganizer state.Organizers _ ->
           VoterIsNotAnOrganizer |> fail
 
-      | AlreadyVotedForAbstract state.VotingResults _ ->
+      | AlreadyVotedForAbstract state.Votings _ ->
           VotingAlreadyIssued |> fail
 
-      | OrganizerExceededMaxNumbersOfVotes state.VotingResults state.MaxVotesPerOrganizer _ ->
+      | OrganizerExceededMaxNumbersOfVotes state.Votings state.MaxVotesPerOrganizer _ ->
           MaxNumberOfVotesExceeded |> fail
 
-      | OrganizerExceededMaxNumbersOfVetos state.VotingResults state.MaxVetosPerOrganizer _ ->
+      | OrganizerExceededMaxNumbersOfVetos state.Votings state.MaxVetosPerOrganizer _ ->
           MaxNumberOfVetosExceeded |> fail
 
       | _ ->
@@ -159,7 +159,7 @@ let handleRevokeVoting state voting =
       VotingPeriodAlreadyFinished |> fail
   | InProgress ->
       match voting with
-      | DidNotVoteForAbstract state.VotingResults _ ->
+      | DidNotVoteForAbstract state.Votings _ ->
           OrganizerDidNotVoteForAbstract |> fail
 
       | _ ->
