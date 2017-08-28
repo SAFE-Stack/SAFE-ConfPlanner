@@ -17,7 +17,7 @@ let ``Can propose an abstract when Call for Papers is open`` () =
   let proposedTalk = proposedTalk()
   Given conference
   |> When (ProposeAbstract proposedTalk)
-  |> ThenStateShouldBe { conference with Abstracts = proposedTalk :: conference.Abstracts }
+  |> ThenStateShouldBe (conference |> withAbstracts [proposedTalk])
   |> WithEvents [AbstractWasProposed proposedTalk]
 
 [<Test>]

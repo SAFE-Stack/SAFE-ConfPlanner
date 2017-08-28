@@ -15,7 +15,7 @@ open TestData
 let ``Can not revoke voting when voting period is already finished`` () =
   let proposedTalk = proposedTalk()
   let voter = organizer()
-  let voting = Voting.Vote (proposedTalk.Id,voter.Id)
+  let voting = vote proposedTalk voter
   let conference =
     conference
     |> withVotingPeriodFinished
@@ -31,7 +31,7 @@ let ``Can not revoke voting when voting period is already finished`` () =
 let ``Can not revoke voting when organizer did not vote for abstract`` () =
   let proposedTalk = proposedTalk()
   let voter = organizer()
-  let voting = Voting.Vote (proposedTalk.Id,voter.Id)
+  let voting = vote proposedTalk voter
   let conference =
     conference
     |> withVotingPeriodInProgress
@@ -45,12 +45,12 @@ let ``Can not revoke voting when organizer did not vote for abstract`` () =
 [<Test>]
 let ``Can revoke voting when constraints are fulfilled`` () =
   let proposedTalk = proposedTalk()
-  let organizer = organizer()
-  let voting = Voting.Vote (proposedTalk.Id,organizer.Id)
+  let voter = organizer()
+  let voting = vote proposedTalk voter
   let conference =
     conference
     |> withVotingPeriodInProgress
-    |> withOrganizer organizer
+    |> withOrganizer voter
     |> withAbstract proposedTalk
     |> withVoting voting
 

@@ -96,7 +96,7 @@ let scoreAbstracts state =
     |> List.map extractAbstractId
     |> List.fold score Map.empty
     |> Map.toList
-    |> List.sortBy (fun (_, votes) -> printfn "votes %i" votes; votes)
+    |> List.sortBy (fun (_, votes) -> votes)
     |> List.map fst
     |> List.filter (fun abstractId -> abstractsWithVetos |> List.contains abstractId |> not)
     |> List.rev

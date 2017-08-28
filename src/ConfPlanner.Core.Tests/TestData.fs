@@ -75,3 +75,15 @@ let withMaxVetosPerOrganizer max conference =
 let withAvailableSlotsForTalks number conference =
   { conference with AvailableSlotsForTalks = number }
 
+let accepted abstr =
+  { abstr with Status = Accepted }
+
+let rejected abstr =
+   { abstr with Status = Rejected }
+
+let vote (abstr: ConferenceAbstract) (organizer: Organizer) =
+   Voting.Vote (abstr.Id,organizer.Id)
+
+let veto (abstr: ConferenceAbstract) (organizer: Organizer) =
+   Voting.Veto (abstr.Id,organizer.Id)
+

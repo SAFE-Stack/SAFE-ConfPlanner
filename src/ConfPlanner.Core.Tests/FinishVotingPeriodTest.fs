@@ -16,7 +16,7 @@ let ``Can finish voting period`` () =
   let conference = conference |> withCallForPapersClosed
   Given conference
   |> When FinishVotingPeriod
-  |> ThenStateShouldBe {conference with VotingPeriod = Finished}
+  |> ThenStateShouldBe (conference |> withFinishedVotingPeriod)
   |> WithEvents [VotingPeriodWasFinished]
 
 [<Test>]
@@ -42,20 +42,20 @@ let ``Cannot finish an voting period when call of papers is not closed`` () =
 // einfach nach votes sortieren, die mit veto raushauen und die top x nehmen?
 [<Test>]
 let ``Voting top x abstracts will be accepted, others will be rejected`` () =
-  let proposedTalk1 = proposedTalk()
-  let proposedTalk2 = proposedTalk()
-  let proposedTalk3 = proposedTalk()
+  let talk1 = proposedTalk()
+  let talk2 = proposedTalk()
+  let talk3 = proposedTalk()
   let voter1 = organizer()
   let voter2 = organizer()
   let voter3 = organizer()
   let votings =
     [
-      Voting.Vote (proposedTalk3.Id,voter1.Id)
-      Voting.Vote (proposedTalk3.Id,voter2.Id)
-      Voting.Vote (proposedTalk3.Id,voter3.Id)
-      Voting.Vote (proposedTalk2.Id,voter1.Id)
-      Voting.Vote (proposedTalk2.Id,voter2.Id)
-      Voting.Vote (proposedTalk1.Id,voter1.Id)
+      vote talk3 voter1
+      vote talk3 voter2
+      vote talk3 voter3
+      vote talk2 voter1
+      vote talk2 voter2
+      vote talk1 voter2
     ]
 
   let conference =
@@ -64,22 +64,78 @@ let ``Voting top x abstracts will be accepted, others will be rejected`` () =
     |> withVotingPeriodInProgress
     |> withAvailableSlotsForTalks 2
     |> withOrganizers [voter1; voter2; voter3]
-    |> withAbstracts [proposedTalk1; proposedTalk2; proposedTalk3]
+    |> withAbstracts [talk1
+    ; talk2; talk3]
     |> withVotings votings
 
-  let events =
-    [
-        AbstractWasAccepted proposedTalk3.Id
-        AbstractWasAccepted proposedTalk2.Id
-        VotingPeriodWasFinished
-        AbstractWasRejected proposedTalk1.Id
-      ]
+  let expectedState =
+    conference
+    |> withFinishedVotingPeriod
+    |> withAbstracts [rejected talk1; accepted talk2; accepted talk3]
 
-  printfn "expected %A" events
+  let expectedEvents =
+    [
+        VotingPeriodWasFinished
+        AbstractWasAccepted talk3.Id
+        AbstractWasAccepted talk2.Id
+        AbstractWasRejected talk1.Id
+    ]
+
   Given conference
   |> When FinishVotingPeriod
-  |> ThenIgnoreState conference
-  |> WithEvents events
+  |> ThenStateShouldBe expectedState
+  |> WithEvents expectedEvents
+
+
+[<Test>]
+let ``A veto rejects talks that would otherwise be accepted`` () =
+  let talk1 = proposedTalk()
+  let talk2 = proposedTalk()
+  let talk3 = proposedTalk()
+  let voter1 = organizer()
+  let voter2 = organizer()
+  let voter3 = organizer()
+  let votings =
+    [
+      vote talk3 voter2
+      vote talk3 voter3
+      vote talk2 voter1
+      vote talk2 voter2
+      vote talk1 voter2
+      veto talk3 voter1
+    ]
+
+  let conference =
+    conference
+    |> withCallForPapersClosed
+    |> withVotingPeriodInProgress
+    |> withAvailableSlotsForTalks 2
+    |> withOrganizers [voter1; voter2; voter3]
+    |> withAbstracts [talk1; talk2; talk3]
+    |> withVotings votings
+
+  let expectedState =
+    conference
+    |> withFinishedVotingPeriod
+    |> withAbstracts
+        [
+          accepted talk1
+          accepted talk2
+          rejected talk3
+        ]
+
+  let expectedEvents =
+    [
+        VotingPeriodWasFinished
+        AbstractWasRejected talk3.Id
+        AbstractWasAccepted talk2.Id
+        AbstractWasAccepted talk1.Id
+    ]
+
+  Given conference
+  |> When FinishVotingPeriod
+  |> ThenStateShouldBe expectedState
+  |> WithEvents expectedEvents
 
 
 

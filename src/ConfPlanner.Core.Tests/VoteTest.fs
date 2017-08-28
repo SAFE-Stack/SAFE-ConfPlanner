@@ -31,7 +31,7 @@ let ``Can not vote when voting period is already finished`` () =
 let ``Can not vote when organizer already voted for abstract`` () =
   let proposedTalk = proposedTalk()
   let voter = organizer()
-  let voting = Voting.Vote (proposedTalk.Id,voter.Id)
+  let voting = vote proposedTalk voter
   let conference =
     conference
     |> withVotingPeriodInProgress
@@ -47,7 +47,7 @@ let ``Can not vote when organizer already voted for abstract`` () =
 let ``Can not vote when voter is not organizer of conference`` () =
   let proposedTalk = proposedTalk()
   let voter = organizer()
-  let voting = Voting.Vote (proposedTalk.Id,voter.Id)
+  let voting = vote proposedTalk voter
   let conference =
     conference
     |> withVotingPeriodInProgress
@@ -62,14 +62,14 @@ let ``Can not vote when voter already voted max number of times`` () =
   let proposedTalk1 = proposedTalk()
   let proposedTalk2 = proposedTalk()
   let voter = organizer()
-  let voting = Voting.Vote (proposedTalk2.Id,voter.Id)
+  let voting = vote proposedTalk1 voter
   let conference =
     conference
     |> withVotingPeriodInProgress
     |> withAbstract proposedTalk1
     |> withOrganizer voter
     |> withMaxVotesPerOrganizer 1
-    |> withVoting (Voting.Vote (proposedTalk1.Id,voter.Id))
+    |> withVoting (vote proposedTalk2 voter)
 
   Given conference
   |> When (Vote voting)
@@ -80,28 +80,27 @@ let ``Can not issue veto when voter already vetoed max number of times`` () =
   let proposedTalk1 = proposedTalk()
   let proposedTalk2 = proposedTalk()
   let voter = organizer()
-  let veto = Voting.Veto (proposedTalk2.Id,voter.Id)
   let conference =
     conference
     |> withVotingPeriodInProgress
     |> withAbstract proposedTalk1
     |> withOrganizer voter
     |> withMaxVetosPerOrganizer 1
-    |> withVoting (Voting.Veto (proposedTalk1.Id,voter.Id))
+    |> withVoting (veto proposedTalk1 voter)
 
   Given conference
-  |> When (Vote veto)
+  |> When (Vote (veto proposedTalk2 voter))
   |> ShouldFailWith MaxNumberOfVetosExceeded
 
 [<Test>]
 let ``Can vote when constraints are fulfilled`` () =
   let proposedTalk = proposedTalk()
-  let organizer = organizer()
-  let voting = Voting.Vote (proposedTalk.Id,organizer.Id)
+  let voter = organizer()
+  let voting = vote proposedTalk voter
   let conference =
     conference
     |> withVotingPeriodInProgress
-    |> withOrganizer organizer
+    |> withOrganizer voter
     |> withAbstract proposedTalk
 
   Given conference
@@ -112,12 +111,12 @@ let ``Can vote when constraints are fulfilled`` () =
 [<Test>]
 let ``Can issue a veto when constraints are fulfilled`` () =
   let proposedTalk = proposedTalk()
-  let organizer = organizer()
-  let veto = Voting.Veto (proposedTalk.Id,organizer.Id)
+  let voter = organizer()
+  let veto = vote proposedTalk voter
   let conference =
     conference
     |> withVotingPeriodInProgress
-    |> withOrganizer organizer
+    |> withOrganizer voter
     |> withAbstract proposedTalk
 
   Given conference
