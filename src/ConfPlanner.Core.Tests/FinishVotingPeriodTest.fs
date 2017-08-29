@@ -64,8 +64,7 @@ let ``Voting top x abstracts will be accepted, others will be rejected`` () =
     |> withVotingPeriodInProgress
     |> withAvailableSlotsForTalks 2
     |> withOrganizers [voter1; voter2; voter3]
-    |> withAbstracts [talk1
-    ; talk2; talk3]
+    |> withAbstracts [talk1; talk2; talk3]
     |> withVotings votings
 
   let expectedState =

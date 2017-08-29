@@ -1,6 +1,16 @@
 source https://www.nuget.org/api/v2
+
+nuget FSharp.Core
+nuget FSharp.NET.Sdk
+
 nuget Chessie
 nuget FAKE
-nuget FSharp.Core
 nuget FsUnit
 nuget NUnit.Console
+
+nuget Fable.Core
+nuget Fable.Elmish.React
+nuget Fable.Elmish.Browser
+nuget Fable.Elmish.Debugger
+
+clitool dotnet-fable
