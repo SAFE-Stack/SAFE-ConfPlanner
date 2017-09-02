@@ -135,8 +135,3 @@ let ``A veto rejects talks that would otherwise be accepted`` () =
   |> When FinishVotingPeriod
   |> ThenStateShouldBe expectedState
   |> WithEvents expectedEvents
-
-
-
-
-

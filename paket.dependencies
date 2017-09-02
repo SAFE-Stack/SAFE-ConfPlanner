@@ -7,10 +7,19 @@ nuget Chessie
 nuget FAKE
 nuget FsUnit
 nuget NUnit.Console
+nuget Microsoft.Extensions.Logging.Console
+nuget NUnit3TestAdapter
+nuget System.Net.NetworkInformation
 
 nuget Fable.Core
 nuget Fable.Elmish.React
 nuget Fable.Elmish.Browser
 nuget Fable.Elmish.Debugger
+nuget Fable.JsonConverter
+
+nuget Suave
+nuget jose-jwt
+
+nuget dotnet-test-nunit 3.4.0-beta-3
 
 clitool dotnet-fable

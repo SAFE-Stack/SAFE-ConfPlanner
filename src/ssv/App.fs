@@ -32,7 +32,7 @@ let menu currentPage =
         [ str "General" ]
       ul
         [ ClassName "menu-list" ]
-        [ menuItem "SSV" SSV currentPage
+        [ menuItem "SSVh" SSV currentPage
           menuItem "Home" Home currentPage
           menuItem "Counter sample" Counter currentPage
           menuItem "About" Page.About currentPage ] ]

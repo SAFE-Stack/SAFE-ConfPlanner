@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <Compile Include="ConfPlannerTestsDSL.fs" />
+    <Compile Include="TestData.fs" />
+    <Compile Include="FinishVotingPeriodTest.fs" />
+    <Compile Include="ProposeAbstractTest.fs" />
+    <Compile Include="VoteTest.fs" />
+    <Compile Include="RevokeVotingTest.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ConfPlanner.Core\ConfPlanner.Core.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0" />
+    <PackageReference Include="NUnit" Version="3.7.*" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.8.*" />
+  </ItemGroup>
+  <Import Project="..\..\..\.paket\Paket.Restore.targets" />
+</Project>
