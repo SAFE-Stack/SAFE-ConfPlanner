@@ -1,59 +1,201 @@
-// include Fake libs
+// --------------------------------------------------------------------------------------
+// FAKE build script
+// --------------------------------------------------------------------------------------
+
 #r "./packages/FAKE/tools/FakeLib.dll"
 
 open Fake
-open Fake.Testing.NUnit3
+open Fake.Git
+open Fake.AssemblyInfoFile
+open Fake.ReleaseNotesHelper
+open System
+open System.IO
 
-// Directories
-let buildDir  = "./build/"
-let deployDir = "./deploy/"
-let testDir = "./tests/"
+let clientPath = "./src/Client" |> FullName
 
-let nunitRunnerPath = "packages/NUnit.ConsoleRunner/tools/nunit3-console.exe"
+let testsPath = "./src/Core.Tests" |> FullName
 
-// Filesets
-let appReferences  =
-    !! "/**/*.csproj"
-    ++ "/**/*.fsproj"
+let dotnetcliVersion = "2.0.0"
 
-// version info
-let version = "0.1"  // or retrieve from CI server
+let mutable dotnetExePath = "dotnet"
 
-// Targets
+// Pattern specifying assemblies to be tested using expecto
+// let clientTestExecutables = "test/UITests/**/bin/**/*Tests*.exe"
+
+
+// --------------------------------------------------------------------------------------
+// END TODO: The rest of the file includes standard build steps
+// --------------------------------------------------------------------------------------
+
+
+let run' timeout cmd args dir =
+    if execProcess (fun info ->
+        info.FileName <- cmd
+        if not (String.IsNullOrWhiteSpace dir) then
+            info.WorkingDirectory <- dir
+        info.Arguments <- args
+    ) timeout |> not then
+        failwithf "Error while running '%s' with args: %s" cmd args
+
+let run = run' System.TimeSpan.MaxValue
+
+let runDotnet workingDir args =
+    let result =
+        ExecProcess (fun info ->
+            info.FileName <- dotnetExePath
+            info.WorkingDirectory <- workingDir
+            info.Arguments <- args) TimeSpan.MaxValue
+    if result <> 0 then failwithf "dotnet %s failed" args
+
+let platformTool tool winTool =
+    let tool = if isUnix then tool else winTool
+    tool
+    |> ProcessHelper.tryFindFileOnPath
+    |> function Some t -> t | _ -> failwithf "%s not found" tool
+
+let nodeTool = platformTool "node" "node.exe"
+let npmTool = platformTool "npm" "npm.cmd"
+let yarnTool = platformTool "yarn" "yarn.cmd"
+
+do if not isWindows then
+    // We have to set the FrameworkPathOverride so that dotnet sdk invocations know
+    // where to look for full-framework base class libraries
+    let mono = platformTool "mono" "mono"
+    let frameworkPath = IO.Path.GetDirectoryName(mono) </> ".." </> "lib" </> "mono" </> "4.5"
+    setEnvironVar "FrameworkPathOverride" frameworkPath
+
+// --------------------------------------------------------------------------------------
+// Clean build results
+
 Target "Clean" (fun _ ->
-    CleanDirs [buildDir; deployDir]
+    !!"src/**/bin" ++ "src/**/obj/"
+        ++ "test/**/bin" ++ "test/**/obj/"
+    |> CleanDirs
+    CleanDirs ["bin"; "temp"; "docs/output"; Path.Combine(clientPath,"public/bundle")]
 )
 
-Target "Build" (fun _ ->
-    // compile all projects below src/app/
-    MSBuildDebug buildDir "Build" appReferences
-    |> Log "AppBuild-Output: "
+Target "InstallDotNetCore" (fun _ ->
+    dotnetExePath <- DotNetCli.InstallDotNetSDK dotnetcliVersion
 )
 
-Target "Deploy" (fun _ ->
-    !! (buildDir + "/**/*.*")
-    -- "*.zip"
-    |> Zip buildDir (deployDir + "ApplicationName." + version + ".zip")
+// --------------------------------------------------------------------------------------
+// Build library & test project
+
+Target "Restore" (fun _ ->
+    runDotnet currentDirectory "restore"
 )
 
 Target "BuildTests" (fun _ ->
-    !! "src/**/*.Tests.fsproj"
-    |> MSBuildDebug testDir "Build"
-    |> Log "BuildTests-Output: "
+    runDotnet currentDirectory "build"
 )
 
-Target "RunUnitTests" (fun _ ->
-    !! (testDir + "*.Tests.dll")
-    |> NUnit3 (fun p ->
-                      {p with ToolPath = nunitRunnerPath})
+
+Target "RunTests" (fun _ ->
+    runDotnet testsPath "test"
 )
 
-// Build order
+Target "InstallClient" (fun _ ->
+    printfn "Node version:"
+    run nodeTool "--version" __SOURCE_DIRECTORY__
+    printfn "Yarn version:"
+    run yarnTool "--version" __SOURCE_DIRECTORY__
+    run yarnTool "install" __SOURCE_DIRECTORY__
+    runDotnet clientPath "restore"
+)
+
+Target "BuildClient" (fun _ ->
+    runDotnet clientPath "fable webpack -- -p"
+)
+
+// --------------------------------------------------------------------------------------
+// Rename driver for macOS or Linux
+
+// Target "RenameDrivers" (fun _ ->
+//     if not isWindows then
+//         run npmTool "install phantomjs" ""
+//     try
+//         if isMacOS && not <| File.Exists "test/UITests/bin/Debug/net461/chromedriver" then
+//             Fake.FileHelper.Rename "test/UITests/bin/Debug/net461/chromedriver" "test/UITests/bin/Debug/net461/chromedriver_macOS"
+//         elif isLinux && not <| File.Exists "test/UITests/bin/Debug/net461/chromedriver" then
+//             Fake.FileHelper.Rename "test/UITests/bin/Debug/net461/chromedriver" "test/UITests/bin/Debug/net461/chromedriver_linux64"
+//     with
+//     | exn -> failwithf "Could not rename chromedriver at test/UITests/bin/Debug/net461/chromedriver. Message: %s" exn.Message
+// )
+
+// Target "RunServerTests" (fun _ ->
+//     runDotnet serverTestsPath "run"
+// )
+
+// Target "RunClientTests" (fun _ ->
+//     ActivateFinalTarget "KillProcess"
+
+//     let serverProcess =
+//         let info = System.Diagnostics.ProcessStartInfo()
+//         info.FileName <- dotnetExePath
+//         info.WorkingDirectory <- serverPath
+//         info.Arguments <- " run"
+//         info.UseShellExecute <- false
+//         System.Diagnostics.Process.Start info
+
+//     System.Threading.Thread.Sleep 5000 |> ignore  // give server some time to start
+
+//     !! clientTestExecutables
+//     |> Expecto (fun p -> { p with Parallel = false } )
+//     |> ignore
+
+//     serverProcess.Kill()
+// )
+
+// --------------------------------------------------------------------------------------
+// Run the Website
+
+let ipAddress = "localhost"
+let port = 8080
+
+// FinalTarget "KillProcess" (fun _ ->
+//     killProcess "dotnet"
+//     killProcess "dotnet.exe"
+// )
+
+
+Target "Run" (fun _ ->
+    // let unitTestsWatch = async {
+    //     let result =
+    //         ExecProcess (fun info ->
+    //             info.FileName <- dotnetExePath
+    //             info.WorkingDirectory <- serverTestsPath
+    //             info.Arguments <- "watch msbuild /t:TestAndRun") TimeSpan.MaxValue
+
+    //     if result <> 0 then failwith "Website shut down." }
+
+    let fablewatch = async { runDotnet clientPath "fable yarn-run start" } // nicht  webpack-dev-server, sonst wird webpack config nicht gefunden
+    let openBrowser = async {
+        System.Threading.Thread.Sleep(5000)
+        Diagnostics.Process.Start("http://"+ ipAddress + sprintf ":%d" port) |> ignore }
+
+    Async.Parallel [|  fablewatch; openBrowser |]
+    |> Async.RunSynchronously
+    |> ignore
+)
+
+
+// -------------------------------------------------------------------------------------
+Target "Build" DoNothing
+Target "All" DoNothing
+
 "Clean"
-  ==> "Build"
+  ==> "InstallDotNetCore"
+  ==> "Restore"
+  ==> "InstallClient"
   ==> "BuildTests"
-  ==> "RunUnitTests"
-  ==> "Deploy"
+//   ==> "RunTests"
+  ==> "BuildClient"
+  ==> "All"
 
-// start build
-RunTargetOrDefault "RunUnitTests"
+"BuildClient"
+  ==> "Build"
+
+"InstallClient"
+  ==> "Run"
+
+RunTargetOrDefault "All"
