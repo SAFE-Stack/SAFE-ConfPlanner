@@ -1,12 +1,18 @@
 module Global
 
+open Server.AuthTypes
+
 type Page =
-  | Home
   | Counter
   | About
+  | Login
+
+type UserData =
+  { UserName : string
+    Token : JWT }
 
 let toHash page =
   match page with
   | About -> "#about"
   | Counter -> "#counter"
-  | Home -> "#home"
+  | Login -> "#login"

@@ -14,6 +14,8 @@ open System.IO
 let clientPath = "./src/Client" |> FullName
 
 let testsPath = "./src/Domain.Tests" |> FullName
+let serverPath = "./src/Server" |> FullName
+
 
 let dotnetcliVersion = "2.0.0"
 
@@ -168,6 +170,7 @@ Target "Run" (fun _ ->
 
     //     if result <> 0 then failwith "Website shut down." }
 
+    let suave = async { runDotnet serverPath "run" }
     let fablewatch = async { runDotnet clientPath "fable yarn-run start" } // nicht  webpack-dev-server, sonst wird webpack config nicht gefunden
     let openBrowser = async {
         System.Threading.Thread.Sleep(5000)
