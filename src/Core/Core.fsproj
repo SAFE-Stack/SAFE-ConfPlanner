@@ -7,7 +7,6 @@
     <Compile Include="Events.fs" />
     <Compile Include="Commands.fs" />
     <Compile Include="States.fs" />
-    <Compile Include="Errors.fs" />
     <Compile Include="CommandHandlers.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
