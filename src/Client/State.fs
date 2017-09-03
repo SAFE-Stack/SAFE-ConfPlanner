@@ -9,7 +9,6 @@ open Types
 
 let pageParser: Parser<Page->Page,Page> =
   oneOf [
-    map SSV (s "ssv")
     map About (s "about")
     map Counter (s "counter")
     map Home (s "home")
@@ -26,23 +25,17 @@ let urlUpdate (result: Option<Page>) model =
 let init result =
   let (counter, counterCmd) = Counter.State.init()
   let (home, homeCmd) = Home.State.init()
-  let (ssv, ssvCmd) = SSV.State.init()
   let (model, cmd) =
     urlUpdate result
       { currentPage = Home
         counter = counter
-        home = home
-        ssv = ssv }
+        home = home }
   model, Cmd.batch [ cmd
                      Cmd.map CounterMsg counterCmd
-                     Cmd.map HomeMsg homeCmd
-                     Cmd.map SSVMsg ssvCmd ]
+                     Cmd.map HomeMsg homeCmd ]
 
 let update msg model =
   match msg with
-  | SSVMsg msg ->
-      let (ssv, ssvCmd) = SSV.State.update msg model.ssv
-      { model with ssv = ssv }, Cmd.map SSVMsg ssvCmd
   | CounterMsg msg ->
       let (counter, counterCmd) = Counter.State.update msg model.counter
       { model with counter = counter }, Cmd.map CounterMsg counterCmd

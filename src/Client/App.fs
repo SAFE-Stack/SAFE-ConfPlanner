@@ -32,8 +32,7 @@ let menu currentPage =
         [ str "General" ]
       ul
         [ ClassName "menu-list" ]
-        [ menuItem "SSVh" SSV currentPage
-          menuItem "Home" Home currentPage
+        [ menuItem "Home" Home currentPage
           menuItem "Counter sample" Counter currentPage
           menuItem "About" Page.About currentPage ] ]
 
@@ -44,7 +43,6 @@ let root model dispatch =
     | Page.About -> Info.View.root
     | Counter -> Counter.View.root model.counter (CounterMsg >> dispatch)
     | Home -> Home.View.root model.home (HomeMsg >> dispatch)
-    | SSV -> SSV.View.view model.ssv (SSVMsg >> dispatch)
 
   div
     []

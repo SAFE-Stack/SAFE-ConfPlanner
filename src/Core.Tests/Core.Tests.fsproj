@@ -13,12 +13,12 @@
     <Compile Include="RevokeVotingTest.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ConfPlanner.Core\ConfPlanner.Core.fsproj" />
+    <ProjectReference Include="..\Core\Core.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0" />
     <PackageReference Include="NUnit" Version="3.7.*" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.8.*" />
   </ItemGroup>
-  <Import Project="..\..\..\.paket\Paket.Restore.targets" />
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

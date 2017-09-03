@@ -10,43 +10,18 @@ open Fake.AssemblyInfoFile
 open Fake.ReleaseNotesHelper
 open System
 open System.IO
-open Fake.Testing.NUnit3
-// open Fake.Testing.Expecto
 
+let clientPath = "./src/Client" |> FullName
 
-let project = "Suave/Fable sample"
-
-let summary = "Suave and Fable sample"
-
-let description = summary
-
-let configuration = "Release"
-
-let srcPath = "./src" |> FullName
-
-let clientPath = "./src/ssv" |> FullName
-
-let serverPath = "./src/Server" |> FullName
-let sharedPath = "./src/Shared" |> FullName
-
-let sharedTestsPath = "./src/Shared/ConfPlanner.Core.Tests" |> FullName
-let clientTestsPath = "./test/UITests" |> FullName
-
-let testDir = "./tests/" |> FullName
-let nunitRunnerPath = "packages/NUnit.ConsoleRunner/tools/nunit3-console.exe"
+let testsPath = "./src/Core.Tests" |> FullName
 
 let dotnetcliVersion = "2.0.0"
 
 let mutable dotnetExePath = "dotnet"
 
-let deployDir = "./deploy"
-
-
 // Pattern specifying assemblies to be tested using expecto
-let clientTestExecutables = "test/UITests/**/bin/**/*Tests*.exe"
+// let clientTestExecutables = "test/UITests/**/bin/**/*Tests*.exe"
 
-let dockerUser = "forki"
-let dockerImageName = "fable-suave"
 
 // --------------------------------------------------------------------------------------
 // END TODO: The rest of the file includes standard build steps
@@ -89,12 +64,6 @@ do if not isWindows then
     let frameworkPath = IO.Path.GetDirectoryName(mono) </> ".." </> "lib" </> "mono" </> "4.5"
     setEnvironVar "FrameworkPathOverride" frameworkPath
 
-
-// Read additional information from the release notes document
-let release = LoadReleaseNotes "RELEASE_NOTES.md"
-let packageVersion = SemVerHelper.parse release.NugetVersion
-
-
 // --------------------------------------------------------------------------------------
 // Clean build results
 
@@ -102,7 +71,7 @@ Target "Clean" (fun _ ->
     !!"src/**/bin" ++ "src/**/obj/"
         ++ "test/**/bin" ++ "test/**/obj/"
     |> CleanDirs
-    CleanDirs ["bin"; "temp"; "docs/output"; deployDir; Path.Combine(clientPath,"public/bundle")]
+    CleanDirs ["bin"; "temp"; "docs/output"; Path.Combine(clientPath,"public/bundle")]
 )
 
 Target "InstallDotNetCore" (fun _ ->
@@ -112,57 +81,17 @@ Target "InstallDotNetCore" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Build library & test project
 
-// Target "InstallServer" (fun _ ->
-//     runDotnet serverPath "restore"
-// )
-
-// Target "BuildServer" (fun _ ->
-//     runDotnet serverPath "build"
-// )
-
-// Target "InstallClientTests" (fun _ ->
-//     runDotnet clientTestsPath "restore"
-// )
-
-// Target "BuildClientTests" (fun _ ->
-//     runDotnet clientTestsPath "build"
-// )
-
-// Target "InstallServerTests" (fun _ ->
-//     runDotnet serverTestsPath "restore"
-// )
-
-// Target "BuildServerTests" (fun _ ->
-//     runDotnet serverPath "build"
-// )
-
-
-
-// Target "BuildServerTests" (fun _ ->
-//     runDotnet serverPath "build"
-// )
-
-// Target "InstallServerTests" (fun _ ->
-//     !! "src/**/*.Tests.fsproj"
-//     |> MSBuildDebug testDir "Build"
-//     |> Log "BuildTests-Output: "
-// )
-
 Target "Restore" (fun _ ->
-    runDotnet "./" "restore"
+    runDotnet currentDirectory "restore"
 )
 
-Target "BuildSharedTests" (fun _ ->
-    // let testPath = !! ("./**/*.Tests")
-    // testPath
-    // |> Seq.iter (fun path ->  printfn "HAAAAALO";runDotnet path ("build -o "+ testDir))
-
-    runDotnet sharedTestsPath "build"
+Target "BuildTests" (fun _ ->
+    runDotnet currentDirectory "build"
 )
 
 
-Target "RunSharedTests" (fun _ ->
-    runDotnet sharedTestsPath "test"
+Target "RunTests" (fun _ ->
+    runDotnet testsPath "test"
 )
 
 Target "InstallClient" (fun _ ->
@@ -239,7 +168,7 @@ Target "Run" (fun _ ->
 
     //     if result <> 0 then failwith "Website shut down." }
 
-    let fablewatch = async { runDotnet clientPath "fable yarn-run start" } // dont call webpack-dev-server because it can find webpack config
+    let fablewatch = async { runDotnet clientPath "fable yarn-run start" } // nicht  webpack-dev-server, sonst wird webpack config nicht gefunden
     let openBrowser = async {
         System.Threading.Thread.Sleep(5000)
         Diagnostics.Process.Start("http://"+ ipAddress + sprintf ":%d" port) |> ignore }
@@ -250,76 +179,6 @@ Target "Run" (fun _ ->
 )
 
 
-// --------------------------------------------------------------------------------------
-// Release Scripts
-
-
-// Target "PrepareRelease" (fun _ ->
-//     Git.Branches.checkout "" false "master"
-//     Git.CommandHelper.directRunGitCommand "" "fetch origin" |> ignore
-//     Git.CommandHelper.directRunGitCommand "" "fetch origin --tags" |> ignore
-
-//     StageAll ""
-//     Git.Commit.Commit "" (sprintf "Bumping version to %O" release.NugetVersion)
-//     Git.Branches.pushBranch "" "origin" "master"
-
-//     let tagName = string release.NugetVersion
-//     Git.Branches.tag "" tagName
-//     Git.Branches.pushTag "" "origin" tagName
-
-//     let result =
-//         ExecProcess (fun info ->
-//             info.FileName <- "docker"
-//             info.Arguments <- sprintf "tag %s/%s %s/%s:%s" dockerUser dockerImageName dockerUser dockerImageName release.NugetVersion) TimeSpan.MaxValue
-//     if result <> 0 then failwith "Docker tag failed"
-// )
-
-// Target "Publish" (fun _ ->
-//     let result =
-//         ExecProcess (fun info ->
-//             info.FileName <- dotnetExePath
-//             info.WorkingDirectory <- serverPath
-//             info.Arguments <- "publish -c Release -o \"" + FullName deployDir + "\"") TimeSpan.MaxValue
-//     if result <> 0 then failwith "Publish failed"
-
-//     let clientDir = deployDir </> "client"
-//     let publicDir = clientDir </> "public"
-//     let jsDir = clientDir </> "js"
-//     let cssDir = clientDir </> "css"
-//     let imageDir = clientDir </> "Images"
-
-//     !! "src/Client/public/**/*.*" |> CopyFiles publicDir
-//     !! "src/Client/js/**/*.*" |> CopyFiles jsDir
-//     !! "src/Client/css/**/*.*" |> CopyFiles cssDir
-//     !! "src/Images/**/*.*" |> CopyFiles imageDir
-
-//     "src/Client/index.html" |> CopyFile clientDir
-// )
-
-// Target "CreateDockerImage" (fun _ ->
-//     let result =
-//         ExecProcess (fun info ->
-//             info.FileName <- "docker"
-//             info.Arguments <- sprintf "build -t %s/%s ." dockerUser dockerImageName) TimeSpan.MaxValue
-//     if result <> 0 then failwith "Docker build failed"
-// )
-
-// Target "Deploy" (fun _ ->
-//     let result =
-//         ExecProcess (fun info ->
-//             info.FileName <- "docker"
-//             info.WorkingDirectory <- deployDir
-//             info.Arguments <- sprintf "login --username \"%s\" --password \"%s\"" dockerUser (getBuildParam "DockerPassword")) TimeSpan.MaxValue
-//     if result <> 0 then failwith "Docker login failed"
-
-//     let result =
-//         ExecProcess (fun info ->
-//             info.FileName <- "docker"
-//             info.WorkingDirectory <- deployDir
-//             info.Arguments <- sprintf "push %s/%s:%s" dockerUser dockerImageName release.NugetVersion) TimeSpan.MaxValue
-//     if result <> 0 then failwith "Docker push failed"
-// )
-
 // -------------------------------------------------------------------------------------
 Target "Build" DoNothing
 Target "All" DoNothing
@@ -327,25 +186,11 @@ Target "All" DoNothing
 "Clean"
   ==> "InstallDotNetCore"
   ==> "Restore"
-//   ==> "InstallServer"
-//   ==> "InstallServerTests"
-//   ==> "InstallClientTests"
   ==> "InstallClient"
-  ==> "BuildSharedTests"
-  ==> "RunSharedTests"
-//   ==> "BuildShared"
-//   ==> "BuildServer"
+  ==> "BuildTests"
+//   ==> "RunTests"
   ==> "BuildClient"
-//   ==> "BuildServerTests"
-//   ==> "RunServerTests"
-//   ==> "BuildClientTests"
-//   ==> "RenameDrivers"
-//   ==> "RunClientTests"
   ==> "All"
-//   ==> "Publish"
-//   ==> "CreateDockerImage"
-//   ==> "PrepareRelease"
-//   ==> "Deploy"
 
 "BuildClient"
   ==> "Build"

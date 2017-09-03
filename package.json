@@ -1,7 +1,7 @@
 {
-  "name": "ssv",
+  "name": "confplanner",
   "version": "1.0.0",
-  "description": "Simple Fable App",
+  "description": "Client for ConfPlanner",
   "scripts": {
     "build": "webpack -p",
     "start": "webpack-dev-server",

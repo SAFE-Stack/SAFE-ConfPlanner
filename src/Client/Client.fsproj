@@ -15,10 +15,6 @@
     <Compile Include="Home/Types.fs" />
     <Compile Include="Home/State.fs" />
     <Compile Include="Home/View.fs" />
-    <!-- SSV -->
-    <Compile Include="SSV/Types.fs" />
-    <Compile Include="SSV/State.fs" />
-    <Compile Include="SSV/View.fs" />
     <!-- Navbar -->
     <Compile Include="Navbar/View.fs" />
     <!-- App -->
