@@ -1,6 +1,6 @@
 module Events
 
-open Domain
+open Model
 
 type Event =
   | VotingWasIssued of Voting

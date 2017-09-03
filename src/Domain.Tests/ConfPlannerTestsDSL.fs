@@ -1,10 +1,9 @@
 module ConfPlannerTestsDSL
 
 open FsUnit
-open Chessie.ErrorHandling
 open NUnit.Framework
 
-open CommandHandlers
+open Behaviour
 open States
 open Commands
 
@@ -21,5 +20,5 @@ let eventEquals expected actual =
 let ThenExpect expectedEvents actualEvents =
   match actualEvents with
   | Some (actualEvents) ->
-      actualEvents |> eventEquals expectedEvents |> should be True //mache schöner
+      actualEvents |> eventEquals expectedEvents |> should be True //TODO: Explicit output instead of True
   | None -> None |> should equal expectedEvents

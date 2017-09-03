@@ -1,7 +1,6 @@
-module CommandHandlers
+module Behaviour
 
-open Chessie.ErrorHandling
-open Domain
+open Model
 open Commands
 open Events
 open States

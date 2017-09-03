@@ -1,6 +1,6 @@
 module States
 
-open Domain
+open Model
 open Events
 
 type State =

@@ -1,5 +1,5 @@
 module TestData
-open Domain
+open Model
 open System
 
 let conference = {

@@ -1,6 +1,6 @@
 module Commands
 
-open Domain
+open Model
 
 type Command =
   | Vote of Voting

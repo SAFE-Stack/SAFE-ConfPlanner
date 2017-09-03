@@ -3,7 +3,7 @@ module VoteTest
 open NUnit.Framework
 
 open ConfPlannerTestsDSL
-open Domain
+open Model
 open System
 open Commands
 open Events

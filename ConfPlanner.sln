@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{EE4D2990-41A6-4958-AB0A-AB99704B9BC3}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Core", "src\Core\Core.fsproj", "{E851C227-8912-447F-B270-3AA3074B90DC}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Domain", "src\Domain\Domain.fsproj", "{E851C227-8912-447F-B270-3AA3074B90DC}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Core.Tests", "src\Core.Tests\Core.Tests.fsproj", "{032436AE-4E10-4D2F-A068-00B1A1DFDB8B}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Domain.Tests", "src\Domain.Tests\Domain.Tests.fsproj", "{032436AE-4E10-4D2F-A068-00B1A1DFDB8B}"
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Client", "src\Client\Client.fsproj", "{CABDE80C-4758-44A3-8836-ACBAD17DB8A3}"
 EndProject
