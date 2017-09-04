@@ -12,6 +12,7 @@ let pageParser: Parser<Page->Page,Page> =
     map About (s "about")
     map Counter (s "counter")
     map Login (s "login")
+    map Conference (s "conference")
   ]
 
 let requiresAuthentication page model =
@@ -36,6 +37,7 @@ let urlUpdate (result: Option<Page>) model =
 
 let init result =
   let user : UserData option = Client.Utils.load "user"
+  let (conference, conferenceCmd) = Conference.State.init()
   let (counter, counterCmd) = Counter.State.init()
   let (login, loginCmd) = Login.State.init user
   let (model, cmd) =
@@ -45,11 +47,13 @@ let init result =
         CurrentUser = user
         LoginModel = login
         CounterModel = counter
+        ConferenceModel = conference
       }
 
   let cmds =
     [
       cmd
+      Cmd.map ConferenceMsg conferenceCmd
       Cmd.map CounterMsg counterCmd
       Cmd.map LoginMsg loginCmd
     ]
@@ -57,6 +61,10 @@ let init result =
 
 let update msg model =
   match msg with
+  | ConferenceMsg msg ->
+      let (conference, conferenceCmd) = Conference.State.update msg model.ConferenceModel
+      { model with ConferenceModel = conference }, Cmd.map ConferenceMsg conferenceCmd
+
   | CounterMsg msg ->
       let (counter, counterCmd) = Counter.State.update msg model.CounterModel
       { model with CounterModel = counter }, Cmd.map CounterMsg counterCmd

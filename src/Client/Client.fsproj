@@ -17,9 +17,15 @@
     <Compile Include="Counter/State.fs" />
     <Compile Include="Counter/View.fs" />
 
+    <!-- Conference -->
+    <Compile Include="Conference/Types.fs" />
+    <Compile Include="Conference/State.fs" />
+    <Compile Include="Conference/View.fs" />
+
     <!-- Navbar -->
     <Compile Include="Navbar/View.fs" />
 
+    <!-- Login -->
     <Compile Include="Login/Types.fs" />
     <Compile Include="Login/State.fs" />
     <Compile Include="Login/View.fs" />

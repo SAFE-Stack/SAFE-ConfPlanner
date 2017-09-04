@@ -31,8 +31,12 @@ let menu currentPage =
         [ str "General" ]
       ul
         [ ClassName "menu-list" ]
-        [ menuItem "Counter" Counter currentPage
-          menuItem "About" Page.About currentPage ] ]
+        [
+          menuItem "Conference" Page.Conference currentPage
+          menuItem "Counter" Page.Counter currentPage
+          menuItem "About" Page.About currentPage
+        ]
+    ]
 
 let view model dispatch =
 
@@ -41,6 +45,7 @@ let view model dispatch =
     | Page.About -> Info.View.root
     | Counter -> Counter.View.root model.CounterModel (CounterMsg >> dispatch)
     | Login -> Login.View.root model.LoginModel (LoginMsg >> dispatch)
+    | Conference -> Conference.View.root model.ConferenceModel (ConferenceMsg >> dispatch)
 
   div
     []

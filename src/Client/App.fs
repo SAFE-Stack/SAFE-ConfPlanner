@@ -9,8 +9,6 @@ open Fable.Import
 open Fable.Import.Browser
 open App.Types
 open App.State
-open Global
-
 
 open Elmish.React
 open Elmish.Debug
