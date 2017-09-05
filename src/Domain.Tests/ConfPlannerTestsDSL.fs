@@ -19,6 +19,5 @@ let eventEquals expected actual =
 
 let ThenExpect expectedEvents actualEvents =
   match actualEvents with
-  | Some (actualEvents) ->
-      actualEvents |> eventEquals expectedEvents |> should be True //TODO: Explicit output instead of True
+  | Some (actualEvents) -> CollectionAssert.AreEquivalent(expectedEvents, actualEvents)
   | None -> None |> should equal expectedEvents
