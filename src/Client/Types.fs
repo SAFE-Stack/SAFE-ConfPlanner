@@ -3,11 +3,18 @@ module App.Types
 open Global
 
 type Msg =
+  | ConferenceMsg of Conference.Types.Msg
   | CounterMsg of Counter.Types.Msg
-  | HomeMsg of Home.Types.Msg
+  | LoginMsg of Login.Types.Msg
+  | LoggedIn
+  | LoggedOut
+  | StorageFailure of exn
+  | Logout
 
 type Model = {
-    currentPage: Page
-    counter: Counter.Types.Model
-    home: Home.Types.Model
+    CurrentPage: Page
+    CurrentUser : UserData option
+    LoginModel: Login.Types.Model
+    CounterModel: Counter.Types.Model
+    ConferenceModel : Conference.Types.Model
   }

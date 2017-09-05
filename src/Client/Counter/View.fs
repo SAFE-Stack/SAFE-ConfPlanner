@@ -3,7 +3,7 @@ module Counter.View
 open Fable.Core
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
-open Types
+open Counter.Types
 
 let simpleButton txt action dispatch =
   div

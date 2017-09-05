@@ -1,25 +1,43 @@
 <Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard1.6</TargetFramework>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+
+    <!-- Shared Code -->
+    <Compile Include="../Server/AuthTypes.fs" />
+    <Compile Include="../Core/Domain.fs" />
+    <Compile Include="../Core/Commands.fs" />
+
     <!-- Global to the app -->
     <Compile Include="Global.fs" />
+    <Compile Include="Style.fs" />
+    <Compile Include="Utils.fs" />
+
     <!-- Info -->
     <Compile Include="Info/View.fs" />
     <!-- Counter -->
     <Compile Include="Counter/Types.fs" />
     <Compile Include="Counter/State.fs" />
     <Compile Include="Counter/View.fs" />
-    <!-- Home -->
-    <Compile Include="Home/Types.fs" />
-    <Compile Include="Home/State.fs" />
-    <Compile Include="Home/View.fs" />
+
+    <!-- Conference -->
+    <Compile Include="Conference/Types.fs" />
+    <Compile Include="Conference/State.fs" />
+    <Compile Include="Conference/View.fs" />
+
     <!-- Navbar -->
     <Compile Include="Navbar/View.fs" />
+
+    <!-- Login -->
+    <Compile Include="Login/Types.fs" />
+    <Compile Include="Login/State.fs" />
+    <Compile Include="Login/View.fs" />
+
     <!-- App -->
     <Compile Include="Types.fs" />
     <Compile Include="State.fs" />
+    <Compile Include="View.fs" />
     <Compile Include="App.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
