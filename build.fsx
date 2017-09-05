@@ -13,7 +13,7 @@ open System.IO
 
 let clientPath = "./src/Client" |> FullName
 
-let testsPath = "./src/Core.Tests" |> FullName
+let testsPath = "./src/Domain.Tests" |> FullName
 
 let dotnetcliVersion = "2.0.0"
 
@@ -187,8 +187,6 @@ Target "All" DoNothing
   ==> "InstallDotNetCore"
   ==> "Restore"
   ==> "InstallClient"
-  ==> "BuildTests"
-//   ==> "RunTests"
   ==> "BuildClient"
   ==> "All"
 
@@ -197,5 +195,8 @@ Target "All" DoNothing
 
 "InstallClient"
   ==> "Run"
+
+"BuildTests"
+  ==> "RunTests"
 
 RunTargetOrDefault "All"

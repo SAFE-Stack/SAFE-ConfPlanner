@@ -7,13 +7,12 @@
     <None Include="app.config" />
     <Compile Include="ConfPlannerTestsDSL.fs" />
     <Compile Include="TestData.fs" />
-    <Compile Include="FinishVotingPeriodTest.fs" />
-    <Compile Include="ProposeAbstractTest.fs" />
-    <Compile Include="VoteTest.fs" />
-    <Compile Include="RevokeVotingTest.fs" />
+    <Compile Include="FinishVotingPeriod_Test.fs" />
+    <Compile Include="ProposeAbstract_Test.fs" />
+    <Compile Include="Vote_Test.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Core\Core.fsproj" />
+    <ProjectReference Include="..\Domain\Domain.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0" />

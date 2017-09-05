@@ -1,12 +1,10 @@
 module States
 
-open Domain
+open Model
 open Events
 
 type State =
   Conference
-
-// Events kommen an, also hier keine Validierung etc mehr
 
 let updateAbstractStatus abstractId status (abstr: ConferenceAbstract) =
     match abstr.Id = abstractId with
@@ -31,9 +29,8 @@ let apply (state : State) event : State =
     | VotingWasIssued voting ->
          { state with Votings = voting :: state.Votings }
 
-    | VotingWasRevoked voting ->
-         { state with Votings = state.Votings |> List.filter (fun v -> voting <> v) }
+    | FinishingDenied(_) -> state
 
+    | VotingDenied(_) -> state
 
-
-
+    | ProposingDenied(_) -> state

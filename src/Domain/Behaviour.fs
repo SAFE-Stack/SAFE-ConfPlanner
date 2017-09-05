@@ -1,11 +1,9 @@
-module CommandHandlers
+module Behaviour
 
-open Chessie.ErrorHandling
-open Domain
+open Model
 open Commands
 open Events
 open States
-open Errors
 
 
 let (|AlreadyVotedForAbstract|_|) votingResults voting =
@@ -69,9 +67,9 @@ let (|OrganizerExceededMaxNumbersOfVetos|_|) votingResults (MaxVetosPerOrganizer
 
 let handleProposeAbstract state proposed =
   match state.CallForPapers with
-  | Open -> [AbstractWasProposed proposed] |> ok
-  | NotOpened -> CallForPapersNotOpened |> fail
-  | Closed -> CallForPapersClosed |> fail
+  | Open -> [AbstractWasProposed proposed]
+  | NotOpened -> [ProposingDenied "Call For Papers Not Opened"]
+  | Closed -> [ProposingDenied "Call For Papers Closed"]
 
 let score m (abstr : AbstractId) =
     match m |> Map.tryFind abstr with
@@ -121,63 +119,30 @@ let handleFinishVotingPeriod state =
       let events =
         [VotingPeriodWasFinished]
         |> (@) (scoreAbstracts state)
-
       // printfn "actual %A" events
       events
-      |> ok
 
   | Closed,Finished ->
-      VotingPeriodAlreadyFinished |> fail
-
+      [FinishingDenied "Voting Period Already Finished"]
   | _,_ ->
-      CallForPapersNotClosed |> fail
+      [FinishingDenied "Call For Papers Not Closed"]
 
 let handleVote state voting =
   match state.VotingPeriod with
   | Finished ->
-      VotingPeriodAlreadyFinished |> fail
+      [VotingDenied "Voting Period Already Finished"]
   | InProgress ->
       match voting with
       | VoterIsNotAnOrganizer state.Organizers _ ->
-          VoterIsNotAnOrganizer |> fail
-
-      | AlreadyVotedForAbstract state.Votings _ ->
-          VotingAlreadyIssued |> fail
-
-      | OrganizerExceededMaxNumbersOfVotes state.Votings state.MaxVotesPerOrganizer _ ->
-          MaxNumberOfVotesExceeded |> fail
-
-      | OrganizerExceededMaxNumbersOfVetos state.Votings state.MaxVetosPerOrganizer _ ->
-          MaxNumberOfVetosExceeded |> fail
-
+          [VotingDenied "Voter Is Not An Organizer"]
       | _ ->
-          [VotingWasIssued voting] |> ok
+          [VotingWasIssued voting]
 
-let handleRevokeVoting state voting =
-  match state.VotingPeriod with
-  | Finished ->
-      VotingPeriodAlreadyFinished |> fail
-  | InProgress ->
-      match voting with
-      | DidNotVoteForAbstract state.Votings _ ->
-          OrganizerDidNotVoteForAbstract |> fail
-
-      | _ ->
-          [VotingWasRevoked voting] |> ok
-
-
-let execute (state: State) (command: Command) : Result<Event list, Error> =
+let execute (state: State) (command: Command) : Event list =
   match command with
   | ProposeAbstract proposed -> handleProposeAbstract state proposed
   | FinishVotingPeriod -> handleFinishVotingPeriod state
   | Vote voting -> handleVote state voting
-  | RevokeVoting voting -> handleRevokeVoting state voting
-
-
-let evolve (state : State) (command : Command) =
-  match execute state command with
-  | Ok (events,_) ->
-      let newState = List.fold States.apply state events
-      (newState, events) |> ok
-
-  | Bad error -> Bad error
+  | RevokeVoting(_) -> failwith "Not Implemented"
+  | AcceptAbstract(_) -> failwith "Not Implemented"
+  | RejectAbstract(_) -> failwith "Not Implemented"

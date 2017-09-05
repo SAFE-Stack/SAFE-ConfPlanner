@@ -3,21 +3,21 @@ module FinishVotingPeriodTest
 open NUnit.Framework
 
 open ConfPlannerTestsDSL
-open Domain
+open Model
 open System
 open Commands
 open Events
-open Errors
 open States
 open TestData
 
 [<Test>]
 let ``Can finish voting period`` () =
-  let conference = conference |> withCallForPapersClosed
+  let conference =
+    conference
+    |> withCallForPapersClosed
   Given conference
   |> When FinishVotingPeriod
-  |> ThenStateShouldBe (conference |> withFinishedVotingPeriod)
-  |> WithEvents [VotingPeriodWasFinished]
+  |> ThenExpect [VotingPeriodWasFinished]
 
 [<Test>]
 let ``Cannot finish an already finished voting period`` () =
@@ -28,18 +28,14 @@ let ``Cannot finish an already finished voting period`` () =
 
   Given conference
   |> When FinishVotingPeriod
-  |> ShouldFailWith VotingPeriodAlreadyFinished
+  |> ThenExpect [FinishingDenied "Voting Period Already Finished"]
 
-
-let ``Cannot finish an voting period when call of papers is not closed`` () =
+let ``Cannot finish a voting period when call of papers is not closed`` () =
   let conference = conference |> withCallForPapersOpen
   Given conference
   |> When FinishVotingPeriod
-  |> ShouldFailWith CallForPapersNotClosed
+  |> ThenExpect [FinishingDenied "Call For Papers Not Closed"]
 
-
-// wie soll bestimmt werden, welche Abstracts accepted oder rejected werden?
-// einfach nach votes sortieren, die mit veto raushauen und die top x nehmen?
 [<Test>]
 let ``Voting top x abstracts will be accepted, others will be rejected`` () =
   let talk1 = proposedTalk()
@@ -67,11 +63,6 @@ let ``Voting top x abstracts will be accepted, others will be rejected`` () =
     |> withAbstracts [talk1; talk2; talk3]
     |> withVotings votings
 
-  let expectedState =
-    conference
-    |> withFinishedVotingPeriod
-    |> withAbstracts [rejected talk1; accepted talk2; accepted talk3]
-
   let expectedEvents =
     [
         VotingPeriodWasFinished
@@ -82,9 +73,7 @@ let ``Voting top x abstracts will be accepted, others will be rejected`` () =
 
   Given conference
   |> When FinishVotingPeriod
-  |> ThenStateShouldBe expectedState
-  |> WithEvents expectedEvents
-
+  |> ThenExpect expectedEvents
 
 [<Test>]
 let ``A veto rejects talks that would otherwise be accepted`` () =
@@ -113,16 +102,6 @@ let ``A veto rejects talks that would otherwise be accepted`` () =
     |> withAbstracts [talk1; talk2; talk3]
     |> withVotings votings
 
-  let expectedState =
-    conference
-    |> withFinishedVotingPeriod
-    |> withAbstracts
-        [
-          accepted talk1
-          accepted talk2
-          rejected talk3
-        ]
-
   let expectedEvents =
     [
         VotingPeriodWasFinished
@@ -133,5 +112,4 @@ let ``A veto rejects talks that would otherwise be accepted`` () =
 
   Given conference
   |> When FinishVotingPeriod
-  |> ThenStateShouldBe expectedState
-  |> WithEvents expectedEvents
+  |> ThenExpect expectedEvents

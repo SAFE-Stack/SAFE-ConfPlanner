@@ -1,5 +1,5 @@
 module TestData
-open Domain
+open Model
 open System
 
 let conference = {
@@ -65,12 +65,6 @@ let withVoting voting conference =
 
 let withVotings votings conference =
   { conference with Votings = votings }
-
-let withMaxVotesPerOrganizer max conference =
-  { conference with MaxVotesPerOrganizer = MaxVotesPerOrganizer max }
-
-let withMaxVetosPerOrganizer max conference =
-  { conference with MaxVetosPerOrganizer = MaxVetosPerOrganizer max }
 
 let withAvailableSlotsForTalks number conference =
   { conference with AvailableSlotsForTalks = number }

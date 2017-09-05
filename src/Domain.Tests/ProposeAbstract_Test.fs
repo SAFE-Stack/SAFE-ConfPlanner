@@ -3,11 +3,10 @@ module ProposeAbstractTest
 open NUnit.Framework
 
 open ConfPlannerTestsDSL
-open Domain
+open Model
 open System
 open Commands
 open Events
-open Errors
 open States
 open TestData
 
@@ -17,19 +16,18 @@ let ``Can propose an abstract when Call for Papers is open`` () =
   let talk = proposedTalk()
   Given conference
   |> When (ProposeAbstract talk)
-  |> ThenStateShouldBe (conference |> withAbstract talk)
-  |> WithEvents [AbstractWasProposed talk]
+  |> ThenExpect [AbstractWasProposed talk]
 
 [<Test>]
 let ``Can not propose an abstract when Call for Papers is not opened yet`` () =
   let conference = conference |> withCallForPapersNotOpened
   Given conference
   |> When (ProposeAbstract <| proposedTalk())
-  |> ShouldFailWith CallForPapersNotOpened
+  |> ThenExpect [ProposingDenied "Call For Papers Not Opened"]
 
 [<Test>]
 let ``Can not propose an abstract when Call for Papers is already closed`` () =
   let conference = conference |> withCallForPapersClosed
   Given conference
   |> When (ProposeAbstract <| proposedTalk())
-  |> ShouldFailWith CallForPapersClosed
+  |> ThenExpect [ProposingDenied "Call For Papers Closed"]
