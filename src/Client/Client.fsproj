@@ -1,11 +1,15 @@
 <Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard1.6</TargetFramework>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <!-- Global to the app -->
-    <Compile Include="../Server/AuthTypes.fs" />
 
+    <!-- Shared Code -->
+    <Compile Include="../Server/AuthTypes.fs" />
+    <Compile Include="../Core/Domain.fs" />
+    <Compile Include="../Core/Commands.fs" />
+
+    <!-- Global to the app -->
     <Compile Include="Global.fs" />
     <Compile Include="Style.fs" />
     <Compile Include="Utils.fs" />

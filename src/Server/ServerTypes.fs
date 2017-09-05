@@ -1,10 +1,9 @@
-/// Module of server domain types. 
-module ServerCode.ServerTypes
+/// Module of server domain types.
+module Server.ServerTypes
 
 open System
 
 /// Represents the rights available for a request
-type UserRights = 
+type UserRights =
    { UserName : string }
 
-    

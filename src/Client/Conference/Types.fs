@@ -3,8 +3,10 @@ module Conference.Types
 
 type Model =
   {
-    Something : string
+    Token : string
   }
 
 type Msg =
-  | Noop
+  | FinishVotingPeriod
+  | PostCommandSuccess of string
+  | PostCommandError of exn

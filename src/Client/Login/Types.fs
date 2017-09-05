@@ -2,15 +2,9 @@ module Login.Types
 
 open Server.AuthTypes
 
-// Login credentials.
-type Login =
-    { UserName : string
-      Password : string }
-
 type LoginState =
 | LoggedOut
 | LoggedIn of JWT
-
 
 type Model = {
     State : LoginState

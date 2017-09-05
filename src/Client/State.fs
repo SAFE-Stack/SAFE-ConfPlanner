@@ -20,7 +20,7 @@ let requiresAuthentication page model =
       | Some _ ->
           { model with CurrentPage = page }, Cmd.none
 
-      | None  ->
+      | None ->
           { model with CurrentPage = Login }, Navigation.modifyUrl (toHash Login)
 
 let urlUpdate (result: Option<Page>) model =
@@ -32,12 +32,21 @@ let urlUpdate (result: Option<Page>) model =
   | Some (Page.Counter as page) ->
       requiresAuthentication page model
 
+  | Some (Page.Conference as page) ->
+      match model.CurrentUser with
+      | Some user ->
+          let conference,cmd = Conference.State.init <| Some user
+          { model with CurrentPage = page; ConferenceModel = conference }, Cmd.map ConferenceMsg cmd
+
+      | None ->
+          model, Cmd.ofMsg Logout
+
   | Some page ->
        { model with CurrentPage = page }, Cmd.none
 
 let init result =
   let user : UserData option = Client.Utils.load "user"
-  let (conference, conferenceCmd) = Conference.State.init()
+  let (conference, conferenceCmd) = Conference.State.init user
   let (counter, counterCmd) = Counter.State.init()
   let (login, loginCmd) = Login.State.init user
   let (model, cmd) =

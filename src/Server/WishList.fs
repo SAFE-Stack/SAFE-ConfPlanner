@@ -1,5 +1,5 @@
 /// Wish list API web parts and data access functions.
-module ServerCode.WishList
+module Server.WishList
 
 open System.IO
 open Suave
@@ -10,17 +10,17 @@ open Suave.Operators
 open Suave.RequestErrors
 open System
 open Suave.ServerErrors
-open ServerCode.Domain
+open Server.Domain
 open Suave.Logging
 open Suave.Logging.Message
 
 let logger = Log.create "FableSample"
 
-/// The default initial data 
+/// The default initial data
 let defaultWishList userName : WishList =
     {
         UserName = userName
-        Books = 
+        Books =
             [{ Title = "Mastering F#"
                Authors = "Alfonso Garcia-Caro Nunez"
                Link = "https://www.amazon.com/Mastering-F-Alfonso-Garcia-Caro-Nunez-ebook/dp/B01M112LR9" }
@@ -66,11 +66,11 @@ let getWishList (ctx: HttpContext) =
 let postWishList (ctx: HttpContext) =
     Auth.useToken ctx (fun token -> async {
         try
-            let wishList = 
+            let wishList =
                 ctx.request.rawForm
                 |> System.Text.Encoding.UTF8.GetString
                 |> FableJson.ofJson<Domain.WishList>
-            
+
             if token.UserName <> wishList.UserName then
                 return! UNAUTHORIZED (sprintf "WishList is not matching user %s" token.UserName) ctx
             else
@@ -82,4 +82,4 @@ let postWishList (ctx: HttpContext) =
         with exn ->
             logger.error (eventX "Database not available" >> addExn exn)
             return! SERVICE_UNAVAILABLE "Database not available" ctx
-    })    
+    })

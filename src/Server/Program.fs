@@ -1,5 +1,5 @@
 ﻿/// Server program entry point module.
-module ServerCode.Program
+module Server.Program
 
 open System.IO
 

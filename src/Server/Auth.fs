@@ -1,5 +1,5 @@
 /// Login web part and functions for API web part request authorisation with JWT.
-module ServerCode.Auth
+module Server.Auth
 
 open Server.AuthTypes
 
