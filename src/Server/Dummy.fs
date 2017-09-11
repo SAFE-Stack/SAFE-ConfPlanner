@@ -17,15 +17,15 @@ type Command =
 
 type State = int
 
-let initialState = 0
+let initialState : State = 0
 
-let updateState (state: State) (msg : Event)  =
+let updateState (state: State) (msg : Event) : State =
   match msg with
   | Event.EventOne _ -> state + 1
   | Event.EventTwo -> state + 2
   | Event.EventThree -> state + 3
 
-let behaviour state command =
+let behaviour state command : Event list =
   printfn "state in behaviour is %i" state
   match command with
   | Command.One -> [EventOne <| string state]

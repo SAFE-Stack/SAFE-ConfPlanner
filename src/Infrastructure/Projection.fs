@@ -1,6 +1,7 @@
 module Infrastructure.Projection
 
 open Infrastructure.Types
+
 let projection (initialState : 'State) (updateState : UpdateState<'State,'Event>) =
   let state = {
       ReadModel = initialState

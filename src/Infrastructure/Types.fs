@@ -28,16 +28,6 @@ type ProjectionState<'State> = {
   Subscriber : Subscriber<'State> list
 }
 
-// Client to Server
-type ClientMsg<'Command> =
-  | Connect
-  | Command of CorrelationId*'Command
-
-// Server to Client
-type ServerMsg<'Event> =
-  | Connected
-  | Events of CorrelationId*'Event list
-
 type Behaviour<'State,'Command,'Event> = 'State -> 'Command -> 'Event list
 
 type UpdateState<'State,'Event> = 'State -> 'Event -> 'State

@@ -11,9 +11,9 @@ open Suave.RequestErrors
 
 open Suave.WebSocket
 
+open Infrastructure.Projection
 open Infrastructure.CommandHandler
 open Infrastructure.EventStore
-open Infrastructure.Projection
 
 open Websocket
 open Dummy

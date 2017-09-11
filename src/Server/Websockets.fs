@@ -9,8 +9,6 @@ open Server.ServerTypes
 open Server.FableJson
 
 open Infrastructure.Types
-open Infrastructure.EventStore
-open Infrastructure.CommandHandler
 
 type WebsocketMsg<'Command,'Event> =
   | Connected

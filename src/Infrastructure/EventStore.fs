@@ -1,7 +1,6 @@
 module Infrastructure.EventStore
 
 open Infrastructure.Types
-open Infrastructure.Projection
 
 let eventStore (stateProjection : MailboxProcessor<ProjectionMsg<'Event,'State>>) =
   let state = {

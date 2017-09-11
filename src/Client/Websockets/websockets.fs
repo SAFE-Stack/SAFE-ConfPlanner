@@ -13,20 +13,20 @@ open Server.ServerTypes
 
 type Model =
   { Info : string
-    Events : Infrastructure.Types.Event list }
+    Events : Dummy.Event list }
 
 type Msg =
-  | Received of ServerMsg
+  | Received of ServerMsg<Dummy.Event>
   | CommandOne
   | CommandTwo
   | CommandThree
 
-let mutable private send_ws : ClientMsg -> unit = (fun _ -> failwith "WebSocket not connected")
+let mutable private send_ws : ClientMsg<Dummy.Command> -> unit = (fun _ -> failwith "WebSocket not connected")
 
 let startWs dispatch =
   let onMsg : System.Func<MessageEvent, obj> =
     (fun (wsMsg:MessageEvent) ->
-      let msg =  ofJson<ServerMsg> <| unbox wsMsg.data
+      let msg =  ofJson<ServerMsg<Dummy.Event>> <| unbox wsMsg.data
       Msg.Received msg |> dispatch
       null) |> unbox // temporary fix until Fable WS Import is upgraded to Fable 1.*
 
@@ -65,13 +65,13 @@ let update msg model =
       { model with Events = model.Events @ events }, Cmd.none
 
   | CommandOne ->
-      model, wsCmd <| ClientMsg.Command (correlationId(),Command.One)
+      model, wsCmd <| ClientMsg.Command (correlationId(),Dummy.Command.One)
 
   | CommandTwo ->
-      model, wsCmd <| ClientMsg.Command (correlationId(),Command.Two)
+      model, wsCmd <| ClientMsg.Command (correlationId(),Dummy.Command.Two)
 
   | CommandThree ->
-      model, wsCmd <| ClientMsg.Command (correlationId(),Command.Three)
+      model, wsCmd <| ClientMsg.Command (correlationId(),Dummy.Command.Three)
 
 
 
