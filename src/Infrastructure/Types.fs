@@ -32,3 +32,12 @@ type Behaviour<'State,'Command,'Event> = 'State -> 'Command -> 'Event list
 
 type UpdateState<'State,'Event> = 'State -> 'Event -> 'State
 
+type InitialState<'State> = 'State
+
+type EventSourced<'State,'Command,'Event> =
+  {
+    InitialState :  InitialState<'State>
+    UpdateState : UpdateState<'State,'Event>
+    Behaviour :  Behaviour<'State,'Command,'Event>
+  }
+

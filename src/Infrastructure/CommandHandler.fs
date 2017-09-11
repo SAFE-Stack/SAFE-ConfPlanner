@@ -4,7 +4,7 @@ open Infrastructure.Types
 open Infrastructure.EventStore
 open Infrastructure.Projection
 
-let commandHandler (eventStore : MailboxProcessor<EventStoreMsg<'Event>>) (stateProjection : MailboxProcessor<ProjectionMsg<'Event,'State>>) (initialState : 'State) (behaviour : Behaviour<'State,'Command,'Event>) =
+let commandHandler (eventStore : MailboxProcessor<EventStoreMsg<'Event>>) (stateProjection : MailboxProcessor<ProjectionMsg<'Event,'State>>) (eventSourced : EventSourced<'State,'Command,'Event>) =
   MailboxProcessor.Start(fun inbox ->
       stateProjection.Post <| ProjectionMsg.AddSubscriber (CommandHandlerMsg.State >> inbox.Post)
 
@@ -16,7 +16,7 @@ let commandHandler (eventStore : MailboxProcessor<EventStoreMsg<'Event>>) (state
           match msg with
           | CommandHandlerMsg.Command (correlationId,command) ->
               printfn "CommandHandler received command: %A" command
-              let newEvents = behaviour state command
+              let newEvents = eventSourced.Behaviour state command
 
               eventStore.Post <| EventStoreMsg.Add (correlationId,newEvents)
 
@@ -27,5 +27,5 @@ let commandHandler (eventStore : MailboxProcessor<EventStoreMsg<'Event>>) (state
               return! loop state
         }
 
-      loop initialState
+      loop eventSourced.InitialState
   )

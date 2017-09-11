@@ -2,9 +2,9 @@ module Infrastructure.Projection
 
 open Infrastructure.Types
 
-let projection (initialState : 'State) (updateState : UpdateState<'State,'Event>) =
+let projection (eventSourced : EventSourced<'State,'Command,'Event>) =
   let state = {
-      ReadModel = initialState
+      ReadModel = eventSourced.InitialState
       Subscriber = []
     }
 
@@ -18,7 +18,7 @@ let projection (initialState : 'State) (updateState : UpdateState<'State,'Event>
             printfn "Projection new events received: %A" events
             let newReadModel =
               events
-              |> List.fold updateState state.ReadModel
+              |> List.fold eventSourced.UpdateState state.ReadModel
 
             state.Subscriber
             |> List.iter (fun sub -> sub newReadModel)

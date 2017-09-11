@@ -11,6 +11,7 @@ open Suave.RequestErrors
 
 open Suave.WebSocket
 
+open Infrastructure.Types
 open Infrastructure.Projection
 open Infrastructure.CommandHandler
 open Infrastructure.EventStore
@@ -18,15 +19,22 @@ open Infrastructure.EventStore
 open Websocket
 open Dummy
 
+let eventSourced : EventSourced<Dummy.State, Dummy.Command, Dummy.Event>=
+  {
+    InitialState = Dummy.initialState
+    UpdateState = Dummy.updateState
+    Behaviour = Dummy.behaviour
+  }
+
 let websocket =
   let stateProjection =
-    projection Dummy.initialState Dummy.updateState
+    projection eventSourced
 
   let eventStore =
     eventStore stateProjection
 
   let commandHandler =
-    commandHandler eventStore stateProjection Dummy.initialState Dummy.behaviour
+    commandHandler eventStore stateProjection eventSourced
 
   websocket commandHandler eventStore
 
