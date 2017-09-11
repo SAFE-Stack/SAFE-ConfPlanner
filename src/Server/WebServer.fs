@@ -11,7 +11,24 @@ open Suave.RequestErrors
 
 open Suave.WebSocket
 
-open Ws
+open Infrastructure.CommandHandler
+open Infrastructure.EventStore
+open Infrastructure.Projection
+
+open Websocket
+open Dummy
+
+let websocket =
+  let stateProjection =
+    projection Dummy.initialState Dummy.updateState
+
+  let eventStore =
+    eventStore stateProjection
+
+  let commandHandler =
+    commandHandler eventStore stateProjection Dummy.initialState Dummy.behaviour
+
+  websocket commandHandler eventStore
 
 // Fire up our web server!
 let start clientPath port =
@@ -35,10 +52,9 @@ let start clientPath port =
 
             POST >=> choose [
                 path "/api/users/login" >=> Auth.login
-                path "/api/commands" >=> CommandApiHandler.handlePost
             ]
 
-            path "/websocket" >=> handShake ws2
+            path "/websocket" >=> handShake websocket
 
             NOT_FOUND "Page not found."
 

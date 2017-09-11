@@ -7,6 +7,7 @@
     <!-- Shared Code -->
     <Compile Include="../Server/AuthTypes.fs" />
     <Compile Include="../Server/ServerTypes.fs" />
+    <Compile Include="../Infrastructure/Types.fs" />
     <Compile Include="../Domain/Model.fs" />
     <Compile Include="../Domain/Commands.fs" />
 

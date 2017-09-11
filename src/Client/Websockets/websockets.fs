@@ -8,12 +8,12 @@ open Fable.Import.Browser
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
 
+open Infrastructure.Types
 open Server.ServerTypes
-
 
 type Model =
   { Info : string
-    Events : Event list }
+    Events : Infrastructure.Types.Event list }
 
 type Msg =
   | Received of ServerMsg
