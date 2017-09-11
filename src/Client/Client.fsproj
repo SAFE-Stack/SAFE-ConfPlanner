@@ -6,8 +6,9 @@
 
     <!-- Shared Code -->
     <Compile Include="../Server/AuthTypes.fs" />
-    <Compile Include="../Core/Domain.fs" />
-    <Compile Include="../Core/Commands.fs" />
+    <Compile Include="../Server/ServerTypes.fs" />
+    <Compile Include="../Domain/Model.fs" />
+    <Compile Include="../Domain/Commands.fs" />
 
     <!-- Global to the app -->
     <Compile Include="Global.fs" />
@@ -28,6 +29,8 @@
 
     <!-- Navbar -->
     <Compile Include="Navbar/View.fs" />
+
+    <Compile Include="Websockets/websockets.fs" />
 
     <!-- Login -->
     <Compile Include="Login/Types.fs" />

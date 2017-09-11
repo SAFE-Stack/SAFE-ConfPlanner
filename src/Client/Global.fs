@@ -11,6 +11,8 @@ type Page =
   | Counter
   | About
   | Login
+  | Websockets
+
 
 let toHash page =
   match page with
@@ -18,3 +20,4 @@ let toHash page =
   | Counter -> "#counter"
   | Login -> "#login"
   | Conference -> "#conference"
+  | Websockets -> "#websockets"
