@@ -9,6 +9,15 @@ open Suave.Filters
 open Suave.Operators
 open Suave.RequestErrors
 
+open Suave.WebSocket
+
+open Infrastructure.EventSourced
+
+open Websocket
+
+let websocket =
+  websocket <| eventSourced Dummy.behaviour Dummy.projection
+
 // Fire up our web server!
 let start clientPath port =
     if not (Directory.Exists clientPath) then
@@ -31,8 +40,9 @@ let start clientPath port =
 
             POST >=> choose [
                 path "/api/users/login" >=> Auth.login
-                path "/api/commands" >=> CommandApiHandler.handlePost
             ]
+
+            path "/websocket" >=> handShake websocket
 
             NOT_FOUND "Page not found."
 

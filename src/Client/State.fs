@@ -13,6 +13,7 @@ let pageParser: Parser<Page->Page,Page> =
     map Counter (s "counter")
     map Login (s "login")
     map Conference (s "conference")
+    map Websockets (s "websockets")
   ]
 
 let requiresAuthentication page model =
@@ -49,6 +50,7 @@ let init result =
   let (conference, conferenceCmd) = Conference.State.init user
   let (counter, counterCmd) = Counter.State.init()
   let (login, loginCmd) = Login.State.init user
+  let (ws, wsCmd) = Ws.init()
   let (model, cmd) =
     urlUpdate result
       {
@@ -57,6 +59,7 @@ let init result =
         LoginModel = login
         CounterModel = counter
         ConferenceModel = conference
+        WsModel = ws
       }
 
   let cmds =
@@ -65,6 +68,7 @@ let init result =
       Cmd.map ConferenceMsg conferenceCmd
       Cmd.map CounterMsg counterCmd
       Cmd.map LoginMsg loginCmd
+      Cmd.map WsMsg wsCmd
     ]
   model, Cmd.batch cmds
 
@@ -77,6 +81,10 @@ let update msg model =
   | CounterMsg msg ->
       let (counter, counterCmd) = Counter.State.update msg model.CounterModel
       { model with CounterModel = counter }, Cmd.map CounterMsg counterCmd
+
+  | WsMsg msg ->
+      let (ws, wsCmd) = Ws.update msg model.WsModel
+      { model with WsModel = ws }, Cmd.map WsMsg wsCmd
 
   | LoginMsg msg ->
       let loginModel, cmd = Login.State.update msg model.LoginModel
