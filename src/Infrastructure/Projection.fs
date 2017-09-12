@@ -1,34 +1,48 @@
-module Infrastructure.Projection
+module Infrastructure.ProjectionHandler
 
 open Infrastructure.Types
 
-let projection (eventSourced : EventSourced<'State,'Command,'Event>) =
-  let state = {
-      ReadModel = eventSourced.InitialState
-      Subscriber = []
-    }
+type Msg<'Event,'State> =
+  | Events of EventsWithCorrelation<'Event>
+  | AddSubscriber of Subscriber<'State>
 
-  MailboxProcessor.Start(fun inbox ->
-    let rec loop state =
-      async {
-        let! msg = inbox.Receive()
+type State<'State> = {
+  ReadModel : 'State
+  Subscriber : Subscriber<'State> list
+}
 
-        match msg with
-        | ProjectionMsg.Events events ->
-            printfn "Projection new events received: %A" events
-            let newReadModel =
-              events
-              |> List.fold eventSourced.UpdateState state.ReadModel
+let projectionHandler
+  (eventSubscriber : EventSubscriber<'Event>)
+  (projection : Projection<'State,'Command,'Event>) =
 
-            state.Subscriber
-            |> List.iter (fun sub -> sub newReadModel)
-
-            return! loop { state with ReadModel = newReadModel }
-
-        | ProjectionMsg.AddSubscriber subscriber ->
-            printfn "New State subscriber %A" subscriber
-            return! loop { state with Subscriber = subscriber :: state.Subscriber }
+    let state = {
+        ReadModel = projection.InitialState
+        Subscriber = []
       }
 
-    loop state
-  )
+    MailboxProcessor.Start(fun inbox ->
+      eventSubscriber (Msg.Events >> inbox.Post)
+
+      let rec loop state =
+        async {
+          let! msg = inbox.Receive()
+
+          match msg with
+          | Msg.Events (_,events) ->
+              printfn "Projection new events received: %A" events
+              let newReadModel =
+                events
+                |> List.fold projection.UpdateState state.ReadModel
+
+              state.Subscriber
+              |> List.iter (fun sub -> sub newReadModel)
+
+              return! loop { state with ReadModel = newReadModel }
+
+          | Msg.AddSubscriber subscriber ->
+              printfn "New State subscriber %A" subscriber
+              return! loop { state with Subscriber = subscriber :: state.Subscriber }
+        }
+
+      loop state
+    )

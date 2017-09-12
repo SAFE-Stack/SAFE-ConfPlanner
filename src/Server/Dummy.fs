@@ -7,13 +7,11 @@ type Event =
   | EventTwo
   | EventThree
 
-
 type Command =
   | One
   | Two
   | Three
   | Four
-
 
 type State = int
 
@@ -32,3 +30,9 @@ let behaviour state command : Event list =
   | Command.Two -> [EventTwo]
   | Command.Three -> [EventThree]
   | Command.Four -> [EventOne <| string state; EventTwo]
+
+let projection : Projection<State, Command, Event>=
+  {
+    InitialState = initialState
+    UpdateState = updateState
+  }

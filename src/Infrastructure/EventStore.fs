@@ -2,7 +2,11 @@ module Infrastructure.EventStore
 
 open Infrastructure.Types
 
-let eventStore (stateProjection : MailboxProcessor<ProjectionMsg<'Event,'State>>) =
+type Msg<'Event> =
+  | Add of EventsWithCorrelation<'Event>
+  | AddSubscriber of Subscriber<EventsWithCorrelation<'Event>>
+
+let eventStore() =
   let state = {
       Events =  []  // lese aus locale file, json deserialize
       Subscriber = []
@@ -20,10 +24,6 @@ let eventStore (stateProjection : MailboxProcessor<ProjectionMsg<'Event,'State>>
             printfn "EventStore new Events: %A" newEvents
             printfn "EventStore all Events: %A" allEvents
 
-            newEvents
-            |> ProjectionMsg.Events
-            |> stateProjection.Post
-
             state.Subscriber
             |> List.iter (fun sub -> (correlationId,newEvents) |> sub)
 
@@ -31,7 +31,7 @@ let eventStore (stateProjection : MailboxProcessor<ProjectionMsg<'Event,'State>>
 
             return! loop { state with Events = allEvents }
 
-        | EventStoreMsg.AddSubscriber subscriber->
+        | Msg.AddSubscriber subscriber->
             printfn "New EventStore subscriber %A" subscriber
             return! loop { state with Subscriber = subscriber :: state.Subscriber }
       }

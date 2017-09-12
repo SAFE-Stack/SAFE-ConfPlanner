@@ -1,31 +1,38 @@
 module Infrastructure.CommandHandler
 
 open Infrastructure.Types
-open Infrastructure.EventStore
-open Infrastructure.Projection
 
-let commandHandler (eventStore : MailboxProcessor<EventStoreMsg<'Event>>) (stateProjection : MailboxProcessor<ProjectionMsg<'Event,'State>>) (eventSourced : EventSourced<'State,'Command,'Event>) =
-  MailboxProcessor.Start(fun inbox ->
-      stateProjection.Post <| ProjectionMsg.AddSubscriber (CommandHandlerMsg.State >> inbox.Post)
+type Msg<'Command,'State> =
+  | Command of CorrelationId*'Command
+  | State of 'State
 
-      let rec loop state =
+let commandHandler
+  (addEvents : AddEvents<'Event>)
+  (stateProjection : Subscriber<'State> -> unit)
+  (behaviour : Behaviour<'State,'Command,'Event>)
+  (projection : Projection<'State,'Command,'Event>) =
 
-        async {
-          let! msg = inbox.Receive()
+    MailboxProcessor.Start(fun inbox ->
+        stateProjection (State >> inbox.Post)
 
-          match msg with
-          | CommandHandlerMsg.Command (correlationId,command) ->
-              printfn "CommandHandler received command: %A" command
-              let newEvents = eventSourced.Behaviour state command
+        let rec loop state =
 
-              eventStore.Post <| EventStoreMsg.Add (correlationId,newEvents)
+          async {
+            let! msg = inbox.Receive()
 
-              return! loop state
+            match msg with
+            | Msg.Command (correlationId,command) ->
+                printfn "CommandHandler received command: %A" command
+                let newEvents = behaviour state command
 
-          | CommandHandlerMsg.State state ->
-              printfn "CommandHandler received state: %A" state
-              return! loop state
-        }
+                addEvents (correlationId,newEvents)
 
-      loop eventSourced.InitialState
-  )
+                return! loop state
+
+            | Msg.State state ->
+                printfn "CommandHandler received state: %A" state
+                return! loop state
+          }
+
+        loop projection.InitialState
+    )

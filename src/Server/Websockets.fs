@@ -10,7 +10,7 @@ open Server.FableJson
 
 open Infrastructure.Types
 
-type WebsocketMsg<'Command,'Event> =
+type Msg<'Command,'Event> =
   | Connected
   | Received of ClientMsg<'Command>
   | Events of CorrelationId*'Event list
@@ -26,80 +26,83 @@ let send (webSocket : WebSocket) (msg : ServerMsg<'Event>) =
     |> Async.Ignore
     |> Async.Start
 
-let websocket (commandHandler : MailboxProcessor<CommandHandlerMsg<'Command,'State>>) (eventStore : MailboxProcessor<EventStoreMsg<'Event>>) (webSocket : WebSocket) (context: HttpContext) =
-  let emptyResponse = [||] |> ByteSegment
+let websocket
+  (eventSourced : EventSourced<'Command,'Event>)
+  (webSocket : WebSocket)
+  (context: HttpContext) =
+    let emptyResponse = [||] |> ByteSegment
 
-  let webSocketHandler =
-    MailboxProcessor.Start(fun inbox ->
+    let webSocketHandler =
+      MailboxProcessor.Start(fun inbox ->
 
-      eventStore.Post <| EventStoreMsg.AddSubscriber (WebsocketMsg.Events >> inbox.Post)
+        eventSourced.EventSubscriber (Msg.Events >> inbox.Post)
 
-      let rec loop() =
-        async {
-          let! msg = inbox.Receive()
+        let rec loop() =
+          async {
+            let! msg = inbox.Receive()
 
-          printfn "webSocketHandler received: %A" msg
+            printfn "webSocketHandler received: %A" msg
 
-          match msg with
-          | Connected ->
-              return! loop()
+            match msg with
+            | Connected ->
+                return! loop()
 
-          | WebsocketMsg.Received clientMsg  ->
-              match clientMsg with
-              | ClientMsg.Command (correlationId,command) ->
-                  printfn "handle incoming command with correlation %A..." correlationId
-                  commandHandler.Post <| CommandHandlerMsg.Command (correlationId,command)
-                  return! loop()
+            | Msg.Received clientMsg  ->
+                match clientMsg with
+                | ClientMsg.Command (correlationId,command) ->
+                    printfn "handle incoming command with correlation %A..." correlationId
+                    eventSourced.CommandHandler (correlationId,command)
+                    return! loop()
 
-              | ClientMsg.Connect ->
-                  printfn "ClientMsg.Connect"
-                  ServerMsg.Connected
+                | ClientMsg.Connect ->
+                    printfn "ClientMsg.Connect"
+                    ServerMsg.Connected
+                    |> send webSocket
+
+                    return! loop()
+
+            | Msg.Events (correlationId,events) ->
+                printfn "events %A for correlation %A will be send to client..." events correlationId
+                let response =
+                  ServerMsg.Events (correlationId,events)
                   |> send webSocket
 
-                  return! loop()
+                return! loop()
+          }
 
-          | WebsocketMsg.Events (correlationId,events) ->
-              printfn "events %A for correlation %A will be send to client..." events correlationId
-              let response =
-                ServerMsg.Events (correlationId,events)
-                |> send webSocket
+        loop()
+      )
 
-              return! loop()
-        }
+    socket {
+        let mutable loop = true
+        while loop do
+            let! msg = webSocket.read()
+            match msg with
+            | (Opcode.Text, data, true) ->
+                let str =
+                  data
+                  |> System.Text.Encoding.UTF8.GetString
 
-      loop()
-    )
+                let deserialized =
+                  str
+                  |> ofJson<ClientMsg<'Command>>
 
-  socket {
-      let mutable loop = true
-      while loop do
-          let! msg = webSocket.read()
-          match msg with
-          | (Opcode.Text, data, true) ->
-              let str =
-                data
-                |> System.Text.Encoding.UTF8.GetString
+                printfn "Received: %A" deserialized
+                webSocketHandler.Post (Msg.Received deserialized)
 
-              let deserialized =
-                str
-                |> ofJson<ClientMsg<'Command>>
+            | (Ping, _, _) ->
+                do! webSocket.send Pong emptyResponse true
 
-              printfn "Received: %A" deserialized
-              webSocketHandler.Post (WebsocketMsg.Received deserialized)
+            | (Pong, _, _) -> ()
 
-          | (Ping, _, _) ->
-              do! webSocket.send Pong emptyResponse true
+            | (Close, _, _) ->
+                do! webSocket.send Close emptyResponse true
+                printfn "%s" "Connection closed..."
+                loop <- false
 
-          | (Pong, _, _) -> ()
-
-          | (Close, _, _) ->
-              do! webSocket.send Close emptyResponse true
-              printfn "%s" "Connection closed..."
-              loop <- false
-
-          | (op, data, fin) ->
-            printfn "Unexpected Message: %A %A %A " op fin data
-  }
+            | (op, data, fin) ->
+              printfn "Unexpected Message: %A %A %A " op fin data
+    }
 //
 // The FIN byte:
 //
