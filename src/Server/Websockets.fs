@@ -13,7 +13,7 @@ open Infrastructure.Types
 type Msg<'Command,'Event> =
   | Connected
   | Received of ClientMsg<'Command>
-  | Events of CorrelationId*'Event list
+  | Events of TransactionId*'Event list
 
 let send (webSocket : WebSocket) (msg : ServerMsg<'Event>) =
   let byteResponse =
@@ -49,9 +49,9 @@ let websocket
 
             | Msg.Received clientMsg  ->
                 match clientMsg with
-                | ClientMsg.Command (correlationId,command) ->
-                    printfn "handle incoming command with correlation %A..." correlationId
-                    eventSourced.CommandHandler (correlationId,command)
+                | ClientMsg.Command (transactionId,command) ->
+                    printfn "handle incoming command with transactionId %A..." transactionId
+                    eventSourced.CommandHandler (transactionId,command)
                     return! loop()
 
                 | ClientMsg.Connect ->
@@ -61,10 +61,10 @@ let websocket
 
                     return! loop()
 
-            | Msg.Events (correlationId,events) ->
-                printfn "events %A for correlation %A will be send to client..." events correlationId
+            | Msg.Events (transactionId,events) ->
+                printfn "events %A for transactionId %A will be send to client..." events transactionId
                 let response =
-                  ServerMsg.Events (correlationId,events)
+                  ServerMsg.Events (transactionId,events)
                   |> send webSocket
 
                 return! loop()

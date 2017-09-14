@@ -23,7 +23,17 @@ let updateState (state: State) (msg : Event) : State =
   | Event.EventTwo -> state + 2
   | Event.EventThree -> state + 3
 
-let behaviour state command : Event list =
+let projection : Projection<State, Event>=
+  {
+    InitialState = initialState
+    UpdateState = updateState
+  }
+
+let behaviour events command : Event list =
+  let state =
+    events
+    |> List.fold projection.UpdateState projection.InitialState
+
   printfn "state in behaviour is %i" state
   match command with
   | Command.One -> [EventOne <| string state]
@@ -31,8 +41,4 @@ let behaviour state command : Event list =
   | Command.Three -> [EventThree]
   | Command.Four -> [EventOne <| string state; EventTwo]
 
-let projection : Projection<State, Command, Event>=
-  {
-    InitialState = initialState
-    UpdateState = updateState
-  }
+

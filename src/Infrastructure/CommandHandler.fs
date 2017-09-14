@@ -2,18 +2,23 @@ module Infrastructure.CommandHandler
 
 open Infrastructure.Types
 
-type Msg<'Command,'State> =
-  | Command of CorrelationId*'Command
-  | State of 'State
+type Msg<'Command,'Event> =
+  | Command of TransactionId*'Command
+  | AddEventSubscriber of Subscriber<TransactionId*'Event>
 
-let commandHandler
-  (addEvents : AddEvents<'Event>)
-  (stateProjection : Subscriber<'State> -> unit)
-  (behaviour : Behaviour<'State,'Command,'Event>)
-  (projection : Projection<'State,'Command,'Event>) =
+type State<'Event> = {
+  Events : 'Event list
+  EventSubscriber : Subscriber<TransactionId*'Event list> list
+}
+
+let commandHandler (behaviour : Behaviour<'Command,'Event>) =
+
+    let state : State<'Event> = {
+      Events = []  // lese aus locale file, json deserialize
+      EventSubscriber = []
+    }
 
     MailboxProcessor.Start(fun inbox ->
-        stateProjection (State >> inbox.Post)
 
         let rec loop state =
 
@@ -21,18 +26,24 @@ let commandHandler
             let! msg = inbox.Receive()
 
             match msg with
-            | Msg.Command (correlationId,command) ->
+            | Msg.Command (transactionId,command) ->
                 printfn "CommandHandler received command: %A" command
-                let newEvents = behaviour state command
+                let newEvents = behaviour state.Events command
+                let allEvents = state.Events @ newEvents
 
-                addEvents (correlationId,newEvents)
+                printfn "EventStore new Events: %A" newEvents
+                printfn "EventStore all Events: %A" allEvents
 
-                return! loop state
+                state.EventSubscriber
+                |> List.iter (fun sub -> (transactionId,newEvents) |> sub)
 
-            | Msg.State state ->
-                printfn "CommandHandler received state: %A" state
-                return! loop state
+                // speichere Events in Json
+
+                return! loop { state with Events = allEvents }
+
+            | Msg.AddEventSubscriber subscriber ->
+                return! loop { state with EventSubscriber = subscriber :: state.EventSubscriber }
           }
 
-        loop projection.InitialState
+        loop state
     )

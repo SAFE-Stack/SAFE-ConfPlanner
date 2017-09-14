@@ -2,42 +2,27 @@ module Infrastructure.EventSourced
 
 open Infrastructure.Types
 open Infrastructure.CommandHandler
-open Infrastructure.EventStore
 open Infrastructure.ProjectionHandler
 
 (*
- Todo: mehr als eine Projection möglich machen
+ Todo: Projections als Map um sie abfragen zu können?
 
 *)
 
-let private buildEventStore() =
-  let eventStore =
-    eventStore()
+
+let eventSourced (behaviour : Behaviour<'Command,'Event>) (projections : Projection<'State,'Event> list) : EventSourced<'Command, 'Event> =
+  let commandHandler =
+    commandHandler behaviour
 
   let eventSubscription =
-    EventStore.Msg.AddSubscriber >> eventStore.Post
+    CommandHandler.Msg.AddEventSubscriber >> commandHandler.Post
 
-  let addEvents =
-    EventStore.Msg.Add >> eventStore.Post
-
-  addEvents, eventSubscription
-
-let eventSourced (behaviour : Behaviour<'State,'Command,'Event>) (projection : Projection<'State,'Command,'Event>) : EventSourced<'Command, 'Event> =
-  let addEvents,eventSubscriber = buildEventStore()
-
-  let stateSubscription =
-    let projectionHandler =
-      projectionHandler eventSubscriber projection
-
-    ProjectionHandler.Msg.AddSubscriber >> projectionHandler.Post
-
-  let commandHandler =
-    let commandHandler =
-      commandHandler addEvents stateSubscription behaviour projection
-
-    CommandHandler.Msg.Command >> commandHandler.Post
+  projections
+  |> List.map projectionHandler
+  |> List.map (fun handler -> ProjectionHandler.Msg.Events >> handler.Post)
+  |> List.iter eventSubscription
 
   {
-    CommandHandler = commandHandler
-    EventSubscriber = eventSubscriber
+    CommandHandler = CommandHandler.Msg.Command >> commandHandler.Post
+    EventSubscriber = eventSubscription
   }

@@ -16,7 +16,7 @@ open Infrastructure.EventSourced
 open Websocket
 
 let websocket =
-  websocket <| eventSourced Dummy.behaviour Dummy.projection
+  websocket <| eventSourced Dummy.behaviour [Dummy.projection]
 
 // Fire up our web server!
 let start clientPath port =

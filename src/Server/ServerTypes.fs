@@ -14,9 +14,9 @@ type UserRights =
 // Client to Server
 type ClientMsg<'Command> =
   | Connect
-  | Command of CorrelationId*'Command
+  | Command of TransactionId*'Command
 
 // Server to Client
 type ServerMsg<'Event> =
   | Connected
-  | Events of CorrelationId*'Event list
+  | Events of TransactionId*'Event list

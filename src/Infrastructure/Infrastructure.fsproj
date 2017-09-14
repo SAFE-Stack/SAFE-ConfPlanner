@@ -5,7 +5,6 @@
   <ItemGroup>
     <Compile Include="Types.fs" />
     <Compile Include="Projection.fs" />
-    <Compile Include="EventStore.fs" />
     <Compile Include="CommandHandler.fs" />
     <Compile Include="EventSourced.fs" />
     <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="1.0.0" />
