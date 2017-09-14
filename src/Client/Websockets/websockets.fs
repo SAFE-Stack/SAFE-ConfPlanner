@@ -21,7 +21,7 @@ type Msg =
   | CommandTwo
   | CommandThree
 
-let mutable private send_ws : ClientMsg<Dummy.Command> -> unit = (fun _ -> failwith "WebSocket not connected")
+let mutable private sendPerWebsocket : ClientMsg<Dummy.Command> -> unit = (fun _ -> failwith "WebSocket not connected")
 
 let startWs dispatch =
   let onMsg : System.Func<MessageEvent, obj> =
@@ -39,7 +39,7 @@ let startWs dispatch =
   ws.onmessage <- onMsg
   ws.onerror <- (fun err -> printfn "%A" err ; null)
 
-  send_ws <- send
+  sendPerWebsocket <- send
 
   ()
 
@@ -48,11 +48,11 @@ let init() =
 
 
 let wsCmd cmd =
-  [fun _ -> send_ws cmd]
+  [fun _ -> sendPerWebsocket cmd]
 
 
-let correlationId() =
-  CorrelationId <| System.Guid.NewGuid()
+let transactionId() =
+  TransactionId <| System.Guid.NewGuid()
 
 
 let update msg model =
@@ -60,18 +60,18 @@ let update msg model =
   | Received (ServerMsg.Connected) ->
     { model with Info = "connected" }, Cmd.none
 
-  | Received (ServerMsg.Events (correlationId,events)) ->
+  | Received (ServerMsg.Events (transactionId,events)) ->
       console.log (sprintf "New Events %A" events)
       { model with Events = model.Events @ events }, Cmd.none
 
   | CommandOne ->
-      model, wsCmd <| ClientMsg.Command (correlationId(),Dummy.Command.One)
+      model, wsCmd <| ClientMsg.Command (transactionId(),Dummy.Command.One)
 
   | CommandTwo ->
-      model, wsCmd <| ClientMsg.Command (correlationId(),Dummy.Command.Two)
+      model, wsCmd <| ClientMsg.Command (transactionId(),Dummy.Command.Two)
 
   | CommandThree ->
-      model, wsCmd <| ClientMsg.Command (correlationId(),Dummy.Command.Three)
+      model, wsCmd <| ClientMsg.Command (transactionId(),Dummy.Command.Three)
 
 
 
