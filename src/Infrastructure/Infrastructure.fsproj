@@ -4,9 +4,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Types.fs" />
-    <Compile Include="Projection.fs" />
+    <Compile Include="ReadmodelHandler.fs" />
+    <Compile Include="QueryManager.fs" />
     <Compile Include="CommandHandler.fs" />
     <Compile Include="EventSourced.fs" />
+  </ItemGroup>
+  <ItemGroup>
     <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="1.0.0" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

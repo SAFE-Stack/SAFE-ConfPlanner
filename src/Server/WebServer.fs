@@ -11,12 +11,19 @@ open Suave.RequestErrors
 
 open Suave.WebSocket
 
+open Infrastructure.Types
 open Infrastructure.EventSourced
 
 open Websocket
 
 let websocket =
-  websocket <| eventSourced Dummy.behaviour [Dummy.projection]
+  let read =
+    {
+      Readmodel.Projection = Dummy.projection
+      QueryHandler = Dummy.queryHandler
+    }
+
+  websocket <| eventSourced Dummy.behaviour [read]
 
 // Fire up our web server!
 let start clientPath port =
