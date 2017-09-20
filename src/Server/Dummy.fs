@@ -3,7 +3,7 @@ module Dummy
 open Infrastructure.Types
 
 type Event =
-  | EventOne of string
+  | EventOne
   | EventTwo
   | EventThree
 
@@ -15,11 +15,21 @@ type Command =
 
 type State = int
 
+type QueryParameter =
+  | State
+  | StateTimesX of int
+  | CanNotBeHandled
+
+
+type QueryResult =
+  | State of int
+  | StateTimesX of int
+
 let initialState : State = 0
 
 let updateState (state: State) (msg : Event) : State =
   match msg with
-  | Event.EventOne _ -> state + 1
+  | Event.EventOne -> state + 1
   | Event.EventTwo -> state + 2
   | Event.EventThree -> state + 3
 
@@ -34,11 +44,36 @@ let behaviour events command : Event list =
     events
     |> List.fold projection.UpdateState projection.InitialState
 
-  printfn "state in behaviour is %i" state
   match command with
-  | Command.One -> [EventOne <| string state]
-  | Command.Two -> [EventTwo]
-  | Command.Three -> [EventThree]
-  | Command.Four -> [EventOne <| string state; EventTwo]
+  | Command.One ->
+      [EventOne]
+
+  | Command.Two ->
+      [EventTwo]
+
+  | Command.Three ->
+      [EventThree]
+
+  | Command.Four ->
+      if state > 10 then
+        []
+      else
+        [EventOne; EventTwo]
+
+let queryHandler (query : Query<QueryParameter>) (state : State) : QueryHandled<QueryResult> =
+  match query.Parameter with
+  | QueryParameter.State ->
+      state
+      |> QueryResult.State
+      |> Handled
+
+  | QueryParameter.StateTimesX int ->
+      int*state
+      |> QueryResult.StateTimesX
+      |> Handled
+
+  | _ -> NotHandled
+
+
 
 

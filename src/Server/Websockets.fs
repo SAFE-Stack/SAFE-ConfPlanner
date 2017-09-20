@@ -10,12 +10,13 @@ open Server.FableJson
 
 open Infrastructure.Types
 
-type Msg<'Command,'Event> =
+type Msg<'Command,'Event,'QueryParameter,'QueryResult> =
   | Connected
-  | Received of ClientMsg<'Command>
+  | Received of ClientMsg<'Command,'QueryParameter,'QueryResult>
   | Events of TransactionId*'Event list
+  | QueryResponse of QueryResponse<'QueryResult>
 
-let send (webSocket : WebSocket) (msg : ServerMsg<'Event>) =
+let send (webSocket : WebSocket) (msg : ServerMsg<'Event,'QueryResult>) =
   let byteResponse =
     msg
     |> toJson
@@ -27,24 +28,24 @@ let send (webSocket : WebSocket) (msg : ServerMsg<'Event>) =
     |> Async.Start
 
 let websocket
-  (eventSourced : EventSourced<'Command,'Event>)
+  (eventSourced : EventSourced<'Command,'Event,'QueryParameter,'State,'QueryResult>)
   (webSocket : WebSocket)
   (context: HttpContext) =
     let emptyResponse = [||] |> ByteSegment
 
     let webSocketHandler =
       MailboxProcessor.Start(fun inbox ->
-
         eventSourced.EventSubscriber (Msg.Events >> inbox.Post)
+
+        let queryReplyChannel = Msg.QueryResponse >> inbox.Post
 
         let rec loop() =
           async {
             let! msg = inbox.Receive()
 
-            printfn "webSocketHandler received: %A" msg
-
             match msg with
             | Connected ->
+                printfn "webSocketHandler connected"
                 return! loop()
 
             | Msg.Received clientMsg  ->
@@ -52,6 +53,11 @@ let websocket
                 | ClientMsg.Command (transactionId,command) ->
                     printfn "handle incoming command with transactionId %A..." transactionId
                     eventSourced.CommandHandler (transactionId,command)
+                    return! loop()
+
+                | ClientMsg.Query query ->
+                    printfn "handle incoming query %A..." query
+                    eventSourced.QueryHandler (query,queryReplyChannel)
                     return! loop()
 
                 | ClientMsg.Connect ->
@@ -65,6 +71,14 @@ let websocket
                 printfn "events %A for transactionId %A will be send to client..." events transactionId
                 let response =
                   ServerMsg.Events (transactionId,events)
+                  |> send webSocket
+
+                return! loop()
+
+            | Msg.QueryResponse response ->
+                printfn "query response %A will be send to client..." response
+                let response =
+                  ServerMsg.QueryResponse response
                   |> send webSocket
 
                 return! loop()
@@ -85,7 +99,7 @@ let websocket
 
                 let deserialized =
                   str
-                  |> ofJson<ClientMsg<'Command>>
+                  |> ofJson<ClientMsg<'Command,'QueryParameter,'QueryResult>>
 
                 printfn "Received: %A" deserialized
                 webSocketHandler.Post (Msg.Received deserialized)
@@ -96,8 +110,8 @@ let websocket
             | (Pong, _, _) -> ()
 
             | (Close, _, _) ->
+                printfn "%s %s" "Connection closed..." (webSocket.ToString())
                 do! webSocket.send Close emptyResponse true
-                printfn "%s" "Connection closed..."
                 loop <- false
 
             | (op, data, fin) ->
