@@ -106,7 +106,7 @@ Target "InstallClient" (fun _ ->
 )
 
 Target "BuildClient" (fun _ ->
-    runDotnet clientPath "fable webpack -- -p"
+    runDotnet clientPath "fable yarn-run build"
 )
 
 // --------------------------------------------------------------------------------------
