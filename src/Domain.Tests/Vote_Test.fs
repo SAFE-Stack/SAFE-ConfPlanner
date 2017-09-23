@@ -15,7 +15,7 @@ open TestData
 let ``Can not vote when voting period is already finished`` () =
   let talk = proposedTalk()
   let voter = organizer()
-  let voting = Voting.Vote (talk.Id,voter.Id)
+  let voting = Voting.Vote (talk.Id,voter.Id,Points 1)
   let conference =
     conference
     |> withVotingPeriodFinished
@@ -30,7 +30,7 @@ let ``Can not vote when voting period is already finished`` () =
 let ``Can not vote when voter is not organizer of conference`` () =
   let talk = proposedTalk()
   let voter = organizer()
-  let voting = vote talk voter
+  let voting = vote talk voter (Points 1)
   let conference =
     conference
     |> withVotingPeriodInProgress
@@ -44,7 +44,7 @@ let ``Can not vote when voter is not organizer of conference`` () =
 let ``Can vote when constraints are fulfilled`` () =
   let talk = proposedTalk()
   let voter = organizer()
-  let voting = vote talk voter
+  let voting = vote talk voter (Points 1)
   let conference =
     conference
     |> withVotingPeriodInProgress
@@ -59,7 +59,7 @@ let ``Can vote when constraints are fulfilled`` () =
 let ``Voter can change previous vote for an abstract`` () =
   let talk = proposedTalk()
   let voter = organizer()
-  let voting = vote talk voter
+  let voting = vote talk voter (Points 1)
   let conference =
     conference
     |> withVotingPeriodInProgress
@@ -75,7 +75,7 @@ let ``Voter can change previous vote for an abstract`` () =
 let ``Can issue a veto when constraints are fulfilled`` () =
   let talk = proposedTalk()
   let voter = organizer()
-  let veto = vote talk voter
+  let veto = veto talk voter
   let conference =
     conference
     |> withVotingPeriodInProgress

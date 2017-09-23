@@ -73,8 +73,8 @@ let accepted abstr =
 let rejected abstr =
    { abstr with Status = Rejected }
 
-let vote (abstr: ConferenceAbstract) (organizer: Organizer) =
-   Voting.Vote (abstr.Id,organizer.Id)
+let vote (abstr: ConferenceAbstract) (organizer: Organizer) (value: Points) =
+   Voting.Vote (abstr.Id,organizer.Id, value)
 
 let veto (abstr: ConferenceAbstract) (organizer: Organizer) =
    Voting.Veto (abstr.Id,organizer.Id)

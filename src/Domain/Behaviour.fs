@@ -64,17 +64,25 @@ let scoreAbstracts state =
   let withoutVetos =
     votes
     |> List.map extractAbstractId
-    |> List.fold score Map.empty
-    |> Map.toList
-    |> List.sortBy (fun (_, votes) -> votes)
-    |> List.map fst
     |> List.filter (fun abstractId -> abstractsWithVetos |> List.contains abstractId |> not)
-    |> List.rev
+
+  let sumPoints abstractId =
+    votes
+    |> List.map extractPoints
+    |> List.filter (fun (id,_) -> id = abstractId)
+    |> List.map (fun (id,points) -> points)
+    |> List.map (fun point -> match point with | Points p -> p)
+    |> List.sum
+    |> Points
 
   let accepted =
+    printf "%A" withoutVetos
     withoutVetos
+    |> Seq.sortByDescending (fun abstractid -> sumPoints abstractid)
+    |> Seq.distinct
     |> Seq.truncate state.AvailableSlotsForTalks
     |> Seq.toList
+
 
   let rejected =
     talks
@@ -82,7 +90,9 @@ let scoreAbstracts state =
     |> List.filter (fun id -> accepted |> List.contains id |> not)
 
   accepted
-  |> List.map AbstractWasAccepted
+  |> List.map (fun x ->
+      printf "Akzeptiert %A" x
+      AbstractWasAccepted x )
   |> (@) (rejected |> List.map AbstractWasRejected)
 
 let handleFinishVotingPeriod state =
