@@ -37,34 +37,6 @@ let numberOfVotesExceeded votingResults getVote (voting : Voting) max =
   | true -> Some voting
   | false -> None
 
-let (|OrganizerExceededMaxNumbersOfVotes|_|) votingResults (MaxVotesPerOrganizer maxVotes) (voting : Voting) =
-  let isVoteOfVoter voterId  = function
-    | Voting.Vote (_,id) -> id = voterId
-    | _ -> false
-
-  let number =
-    votingResults
-    |> List.filter (isVoteOfVoter <| extractVoterId voting)
-    |> List.length
-
-  match number >= maxVotes with
-  | true -> Some voting
-  | false -> None
-
-let (|OrganizerExceededMaxNumbersOfVetos|_|) votingResults (MaxVetosPerOrganizer maxVetos) (voting : Voting) =
-  let isVetoOfVoter voterId  = function
-    | Voting.Veto (_,id) -> id = voterId
-    | _ -> false
-
-  let number =
-    votingResults
-    |> List.filter (isVetoOfVoter <| extractVoterId voting)
-    |> List.length
-
-  match number >= maxVetos with
-  | true -> Some voting
-  | false -> None
-
 let handleProposeAbstract state proposed =
   match state.CallForPapers with
   | Open -> [AbstractWasProposed proposed]
@@ -116,12 +88,24 @@ let scoreAbstracts state =
 let handleFinishVotingPeriod state =
   match state.CallForPapers,state.VotingPeriod with
   | Closed,InProgess ->
+      let unfinishedVotings =
+        state.Abstracts
+        |> Seq.map (fun abstr ->
+            state.Votings
+            |> List.map extractAbstractId
+            |> List.filter (fun id -> id = abstr.Id)
+            |> List.length)
+        |> Seq.filter (fun votes ->
+            votes <> state.Organizers.Length)
+        |> Seq.length
       let events =
-        [VotingPeriodWasFinished]
-        |> (@) (scoreAbstracts state)
-      // printfn "actual %A" events
+        match unfinishedVotings with
+        | 0 ->
+            [VotingPeriodWasFinished]
+            |> (@) (scoreAbstracts state)
+        | _ ->
+            [FinishingDenied "Not all abstracts have been voted for by all organisers"]
       events
-
   | Closed,Finished ->
       [FinishingDenied "Voting Period Already Finished"]
   | _,_ ->
@@ -139,6 +123,9 @@ let handleVote state voting =
           [VotingWasIssued voting]
 
 let execute (state: State) (command: Command) : Event list =
+
+
+
   match command with
   | ProposeAbstract proposed -> handleProposeAbstract state proposed
   | FinishVotingPeriod -> handleFinishVotingPeriod state

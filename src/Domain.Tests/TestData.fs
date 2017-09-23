@@ -9,8 +9,6 @@ let conference = {
   Abstracts = []
   Votings = []
   Organizers = []
-  MaxVotesPerOrganizer = MaxVotesPerOrganizer 3
-  MaxVetosPerOrganizer = MaxVetosPerOrganizer 1
   AvailableSlotsForTalks = 2
 }
 

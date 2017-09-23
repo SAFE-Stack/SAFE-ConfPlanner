@@ -16,6 +16,6 @@ let root model dispatch =
   div
     [ ClassName "columns is-vcentered" ]
     [ div [ ClassName "column" ] [ ]
-      simpleButton "FinishVotingPeriod" FinishVotingPeriod dispatch
+      simpleButton "FinishVotingPerod" FinishVotingPeriod dispatch
       div [ ClassName "column" ] [ ]
     ]
