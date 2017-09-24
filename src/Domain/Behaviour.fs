@@ -68,14 +68,12 @@ let scoreAbstracts state =
     |> List.filter (fun abstractId -> abstractsWithVetos |> List.contains abstractId |> not)
 
   let sumPoints abstractId =
-    (List.sumBy 
-      (fun point -> match point with | Points p -> p) 
-      (votes
-        |> List.map extractPoints
-        |> List.filter (fun (id,_) -> id = abstractId)
-        |> List.map (fun (id,points) -> points)))
-    |> Points
-
+    votes
+      |> List.map extractPoints
+      |> List.filter (fun (id,_) -> id = abstractId)
+      |> List.map (fun (id,points) -> points)
+      |> List.sumBy (fun points -> match points with | Zero -> 0| One -> 1 | Two -> 2)  
+      
   let accepted =
     withoutVetos
     |> Seq.sortByDescending sumPoints

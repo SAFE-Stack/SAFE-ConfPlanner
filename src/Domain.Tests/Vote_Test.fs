@@ -13,7 +13,7 @@ open Testbase
 let ``Can not vote when voting period is already finished`` () =
   let heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }
   let talk = proposedTalk()
-  let vote = vote talk heimeshoff (Points 1)
+  let vote = vote talk heimeshoff Points.One
 
   Given [ 
     OrganizerRegistered heimeshoff 
@@ -27,7 +27,7 @@ let ``Can not vote when voting period is already finished`` () =
 let ``Can not vote when voter is not organizer of conference`` () =
   let heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }
   let talk = proposedTalk()
-  let vote = vote talk heimeshoff (Points 1)
+  let vote = vote talk heimeshoff Points.One
 
   Given [
     TalkWasProposed talk]
@@ -39,7 +39,7 @@ let ``Can not vote when voter is not organizer of conference`` () =
 let ``Can vote when constraints are fulfilled`` () =
   let heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }
   let talk = proposedTalk()
-  let vote = vote talk heimeshoff (Points 1)
+  let vote = vote talk heimeshoff Points.One
 
   Given [ 
     OrganizerRegistered heimeshoff 
@@ -52,7 +52,7 @@ let ``Can vote when constraints are fulfilled`` () =
 let ``Voter can change previous vote for an abstract`` () =
   let heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }
   let talk = proposedTalk()
-  let vote = vote talk heimeshoff (Points 1)
+  let vote = vote talk heimeshoff Points.One
 
   Given [ 
     OrganizerRegistered heimeshoff 

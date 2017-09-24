@@ -29,7 +29,7 @@ type ConferenceAbstract = {
   Type : AbstractType
 }
 
-type Points = Points of int
+type Points = Zero | One | Two
 
 type OrganizerId = OrganizerId of Guid
 
