@@ -6,6 +6,8 @@
     <Compile Include="Types.fs" />
     <Compile Include="ReadmodelHandler.fs" />
     <Compile Include="QueryManager.fs" />
+    <Compile Include="FableJson.fs" />
+    <Compile Include="EventStore.fs" />
     <Compile Include="CommandHandler.fs" />
     <Compile Include="EventSourced.fs" />
   </ItemGroup>

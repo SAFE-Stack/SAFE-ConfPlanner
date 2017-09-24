@@ -3,12 +3,12 @@ module Server.Program
 
 open System.IO
 
-let GetEnvVar var = 
+let GetEnvVar var =
     match System.Environment.GetEnvironmentVariable(var) with
     | null -> None
     | value -> Some value
 
-let getPortsOrDefault defaultVal = 
+let getPortsOrDefault defaultVal =
     match System.Environment.GetEnvironmentVariable("SUAVE_FABLE_PORT") with
     | null -> defaultVal
     | value -> value |> uint16
@@ -19,10 +19,12 @@ let main args =
         let clientPath =
             match args |> Array.toList with
             | clientPath:: _  when Directory.Exists clientPath -> clientPath
-            | _ -> 
+            | _ ->
                 let devPath = Path.Combine("..","Client")
-                if Directory.Exists devPath then devPath else
-                @"./client"
+                if Directory.Exists devPath then
+                  devPath
+                else
+                  @"./client"
 
         WebServer.start (Path.GetFullPath clientPath) (getPortsOrDefault 8085us)
         0
