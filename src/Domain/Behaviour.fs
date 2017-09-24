@@ -1,9 +1,10 @@
 module Behaviour
 
+open System
 open Model
 open Commands
 open Events
-open States
+open Projections
 
 
 let (|AlreadyVotedForAbstract|_|) votingResults voting =
@@ -37,8 +38,8 @@ let numberOfVotesExceeded votingResults getVote (voting : Voting) max =
   | true -> Some voting
   | false -> None
 
-let handleProposeAbstract state proposed =
-  match state.CallForPapers with
+let handleProposeAbstract givenHistory proposed =
+  match (conferenceState givenHistory).CallForPapers with
   | Open -> [AbstractWasProposed proposed]
   | NotOpened -> [ProposingDenied "Call For Papers Not Opened"]
   | Closed -> [ProposingDenied "Call For Papers Closed"]
@@ -67,22 +68,20 @@ let scoreAbstracts state =
     |> List.filter (fun abstractId -> abstractsWithVetos |> List.contains abstractId |> not)
 
   let sumPoints abstractId =
-    votes
-    |> List.map extractPoints
-    |> List.filter (fun (id,_) -> id = abstractId)
-    |> List.map (fun (id,points) -> points)
-    |> List.map (fun point -> match point with | Points p -> p)
-    |> List.sum
+    (List.sumBy 
+      (fun point -> match point with | Points p -> p) 
+      (votes
+        |> List.map extractPoints
+        |> List.filter (fun (id,_) -> id = abstractId)
+        |> List.map (fun (id,points) -> points)))
     |> Points
 
   let accepted =
-    printf "%A" withoutVetos
     withoutVetos
-    |> Seq.sortByDescending (fun abstractid -> sumPoints abstractid)
+    |> Seq.sortByDescending sumPoints
     |> Seq.distinct
     |> Seq.truncate state.AvailableSlotsForTalks
     |> Seq.toList
-
 
   let rejected =
     talks
@@ -90,12 +89,11 @@ let scoreAbstracts state =
     |> List.filter (fun id -> accepted |> List.contains id |> not)
 
   accepted
-  |> List.map (fun x ->
-      printf "Akzeptiert %A" x
-      AbstractWasAccepted x )
+  |> List.map AbstractWasAccepted
   |> (@) (rejected |> List.map AbstractWasRejected)
 
-let handleFinishVotingPeriod state =
+let handleFinishVotingPeriod givenHistory =
+  let state = (conferenceState givenHistory)
   match state.CallForPapers,state.VotingPeriod with
   | Closed,InProgess ->
       let unfinishedVotings =
@@ -113,33 +111,25 @@ let handleFinishVotingPeriod state =
         | 0 ->
             [VotingPeriodWasFinished]
             |> (@) (scoreAbstracts state)
-        | _ ->
-            [FinishingDenied "Not all abstracts have been voted for by all organisers"]
+        | _ -> [FinishingDenied "Not all abstracts have been voted for by all organisers"]
       events
-  | Closed,Finished ->
-      [FinishingDenied "Voting Period Already Finished"]
-  | _,_ ->
-      [FinishingDenied "Call For Papers Not Closed"]
+  | Closed,Finished -> [FinishingDenied "Voting Period Already Finished"]
+  | _,_ -> [FinishingDenied "Call For Papers Not Closed"]
 
-let handleVote state voting =
+let handleVote givenHistory voting =
+  let state = (conferenceState givenHistory)
   match state.VotingPeriod with
-  | Finished ->
-      [VotingDenied "Voting Period Already Finished"]
-  | InProgress ->
-      match voting with
-      | VoterIsNotAnOrganizer state.Organizers _ ->
-          [VotingDenied "Voter Is Not An Organizer"]
-      | _ ->
-          [VotingWasIssued voting]
+  | Finished -> [VotingDenied "Voting Period Already Finished"]
+  | InProgress -> 
+    match voting with
+    | VoterIsNotAnOrganizer state.Organizers _ -> [VotingDenied "Voter Is Not An Organizer"]
+    | _ -> [VotingWasIssued voting]
 
-let execute (state: State) (command: Command) : Event list =
-
-
-
+let execute (given_history: Event list) (command: Command) : Event list =
   match command with
-  | ProposeAbstract proposed -> handleProposeAbstract state proposed
-  | FinishVotingPeriod -> handleFinishVotingPeriod state
-  | Vote voting -> handleVote state voting
+  | ProposeAbstract proposed -> handleProposeAbstract given_history proposed
+  | FinishVotingPeriod -> handleFinishVotingPeriod given_history
+  | Vote voting -> handleVote given_history voting
   | RevokeVoting(_) -> failwith "Not Implemented"
   | AcceptAbstract(_) -> failwith "Not Implemented"
   | RejectAbstract(_) -> failwith "Not Implemented"

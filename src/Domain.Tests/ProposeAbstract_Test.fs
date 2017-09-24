@@ -1,33 +1,39 @@
 module ProposeAbstractTest
 
+open System
 open NUnit.Framework
 
-open ConfPlannerTestsDSL
 open Model
-open System
 open Commands
 open Events
-open States
-open TestData
+open Testbase
+
+// Scenario
+let heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }
+let talk = proposedTalk()
+
 
 [<Test>]
 let ``Can propose an abstract when Call for Papers is open`` () =
-  let conference = conference |> withCallForPapersOpen
-  let talk = proposedTalk()
-  Given conference
+  Given [ 
+    OrganizerRegistered heimeshoff 
+    CallForPapersOpened]
   |> When (ProposeAbstract talk)
   |> ThenExpect [AbstractWasProposed talk]
 
+
 [<Test>]
 let ``Can not propose an abstract when Call for Papers is not opened yet`` () =
-  let conference = conference |> withCallForPapersNotOpened
-  Given conference
-  |> When (ProposeAbstract <| proposedTalk())
+  Given [ 
+    OrganizerRegistered heimeshoff]
+  |> When (ProposeAbstract talk)
   |> ThenExpect [ProposingDenied "Call For Papers Not Opened"]
+
 
 [<Test>]
 let ``Can not propose an abstract when Call for Papers is already closed`` () =
-  let conference = conference |> withCallForPapersClosed
-  Given conference
-  |> When (ProposeAbstract <| proposedTalk())
+  Given [ 
+    OrganizerRegistered heimeshoff 
+    CallForPapersClosed]
+  |> When (ProposeAbstract talk)
   |> ThenExpect [ProposingDenied "Call For Papers Closed"]

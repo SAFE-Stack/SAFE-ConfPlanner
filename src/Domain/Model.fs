@@ -1,4 +1,4 @@
-module Model
+module  Model
 
 open System
 
@@ -57,10 +57,6 @@ let extractPoints voting =
   match voting with
   | Vote (id,_,points) -> (id, points)
   | Veto (_) -> failwith "Veto does not have points"
-
-// type AcceptAbstract = proposedTalk -> AcceptedAbstract
-
-// type Voter = Voting -> VotingResults -> VotingResults
 
 type CallForPapers =
   | NotOpened
