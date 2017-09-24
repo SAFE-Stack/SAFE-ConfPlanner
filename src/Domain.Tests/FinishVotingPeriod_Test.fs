@@ -1,115 +1,143 @@
 module FinishVotingPeriodTest
 
+open System
 open NUnit.Framework
 
-open ConfPlannerTestsDSL
 open Model
-open System
 open Commands
 open Events
-open States
-open TestData
+open Testbase
+
+// Scenario
+let heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }
+let fellien = { Firstname = "Janek";  Lastname = "Felien"; Id = OrganizerId <| Guid.NewGuid() }
+let poepke = { Firstname = "Conrad";  Lastname = "Poepke"; Id = OrganizerId <| Guid.NewGuid() }
+
 
 [<Test>]
 let ``Can finish voting period`` () =
-  let conference =
-    conference
-    |> withCallForPapersClosed
-  Given conference
+  Given [
+    CallForPapersOpened
+    CallForPapersClosed]
   |> When FinishVotingPeriod
   |> ThenExpect [VotingPeriodWasFinished]
 
+
 [<Test>]
 let ``Cannot finish an already finished voting period`` () =
-  let conference =
-    conference
-    |> withFinishedVotingPeriod
-    |> withCallForPapersClosed
-
-  Given conference
+  Given [
+    CallForPapersOpened
+    CallForPapersClosed
+    VotingPeriodWasFinished]
   |> When FinishVotingPeriod
   |> ThenExpect [FinishingDenied "Voting Period Already Finished"]
 
-let ``Cannot finish a voting period when call of papers is not closed`` () =
-  let conference = conference |> withCallForPapersOpen
-  Given conference
+
+[<Test>]
+let ``Cannot finish a voting period when call for papers is not closed`` () =
+  Given [
+    CallForPapersOpened]
   |> When FinishVotingPeriod
   |> ThenExpect [FinishingDenied "Call For Papers Not Closed"]
+
+
+[<Test>]
+let ``Cannot finish a voting period when not all abstracts have votes from every organizer`` () =
+  let talk1 = proposedTalk()
+  let talk2 = proposedTalk()
+  let talk3 = proposedTalk()
+
+  Given [
+    OrganizerRegistered heimeshoff
+    OrganizerRegistered fellien
+    OrganizerRegistered poepke
+
+    CallForPapersOpened
+    TalkWasProposed talk1
+    TalkWasProposed talk2
+    TalkWasProposed talk3
+    CallForPapersClosed
+    
+    VotingWasIssued (vote talk1 heimeshoff Points.One)
+    VotingWasIssued (vote talk2 heimeshoff Points.One)
+    VotingWasIssued (vote talk3 heimeshoff Points.One)
+    VotingWasIssued (vote talk1 fellien Points.One)
+    VotingWasIssued (vote talk2 fellien Points.One)
+    VotingWasIssued (vote talk1 poepke Points.One)
+    VotingWasIssued (vote talk2 poepke Points.One)
+    VotingWasIssued (vote talk3 poepke Points.One)]
+
+  |> When FinishVotingPeriod
+  |> ThenExpect [
+      FinishingDenied "Not all abstracts have been voted for by all organisers"]
+
 
 [<Test>]
 let ``Voting top x abstracts will be accepted, others will be rejected`` () =
   let talk1 = proposedTalk()
   let talk2 = proposedTalk()
   let talk3 = proposedTalk()
-  let voter1 = organizer()
-  let voter2 = organizer()
-  let voter3 = organizer()
-  let votings =
-    [
-      vote talk3 voter1
-      vote talk3 voter2
-      vote talk3 voter3
-      vote talk2 voter1
-      vote talk2 voter2
-      vote talk1 voter2
-    ]
 
-  let conference =
-    conference
-    |> withCallForPapersClosed
-    |> withVotingPeriodInProgress
-    |> withAvailableSlotsForTalks 2
-    |> withOrganizers [voter1; voter2; voter3]
-    |> withAbstracts [talk1; talk2; talk3]
-    |> withVotings votings
+  Given [
+    OrganizerRegistered heimeshoff
+    OrganizerRegistered fellien
+    OrganizerRegistered poepke
+    NumberOfSlotsDecided 2
 
-  let expectedEvents =
-    [
-        VotingPeriodWasFinished
-        AbstractWasAccepted talk3.Id
-        AbstractWasAccepted talk2.Id
-        AbstractWasRejected talk1.Id
-    ]
+    CallForPapersOpened
+    TalkWasProposed talk1
+    TalkWasProposed talk2
+    TalkWasProposed talk3
+    CallForPapersClosed
 
-  Given conference
+    VotingWasIssued (vote talk3 heimeshoff Points.Zero)
+    VotingWasIssued (vote talk3 fellien Points.Zero)
+    VotingWasIssued (vote talk3 poepke Points.Zero)
+    VotingWasIssued (vote talk2 heimeshoff Points.One)
+    VotingWasIssued (vote talk2 fellien Points.One)
+    VotingWasIssued (vote talk2 poepke Points.One)
+    VotingWasIssued (vote talk1 heimeshoff Points.Zero)
+    VotingWasIssued (vote talk1 fellien Points.One)
+    VotingWasIssued (vote talk1 poepke Points.One)]
+
   |> When FinishVotingPeriod
-  |> ThenExpect expectedEvents
+  |> ThenExpect [
+      VotingPeriodWasFinished
+      AbstractWasAccepted talk2.Id
+      AbstractWasAccepted talk1.Id
+      AbstractWasRejected talk3.Id ]
 
 [<Test>]
 let ``A veto rejects talks that would otherwise be accepted`` () =
   let talk1 = proposedTalk()
   let talk2 = proposedTalk()
   let talk3 = proposedTalk()
-  let voter1 = organizer()
-  let voter2 = organizer()
-  let voter3 = organizer()
-  let votings =
-    [
-      vote talk3 voter2
-      vote talk3 voter3
-      vote talk2 voter1
-      vote talk2 voter2
-      vote talk1 voter2
-      veto talk3 voter1
-    ]
 
-  let conference =
-    conference
-    |> withCallForPapersClosed
-    |> withVotingPeriodInProgress
-    |> withAvailableSlotsForTalks 2
-    |> withOrganizers [voter1; voter2; voter3]
-    |> withAbstracts [talk1; talk2; talk3]
-    |> withVotings votings
+  Given [
+    OrganizerRegistered heimeshoff
+    OrganizerRegistered fellien
+    OrganizerRegistered poepke
+    NumberOfSlotsDecided 2
 
-  let expectedEvents =
-    [
-        VotingPeriodWasFinished
-        AbstractWasRejected talk3.Id
-        AbstractWasAccepted talk2.Id
-        AbstractWasAccepted talk1.Id
-    ]
+    CallForPapersOpened
+    TalkWasProposed talk1
+    TalkWasProposed talk2
+    TalkWasProposed talk3
+    CallForPapersClosed
 
-  Given conference
+    VotingWasIssued (vote talk3 heimeshoff Points.Two)
+    VotingWasIssued (veto talk3 fellien)
+    VotingWasIssued (vote talk3 poepke Points.Two)
+    VotingWasIssued (vote talk2 heimeshoff Points.One)
+    VotingWasIssued (vote talk2 fellien Points.One)
+    VotingWasIssued (vote talk2 poepke Points.One)
+    VotingWasIssued (vote talk1 heimeshoff Points.Zero)
+    VotingWasIssued (vote talk1 fellien Points.Zero)
+    VotingWasIssued (vote talk1 poepke Points.Zero)]
+
   |> When FinishVotingPeriod
-  |> ThenExpect expectedEvents
+  |> ThenExpect [
+      VotingPeriodWasFinished
+      AbstractWasRejected talk3.Id
+      AbstractWasAccepted talk2.Id
+      AbstractWasAccepted talk1.Id ]

@@ -5,8 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <Compile Include="ConfPlannerTestsDSL.fs" />
-    <Compile Include="TestData.fs" />
+    <Compile Include="Testbase.fs" />
     <Compile Include="FinishVotingPeriod_Test.fs" />
     <Compile Include="ProposeAbstract_Test.fs" />
     <Compile Include="Vote_Test.fs" />

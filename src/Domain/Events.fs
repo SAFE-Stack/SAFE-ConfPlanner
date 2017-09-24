@@ -3,6 +3,11 @@ module Events
 open Model
 
 type Event =
+  | OrganizerRegistered of Organizer
+  | TalkWasProposed of ConferenceAbstract
+  | CallForPapersOpened
+  | CallForPapersClosed
+  | NumberOfSlotsDecided of int
   | VotingWasIssued of Voting
   | VotingPeriodWasFinished
   | AbstractWasProposed of ConferenceAbstract

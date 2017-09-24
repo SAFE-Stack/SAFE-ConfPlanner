@@ -1,4 +1,4 @@
-module Model
+module  Model
 
 open System
 
@@ -29,6 +29,8 @@ type ConferenceAbstract = {
   Type : AbstractType
 }
 
+type Points = Zero | One | Two
+
 type OrganizerId = OrganizerId of Guid
 
 type Organizer = {
@@ -38,22 +40,23 @@ type Organizer = {
 }
 
 type Voting =
-  | Vote of AbstractId*OrganizerId
+  | Vote of AbstractId*OrganizerId*Points
   | Veto of AbstractId*OrganizerId
 
 let extractVoterId voting =
   match voting with
-  | Vote (_,id) -> id
+  | Vote (_,id, _) -> id
   | Veto (_,id) -> id
 
 let extractAbstractId voting =
   match voting with
-  | Vote (id,_) -> id
+  | Vote (id,_,_) -> id
   | Veto (id,_) -> id
 
-// type AcceptAbstract = proposedTalk -> AcceptedAbstract
-
-// type Voter = Voting -> VotingResults -> VotingResults
+let extractPoints voting =
+  match voting with
+  | Vote (id,_,points) -> (id, points)
+  | Veto (_) -> failwith "Veto does not have points"
 
 type CallForPapers =
   | NotOpened
@@ -66,9 +69,6 @@ type VotingPeriod =
 
 type ConferenceId = ConferenceId of Guid
 
-type MaxVotesPerOrganizer = MaxVotesPerOrganizer of int
-type MaxVetosPerOrganizer = MaxVetosPerOrganizer of int
-
 type Conference = {
   Id : ConferenceId
   CallForPapers : CallForPapers
@@ -76,7 +76,5 @@ type Conference = {
   Abstracts : ConferenceAbstract list
   Votings : Voting list
   Organizers : Organizer list
-  MaxVotesPerOrganizer : MaxVotesPerOrganizer
-  MaxVetosPerOrganizer : MaxVetosPerOrganizer
   AvailableSlotsForTalks : int
 }

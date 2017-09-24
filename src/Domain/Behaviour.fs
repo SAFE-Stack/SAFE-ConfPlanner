@@ -1,9 +1,10 @@
 module Behaviour
 
+open System
 open Model
 open Commands
 open Events
-open States
+open Projections
 
 
 let (|AlreadyVotedForAbstract|_|) votingResults voting =
@@ -37,36 +38,8 @@ let numberOfVotesExceeded votingResults getVote (voting : Voting) max =
   | true -> Some voting
   | false -> None
 
-let (|OrganizerExceededMaxNumbersOfVotes|_|) votingResults (MaxVotesPerOrganizer maxVotes) (voting : Voting) =
-  let isVoteOfVoter voterId  = function
-    | Voting.Vote (_,id) -> id = voterId
-    | _ -> false
-
-  let number =
-    votingResults
-    |> List.filter (isVoteOfVoter <| extractVoterId voting)
-    |> List.length
-
-  match number >= maxVotes with
-  | true -> Some voting
-  | false -> None
-
-let (|OrganizerExceededMaxNumbersOfVetos|_|) votingResults (MaxVetosPerOrganizer maxVetos) (voting : Voting) =
-  let isVetoOfVoter voterId  = function
-    | Voting.Veto (_,id) -> id = voterId
-    | _ -> false
-
-  let number =
-    votingResults
-    |> List.filter (isVetoOfVoter <| extractVoterId voting)
-    |> List.length
-
-  match number >= maxVetos with
-  | true -> Some voting
-  | false -> None
-
-let handleProposeAbstract state proposed =
-  match state.CallForPapers with
+let handleProposeAbstract givenHistory proposed =
+  match (conferenceState givenHistory).CallForPapers with
   | Open -> [AbstractWasProposed proposed]
   | NotOpened -> [ProposingDenied "Call For Papers Not Opened"]
   | Closed -> [ProposingDenied "Call For Papers Closed"]
@@ -92,15 +65,19 @@ let scoreAbstracts state =
   let withoutVetos =
     votes
     |> List.map extractAbstractId
-    |> List.fold score Map.empty
-    |> Map.toList
-    |> List.sortBy (fun (_, votes) -> votes)
-    |> List.map fst
     |> List.filter (fun abstractId -> abstractsWithVetos |> List.contains abstractId |> not)
-    |> List.rev
 
+  let sumPoints abstractId =
+    votes
+      |> List.map extractPoints
+      |> List.filter (fun (id,_) -> id = abstractId)
+      |> List.map (fun (id,points) -> points)
+      |> List.sumBy (fun points -> match points with | Zero -> 0| One -> 1 | Two -> 2)  
+      
   let accepted =
     withoutVetos
+    |> Seq.sortByDescending sumPoints
+    |> Seq.distinct
     |> Seq.truncate state.AvailableSlotsForTalks
     |> Seq.toList
 
@@ -113,36 +90,44 @@ let scoreAbstracts state =
   |> List.map AbstractWasAccepted
   |> (@) (rejected |> List.map AbstractWasRejected)
 
-let handleFinishVotingPeriod state =
+let handleFinishVotingPeriod givenHistory =
+  let state = (conferenceState givenHistory)
   match state.CallForPapers,state.VotingPeriod with
   | Closed,InProgess ->
+      let unfinishedVotings =
+        state.Abstracts
+        |> Seq.map (fun abstr ->
+            state.Votings
+            |> List.map extractAbstractId
+            |> List.filter (fun id -> id = abstr.Id)
+            |> List.length)
+        |> Seq.filter (fun votes ->
+            votes <> state.Organizers.Length)
+        |> Seq.length
       let events =
-        [VotingPeriodWasFinished]
-        |> (@) (scoreAbstracts state)
-      // printfn "actual %A" events
+        match unfinishedVotings with
+        | 0 ->
+            [VotingPeriodWasFinished]
+            |> (@) (scoreAbstracts state)
+        | _ -> [FinishingDenied "Not all abstracts have been voted for by all organisers"]
       events
+  | Closed,Finished -> [FinishingDenied "Voting Period Already Finished"]
+  | _,_ -> [FinishingDenied "Call For Papers Not Closed"]
 
-  | Closed,Finished ->
-      [FinishingDenied "Voting Period Already Finished"]
-  | _,_ ->
-      [FinishingDenied "Call For Papers Not Closed"]
-
-let handleVote state voting =
+let handleVote givenHistory voting =
+  let state = (conferenceState givenHistory)
   match state.VotingPeriod with
-  | Finished ->
-      [VotingDenied "Voting Period Already Finished"]
-  | InProgress ->
-      match voting with
-      | VoterIsNotAnOrganizer state.Organizers _ ->
-          [VotingDenied "Voter Is Not An Organizer"]
-      | _ ->
-          [VotingWasIssued voting]
+  | Finished -> [VotingDenied "Voting Period Already Finished"]
+  | InProgress -> 
+    match voting with
+    | VoterIsNotAnOrganizer state.Organizers _ -> [VotingDenied "Voter Is Not An Organizer"]
+    | _ -> [VotingWasIssued voting]
 
-let execute (state: State) (command: Command) : Event list =
+let execute (given_history: Event list) (command: Command) : Event list =
   match command with
-  | ProposeAbstract proposed -> handleProposeAbstract state proposed
-  | FinishVotingPeriod -> handleFinishVotingPeriod state
-  | Vote voting -> handleVote state voting
+  | ProposeAbstract proposed -> handleProposeAbstract given_history proposed
+  | FinishVotingPeriod -> handleFinishVotingPeriod given_history
+  | Vote voting -> handleVote given_history voting
   | RevokeVoting(_) -> failwith "Not Implemented"
   | AcceptAbstract(_) -> failwith "Not Implemented"
   | RejectAbstract(_) -> failwith "Not Implemented"

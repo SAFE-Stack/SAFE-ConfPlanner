@@ -6,7 +6,7 @@
     <Compile Include="Model.fs" />
     <Compile Include="Events.fs" />
     <Compile Include="Commands.fs" />
-    <Compile Include="States.fs" />
+    <Compile Include="Projections.fs" />
     <Compile Include="Behaviour.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
