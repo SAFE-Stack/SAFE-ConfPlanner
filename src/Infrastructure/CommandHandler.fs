@@ -32,17 +32,17 @@ let commandHandler (eventStore : MailboxProcessor<EventStore.Msg<'Event>>) (beha
 
             match msg with
             | Msg.Init ->
-                printfn "hier"
-                let initialEvents = eventStore.PostAndReply(EventStore.Msg.GetAllEvents)
-                printfn "initial events %A" initialEvents
-                initialEvents
-                |> List.iter (fun data -> state.EventSubscriber |>  informSubscribers data)
+                match eventStore.PostAndReply(EventStore.Msg.GetAllEvents) with
+                | EventResult.Ok events ->
+                    printfn "initial events %A" events
 
-                let events =
-                  initialEvents
-                  |> List.collect snd
+                    events
+                    |> List.iter (fun data -> state.EventSubscriber |>  informSubscribers data)
 
-                return! loop { state with Events = events  }
+                    return! loop { state with Events = events |> List.collect snd  }
+
+                | EventResult.Error _ ->
+                    return! loop state
 
             | Msg.Command (transactionId,command) ->
                 printfn "CommandHandler received command: %A" command

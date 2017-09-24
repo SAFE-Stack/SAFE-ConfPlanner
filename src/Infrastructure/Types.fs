@@ -56,3 +56,6 @@ type EventSourced<'Command,'Event,'QueryParameter,'State,'QueryResult> =
      EventSubscriber : EventSubscriber<'Event>
   }
 
+
+type EventResult<'Event> = Result<(TransactionId * 'Event list) list, string>
+
