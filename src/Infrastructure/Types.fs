@@ -6,8 +6,6 @@ type TransactionId = TransactionId of System.Guid
 
 type QueryId = QueryId of System.Guid
 
-type EventSet<'Event> = 'Event list
-
 type Behaviour<'Command,'Event> = 'Event list -> 'Command -> 'Event list
 
 type Projection<'State,'Event> =
@@ -41,7 +39,9 @@ type QueryResponseChannel<'QueryResult> =
 
 type CommandHandler<'Command> = TransactionId*'Command -> unit
 
-type EventSubscriber<'Event> = Subscriber<TransactionId*EventSet<'Event>> -> unit
+type EventSubscriber<'Event> = Subscriber<TransactionId * 'Event list> -> unit
+
+type Projection<'Event> = TransactionId * 'Event list -> unit
 
 type Readmodel<'State,'Event,'QueryParameter,'QueryResult> = {
   Projection : Projection<'State,'Event>
@@ -57,5 +57,8 @@ type EventSourced<'Command,'Event,'QueryParameter,'State,'QueryResult> =
   }
 
 
-type EventResult<'Event> = Result<(TransactionId * 'Event list) list, string>
+type EventResult<'Event> =
+  // Result<(TransactionId * 'Event list) list, string>
+  | Ok of (TransactionId * 'Event list) list
+  | Error of string
 

@@ -8,31 +8,53 @@ type Msg<'Event,'QueryParameter,'QueryResult> =
 
 type State<'State> = 'State
 
-let readModelHandler (read : Readmodel<'State,'Event,'QueryParameter,'QueryResult>) : MailboxProcessor<Msg<'Event,'QueryParameter,'QueryResult>> =
+let private createQueryHandler (handler : MailboxProcessor<Msg<'Event,'QueryParameter,'QueryResult>>) query =
+    handler.PostAndReply(fun reply -> Msg.Query <| (query,reply))
+
+let private createReadmodel (handler : MailboxProcessor<Msg<'Event,'QueryParameter,'QueryResult>>) =
+  Msg.Events >> handler.Post
+
+let private readModelHandler (read : Readmodel<'State,'Event,'QueryParameter,'QueryResult>) : Projection<'Event> * QueryHandler<'QueryParameter,'QueryResult> =
     let state = read.Projection.InitialState
 
-    MailboxProcessor.Start(fun inbox ->
+    let readProcessor =
+      MailboxProcessor.Start(fun inbox ->
 
-      let rec loop state =
-        async {
-          let! msg = inbox.Receive()
+        let rec loop state =
+          async {
+            let! msg = inbox.Receive()
 
-          match msg with
-          | Msg.Events (_,events) ->
-              printfn "ReadModel received new events: %A" events
-              let newReadModel =
-                events
-                |> List.fold read.Projection.UpdateState state
+            match msg with
+            | Msg.Events (_,events) ->
+                printfn "ReadModel received new events: %A" events
+                let newReadModel =
+                  events
+                  |> List.fold read.Projection.UpdateState state
 
-              printfn "New Readmodel: %A" newReadModel
+                printfn "New Readmodel: %A" newReadModel
 
-              return! loop newReadModel
+                return! loop newReadModel
 
-          | Msg.Query (query,reply) ->
-              reply.Reply <| read.QueryHandler query state
+            | Msg.Query (query,reply) ->
+                reply.Reply <| read.QueryHandler query state
 
-              return! loop state
-        }
+                return! loop state
+          }
 
-      loop state
-    )
+        loop state
+      )
+
+    let queryHandler =
+      createQueryHandler readProcessor
+
+    let projection =
+      createReadmodel readProcessor
+
+    projection,queryHandler
+
+
+let initializeReadSide readmodels : Projection<'Event> list * (Query<'QueryParameter> -> QueryHandled<'QueryResult>) list =
+  readmodels
+    |> List.map readModelHandler
+    |> List.unzip
+

@@ -6,42 +6,27 @@ open ReadmodelHandler
 open QueryManager
 open EventStore
 
-let private createQueryHandler (handler : MailboxProcessor<Msg<'Event,'QueryParameter,'QueryResult>>) query =
-    handler.PostAndReply(fun reply -> ReadmodelHandler.Msg.Query <| (query,reply))
-
 let eventSourced (behaviour : Behaviour<'Command,'Event>) (readmodels : Readmodel<'State,'Event,'QueryParameter,'QueryResult> list) : EventSourced<'Command,'Event,'QueryParameter,'State,'QueryResult> =
-  let eventStore = eventStore()
+  let getAllEvents,addEventsToStore =
+    eventStore()
 
-  let commandHandler =
-    commandHandler eventStore behaviour
+  let initCommandHandler,commandHandler,subscribeToEvents =
+    commandHandler behaviour
 
-  let subscribeToEvents =
-    CommandHandler.Msg.AddEventSubscriber >> commandHandler.Post
-
-  let readmodels =
-    readmodels |> List.map readModelHandler
+  let projections,queryHandlers =
+    readmodels |> initializeReadSide
 
   // subscribe projections to new events
-  do readmodels
-      |> List.map (fun handler -> ReadmodelHandler.Msg.Events >> handler.Post)
-      |> List.iter subscribeToEvents
+  do projections |> List.iter subscribeToEvents
 
-  // initialize CommandHandler before eventStore subscribes to new events
-  do commandHandler.Post CommandHandler.Msg.Init
+  // initialize CommandHandler with events before eventStore subscribes to new events
+  do getAllEvents() |> initCommandHandler
 
-  do eventStore
-      |> fun eventStore -> EventStore.Msg.AddEvents >> eventStore.Post
-      |> subscribeToEvents
-
-  // create a queryManager with all available queryHandlers
-  let queryManager =
-    readmodels
-    |> List.map createQueryHandler
-    |> queryManager
-
+  // subscribe eventStore to new events
+  do addEventsToStore |> subscribeToEvents
 
   {
-    CommandHandler = CommandHandler.Msg.Command >> commandHandler.Post
-    QueryHandler = QueryManager.Msg.Query >> queryManager.Post
+    CommandHandler = commandHandler
+    QueryHandler = queryHandlers |> queryManager
     EventSubscriber = subscribeToEvents
   }
