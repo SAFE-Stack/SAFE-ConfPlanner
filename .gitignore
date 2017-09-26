@@ -395,3 +395,4 @@ paket-files/
 # Roman
 tests
 eventstore.json
+.history/
