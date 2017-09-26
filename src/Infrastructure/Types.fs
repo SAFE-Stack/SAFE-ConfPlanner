@@ -1,12 +1,16 @@
 module Infrastructure.Types
 
-type Subscriber<'a> = 'a -> unit
+type Subscriber<'a> =
+  'a -> unit
 
-type TransactionId = TransactionId of System.Guid
+type TransactionId =
+  TransactionId of System.Guid
 
-type QueryId = QueryId of System.Guid
+type QueryId =
+  QueryId of System.Guid
 
-type Behaviour<'Command,'Event> = 'Event list -> 'Command -> 'Event list
+type Behaviour<'CommandPayload,'Event> =
+  'Event list -> 'CommandPayload -> 'Event list
 
 type Projection<'State,'Event> =
   {
@@ -14,19 +18,21 @@ type Projection<'State,'Event> =
     UpdateState : 'State -> 'Event -> 'State
   }
 
-type Query<'QueryParameter> = {
-  Id : QueryId
-  Parameter : 'QueryParameter
-}
+type Query<'QueryParameter> =
+  {
+    Id : QueryId
+    Parameter : 'QueryParameter
+  }
 
 type QueryHandled<'QueryResult> =
   | Handled of 'QueryResult
   | NotHandled
 
-type QueryResponse<'QueryResult>  = {
-  QueryId : QueryId
-  Result : QueryHandled<'QueryResult>
-}
+type QueryResponse<'QueryResult> =
+  {
+    QueryId : QueryId
+    Result : QueryHandled<'QueryResult>
+  }
 
 type QueryHandler<'QueryParameter,'QueryResult> =
   Query<'QueryParameter> -> QueryHandled<'QueryResult>
@@ -37,28 +43,37 @@ type QueryHandlerWithState<'QueryParameter,'State,'QueryResult> =
 type QueryResponseChannel<'QueryResult> =
   QueryResponse<'QueryResult> -> unit
 
-type CommandHandler<'Command> = TransactionId*'Command -> unit
-
-type EventSubscriber<'Event> = Subscriber<TransactionId * 'Event list> -> unit
-
-type Projection<'Event> = TransactionId * 'Event list -> unit
-
-type Readmodel<'State,'Event,'QueryParameter,'QueryResult> = {
-  Projection : Projection<'State,'Event>
-  QueryHandler : QueryHandlerWithState<'QueryParameter,'State,'QueryResult>
-}
-
-
-type EventSourced<'Command,'Event,'QueryParameter,'State,'QueryResult> =
-  {
-     CommandHandler : CommandHandler<'Command>
-     QueryHandler : (Query<'QueryParameter> * QueryResponseChannel<'QueryResult>) -> unit
-     EventSubscriber : EventSubscriber<'Event>
-  }
-
+type EventSet<'Event> =
+  TransactionId * 'Event list
 
 type EventResult<'Event> =
-  // Result<(TransactionId * 'Event list) list, string>
-  | Ok of (TransactionId * 'Event list) list
-  | Error of string
+  Result<EventSet<'Event> list, string>
+
+type Projection<'Event> =
+  EventSet<'Event> -> unit
+
+type Readmodel<'State,'Event,'QueryParameter,'QueryResult> =
+  {
+    Projection : Projection<'State,'Event>
+    QueryHandler : QueryHandlerWithState<'QueryParameter,'State,'QueryResult>
+  }
+
+type Command<'CommandPayload> =
+  TransactionId * 'CommandPayload
+
+type CommandHandler<'CommandPayload> =
+  Command<'CommandPayload> -> unit
+
+type EventPublisher<'Event> =
+  Subscriber<EventSet<'Event>> -> unit
+
+type QueryManager<'QueryParameter,'QueryResult> =
+  Query<'QueryParameter> * QueryResponseChannel<'QueryResult> -> unit
+
+type EventSourced<'CommandPayload,'Event,'QueryParameter,'State,'QueryResult> =
+  {
+     CommandHandler : CommandHandler<'CommandPayload>
+     QueryManager : QueryManager<'QueryParameter,'QueryResult>
+     EventPublisher : EventPublisher<'Event>
+  }
 

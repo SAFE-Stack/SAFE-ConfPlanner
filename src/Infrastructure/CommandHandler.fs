@@ -1,32 +1,28 @@
 module Infrastructure.CommandHandler
 
 open Types
-open EventStore
 
-type Msg<'Command,'Event> =
+type Msg<'CommandPayload,'Event> =
   | Init of EventResult<'Event>
-  | Command of TransactionId*'Command
-  | AddEventSubscriber of Subscriber<TransactionId*'Event list>
+  | Command of Command<'CommandPayload>
+  | AddEventSubscriber of Subscriber<EventSet<'Event>>
 
 type State<'Event> = {
   Events : 'Event list
-  EventSubscriber : Subscriber<TransactionId*'Event list> list
+  EventSubscriber : Subscriber<EventSet<'Event>> list
 }
 
 let informSubscribers data subscribers =
   subscribers |> List.iter (fun sub -> data |> sub)
 
-
-//  (EventResult<'Event> -> unit) * CommandHandler<'Command> *  EventSubscriber<'Event>
-
-let commandHandler (behaviour : Behaviour<'Command,'Event>) : (EventResult<'Event> -> unit) * CommandHandler<'Command> * EventSubscriber<'Event> =
+let commandHandler (behaviour : Behaviour<'CommandPayload,'Event>) : (EventResult<'Event> -> unit) * CommandHandler<'CommandPayload> * EventPublisher<'Event> =
 
     let state : State<'Event> = {
       Events = []
       EventSubscriber = []
     }
 
-    let handler =
+    let mailbox =
       MailboxProcessor.Start(fun inbox ->
         let rec loop state =
 
@@ -47,13 +43,12 @@ let commandHandler (behaviour : Behaviour<'Command,'Event>) : (EventResult<'Even
                 | EventResult.Error _ ->
                     return! loop state
 
-            | Command (transactionId,command) ->
-                printfn "CommandHandler received command: %A" command
-                let newEvents = behaviour state.Events command
+            | Command (transactionId,payload) ->
+                printfn "CommandHandler received command: %A" (transactionId,payload)
+                let newEvents = behaviour state.Events payload
                 let allEvents = state.Events @ newEvents
 
-                printfn "EventStore new Events: %A" newEvents
-                printfn "EventStore all Events: %A" allEvents
+                printfn "CommandHandler new Events: %A" newEvents
 
                 state.EventSubscriber |> informSubscribers (transactionId,newEvents)
 
@@ -66,15 +61,15 @@ let commandHandler (behaviour : Behaviour<'Command,'Event>) : (EventResult<'Even
         loop state
     )
 
-    let subscribeToEvents =
-      AddEventSubscriber >> handler.Post
-
     let init =
-      Init >> handler.Post
+      Init >> mailbox.Post
 
     let commandHandler =
-      Command >> handler.Post
+      Command >> mailbox.Post
 
-    init,commandHandler,subscribeToEvents
+    let eventPublisher =
+      AddEventSubscriber >> mailbox.Post
+
+    init,commandHandler,eventPublisher
 
 

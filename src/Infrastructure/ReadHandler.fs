@@ -1,4 +1,4 @@
-module Infrastructure.ReadmodelHandler
+module Infrastructure.ReadHandler
 
 open Infrastructure.Types
 

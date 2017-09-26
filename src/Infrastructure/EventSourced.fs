@@ -2,31 +2,31 @@ module Infrastructure.EventSourced
 
 open Types
 open CommandHandler
-open ReadmodelHandler
+open ReadHandler
 open QueryManager
 open EventStore
 
-let eventSourced (behaviour : Behaviour<'Command,'Event>) (readmodels : Readmodel<'State,'Event,'QueryParameter,'QueryResult> list) : EventSourced<'Command,'Event,'QueryParameter,'State,'QueryResult> =
+let eventSourced (behaviour : Behaviour<'CommandPayload,'Event>) (readmodels : Readmodel<'State,'Event,'QueryParameter,'QueryResult> list) : EventSourced<'CommandPayload,'Event,'QueryParameter,'State,'QueryResult> =
   let getAllEvents,addEventsToStore =
     eventStore()
 
-  let initCommandHandler,commandHandler,subscribeToEvents =
+  let initCommandHandler,commandHandler,eventPublisher =
     commandHandler behaviour
 
   let projections,queryHandlers =
     readmodels |> initializeReadSide
 
   // subscribe projections to new events
-  do projections |> List.iter subscribeToEvents
+  do projections |> List.iter eventPublisher
 
   // initialize CommandHandler with events before eventStore subscribes to new events
   do getAllEvents() |> initCommandHandler
 
   // subscribe eventStore to new events
-  do addEventsToStore |> subscribeToEvents
+  do addEventsToStore |> eventPublisher
 
   {
     CommandHandler = commandHandler
-    QueryHandler = queryHandlers |> queryManager
-    EventSubscriber = subscribeToEvents
+    QueryManager = queryHandlers |> queryManager
+    EventPublisher = eventPublisher
   }

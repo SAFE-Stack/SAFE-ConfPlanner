@@ -18,7 +18,7 @@ let rec private oneOf (queryHandler : QueryHandler<'QueryParameter,'QueryResult>
   | _ -> NotHandled
 
 let queryManager (queryHandler : QueryHandler<'QueryParameter,'QueryResult> list) : (Query<'QueryParameter> * QueryResponseChannel<'QueryResult>) -> unit =
-  let processor =
+  let mailbox =
     MailboxProcessor.Start(fun inbox ->
       let rec loop() =
         async {
@@ -39,7 +39,7 @@ let queryManager (queryHandler : QueryHandler<'QueryParameter,'QueryResult> list
     )
 
   let queryHandler =
-    Msg.Query >> processor.Post
+    Msg.Query >> mailbox.Post
 
   queryHandler
 
