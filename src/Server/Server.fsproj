@@ -2,24 +2,24 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-    <DebugType>portable</DebugType>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Infrastructure\Infrastructure.fsproj" />
+  </ItemGroup>
   <ItemGroup>
     <Compile Include="../Domain/Model.fs" />
     <Compile Include="../Domain/Commands.fs" />
     <Compile Include="AuthTypes.fs" />
     <Compile Include="ServerTypes.fs" />
     <Compile Include="JsonWebToken.fs" />
-    <Compile Include="FableJson.fs" />
     <Compile Include="Auth.fs" />
     <Compile Include="Dummy.fs" />
     <Compile Include="Websockets.fs" />
     <Compile Include="WebServer.fs" />
     <Compile Include="Program.fs" />
-    <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="1.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Infrastructure\Infrastructure.fsproj" />
+    <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="1.0.0" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

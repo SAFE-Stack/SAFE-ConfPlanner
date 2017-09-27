@@ -6,8 +6,8 @@ open Suave.Sockets.Control
 open Suave.WebSocket
 
 open Server.ServerTypes
-open Server.FableJson
 
+open Infrastructure.FableJson
 open Infrastructure.Types
 
 type Msg<'CommandPayload,'Event,'QueryParameter,'QueryResult> =

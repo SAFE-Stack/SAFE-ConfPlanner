@@ -6,12 +6,14 @@ open Server.AuthTypes
 open Suave
 open Suave.RequestErrors
 
+open Infrastructure.FableJson
+
 /// Login web part that authenticates a user and returns a token in the HTTP body.
 let login (ctx: HttpContext) = async {
     let login =
         ctx.request.rawForm
         |> System.Text.Encoding.UTF8.GetString
-        |> FableJson.ofJson<Server.AuthTypes.Login>
+        |> ofJson<Server.AuthTypes.Login>
 
     try
         if (login.UserName <> "test" || login.Password <> "test") &&
