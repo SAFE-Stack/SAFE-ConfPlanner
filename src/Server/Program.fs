@@ -21,10 +21,12 @@ let main args =
             | clientPath:: _  when Directory.Exists clientPath -> clientPath
             | _ ->
                 let devPath = Path.Combine("..","Client")
+                printfn "dev path: %A" devPath
+                printfn "full path : %A" <| Path.GetFullPath devPath
                 if Directory.Exists devPath then
                   devPath
                 else
-                  @"./client"
+                  @"C:/src/ConfPlanner/src/Client"
 
         WebServer.start (Path.GetFullPath clientPath) (getPortsOrDefault 8085us)
         0
