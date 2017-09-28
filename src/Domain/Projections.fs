@@ -26,7 +26,7 @@ let apply (state : Conference) event : Conference =
     | VotingDenied(_) -> state
     | ProposingDenied(_) -> state
 
-let conferenceState (givenHistory: Event list) = 
+let conferenceState (givenHistory: Event list) =
     givenHistory
     |> Seq.fold apply {
       Id = ConferenceId <| Guid.Empty

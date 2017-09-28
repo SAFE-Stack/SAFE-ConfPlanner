@@ -72,8 +72,8 @@ let scoreAbstracts state =
       |> List.map extractPoints
       |> List.filter (fun (id,_) -> id = abstractId)
       |> List.map (fun (id,points) -> points)
-      |> List.sumBy (fun points -> match points with | Zero -> 0| One -> 1 | Two -> 2)  
-      
+      |> List.sumBy (fun points -> match points with | Zero -> 0| One -> 1 | Two -> 2)
+
   let accepted =
     withoutVetos
     |> Seq.sortByDescending sumPoints
@@ -118,7 +118,7 @@ let handleVote givenHistory voting =
   let state = (conferenceState givenHistory)
   match state.VotingPeriod with
   | Finished -> [VotingDenied "Voting Period Already Finished"]
-  | InProgress -> 
+  | InProgress ->
     match voting with
     | VoterIsNotAnOrganizer state.Organizers _ -> [VotingDenied "Voter Is Not An Organizer"]
     | _ -> [VotingWasIssued voting]

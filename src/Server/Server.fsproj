@@ -7,12 +7,11 @@
     <ProjectReference Include="..\Infrastructure\Infrastructure.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="../Domain/Model.fs" />
-    <Compile Include="../Domain/Commands.fs" />
     <Compile Include="AuthTypes.fs" />
     <Compile Include="ServerTypes.fs" />
     <Compile Include="JsonWebToken.fs" />
     <Compile Include="Auth.fs" />
+    <Compile Include="Conference.fs" />
     <Compile Include="Dummy.fs" />
     <Compile Include="Websockets.fs" />
     <Compile Include="WebServer.fs" />
@@ -20,6 +19,7 @@
   </ItemGroup>
   <ItemGroup>
     <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="1.0.0" />
+    <ProjectReference Include="..\Domain\Domain.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

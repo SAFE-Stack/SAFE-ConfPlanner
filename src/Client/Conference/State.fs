@@ -5,7 +5,7 @@ open Fable.PowerPack
 open Fable.PowerPack.Fetch.Fetch_types
 open Fable.Core.JsInterop
 open Global
-open Conference.Types
+open Conference.View
 
 
 let init (user: UserData option) : Model * Cmd<Msg> =
