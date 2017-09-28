@@ -12,13 +12,13 @@ type UserRights =
 
 
 // Client to Server
-type ClientMsg<'Command,'QueryParameter,'QueryResult> =
+type ClientMsg<'CommandPayload,'QueryParameter,'QueryResult> =
   | Connect
-  | Command of TransactionId*'Command
+  | Command of Command<'CommandPayload>
   | Query of Query<'QueryParameter>
 
 // Server to Client
 type ServerMsg<'Event,'QueryResult> =
   | Connected
-  | Events of TransactionId*'Event list
+  | Events of EventSet<'Event>
   | QueryResponse of QueryResponse<'QueryResult>

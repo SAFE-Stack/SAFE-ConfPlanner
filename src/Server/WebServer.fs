@@ -27,6 +27,7 @@ let websocket =
 
 // Fire up our web server!
 let start clientPath port =
+    printfn "Client-HomePath: %A" clientPath
     if not (Directory.Exists clientPath) then
         failwithf "Client-HomePath '%s' doesn't exist." clientPath
 

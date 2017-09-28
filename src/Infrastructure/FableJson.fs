@@ -1,5 +1,5 @@
 /// Functions to serialize and deserialize JSON, with client side support.
-module Server.FableJson
+module Infrastructure.FableJson
 
 open Newtonsoft.Json
 

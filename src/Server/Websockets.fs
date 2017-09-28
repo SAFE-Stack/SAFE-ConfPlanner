@@ -6,14 +6,14 @@ open Suave.Sockets.Control
 open Suave.WebSocket
 
 open Server.ServerTypes
-open Server.FableJson
 
+open Infrastructure.FableJson
 open Infrastructure.Types
 
-type Msg<'Command,'Event,'QueryParameter,'QueryResult> =
+type Msg<'CommandPayload,'Event,'QueryParameter,'QueryResult> =
   | Connected
-  | Received of ClientMsg<'Command,'QueryParameter,'QueryResult>
-  | Events of TransactionId*'Event list
+  | Received of ClientMsg<'CommandPayload,'QueryParameter,'QueryResult>
+  | Events of EventSet<'Event>
   | QueryResponse of QueryResponse<'QueryResult>
 
 let send (webSocket : WebSocket) (msg : ServerMsg<'Event,'QueryResult>) =
@@ -28,14 +28,14 @@ let send (webSocket : WebSocket) (msg : ServerMsg<'Event,'QueryResult>) =
     |> Async.Start
 
 let websocket
-  (eventSourced : EventSourced<'Command,'Event,'QueryParameter,'State,'QueryResult>)
+  (eventSourced : EventSourced<'CommandPayload,'Event,'QueryParameter,'State,'QueryResult>)
   (webSocket : WebSocket)
   (context: HttpContext) =
     let emptyResponse = [||] |> ByteSegment
 
     let webSocketHandler =
       MailboxProcessor.Start(fun inbox ->
-        eventSourced.EventSubscriber (Msg.Events >> inbox.Post)
+        eventSourced.EventPublisher (Msg.Events >> inbox.Post)
 
         let queryReplyChannel = Msg.QueryResponse >> inbox.Post
 
@@ -57,7 +57,7 @@ let websocket
 
                 | ClientMsg.Query query ->
                     printfn "handle incoming query %A..." query
-                    eventSourced.QueryHandler (query,queryReplyChannel)
+                    eventSourced.QueryManager (query,queryReplyChannel)
                     return! loop()
 
                 | ClientMsg.Connect ->
@@ -99,7 +99,7 @@ let websocket
 
                 let deserialized =
                   str
-                  |> ofJson<ClientMsg<'Command,'QueryParameter,'QueryResult>>
+                  |> ofJson<ClientMsg<'CommandPayload,'QueryParameter,'QueryResult>>
 
                 printfn "Received: %A" deserialized
                 webSocketHandler.Post (Msg.Received deserialized)

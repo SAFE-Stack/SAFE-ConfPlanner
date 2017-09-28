@@ -1,49 +1,75 @@
 module Infrastructure.CommandHandler
 
-open Infrastructure.Types
+open Types
 
-type Msg<'Command,'Event> =
-  | Command of TransactionId*'Command
-  | AddEventSubscriber of Subscriber<TransactionId*'Event>
+type Msg<'CommandPayload,'Event> =
+  | Init of EventResult<'Event>
+  | Command of Command<'CommandPayload>
+  | AddEventSubscriber of Subscriber<EventSet<'Event>>
 
 type State<'Event> = {
   Events : 'Event list
-  EventSubscriber : Subscriber<TransactionId*'Event list> list
+  EventSubscriber : Subscriber<EventSet<'Event>> list
 }
 
-let commandHandler (behaviour : Behaviour<'Command,'Event>) =
+let informSubscribers data subscribers =
+  subscribers |> List.iter (fun sub -> data |> sub)
+
+let commandHandler (behaviour : Behaviour<'CommandPayload,'Event>) : (EventResult<'Event> -> unit) * CommandHandler<'CommandPayload> * EventPublisher<'Event> =
 
     let state : State<'Event> = {
-      Events = []  // lese aus locale file, json deserialize
+      Events = []
       EventSubscriber = []
     }
 
-    MailboxProcessor.Start(fun inbox ->
-
+    let mailbox =
+      MailboxProcessor.Start(fun inbox ->
         let rec loop state =
 
           async {
             let! msg = inbox.Receive()
 
             match msg with
-            | Msg.Command (transactionId,command) ->
-                printfn "CommandHandler received command: %A" command
-                let newEvents = behaviour state.Events command
+            | Init eventResult ->
+                match eventResult with
+                | EventResult.Ok events ->
+                    printfn "initial events %A" events
+
+                    events
+                    |> List.iter (fun data -> state.EventSubscriber |>  informSubscribers data)
+
+                    return! loop { state with Events = events |> List.collect snd  }
+
+                | EventResult.Error _ ->
+                    return! loop state
+
+            | Command (transactionId,payload) ->
+                printfn "CommandHandler received command: %A" (transactionId,payload)
+                let newEvents = behaviour state.Events payload
                 let allEvents = state.Events @ newEvents
 
-                printfn "EventStore new Events: %A" newEvents
-                printfn "EventStore all Events: %A" allEvents
+                printfn "CommandHandler new Events: %A" newEvents
 
-                state.EventSubscriber
-                |> List.iter (fun sub -> (transactionId,newEvents) |> sub)
-
-                // speichere Events in Json
+                state.EventSubscriber |> informSubscribers (transactionId,newEvents)
 
                 return! loop { state with Events = allEvents }
 
-            | Msg.AddEventSubscriber subscriber ->
+            | AddEventSubscriber subscriber ->
                 return! loop { state with EventSubscriber = subscriber :: state.EventSubscriber }
           }
 
         loop state
     )
+
+    let init =
+      Init >> mailbox.Post
+
+    let commandHandler =
+      Command >> mailbox.Post
+
+    let eventPublisher =
+      AddEventSubscriber >> mailbox.Post
+
+    init,commandHandler,eventPublisher
+
+
