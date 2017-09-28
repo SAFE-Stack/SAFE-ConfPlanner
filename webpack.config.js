@@ -1,11 +1,12 @@
 var path = require("path");
 var webpack = require("webpack");
+let fableUtils = require("fable-utils");
 
 function resolve(filePath) {
   return path.join(__dirname, filePath)
 }
 
-var babelOptions = {
+var babelOptions = fableUtils.resolveBabelOptions({
   presets: [["es2015", { "modules": false }]],
   plugins: [["transform-runtime", {
     "helpers": true,
@@ -14,7 +15,7 @@ var babelOptions = {
     "polyfill": false,
     "regenerator": false
   }]]
-};
+});
 
 var isProduction = process.argv.indexOf("-p") >= 0;
 var suavePort = process.env.SUAVE_FABLE_PORT || "8085";
