@@ -176,7 +176,7 @@ Target "Run" (fun _ ->
         System.Threading.Thread.Sleep(5000)
         Diagnostics.Process.Start("http://"+ ipAddress + sprintf ":%d" port) |> ignore }
 
-    Async.Parallel [|  fablewatch; openBrowser |]
+    Async.Parallel [|  suave; fablewatch; openBrowser |]
     |> Async.RunSynchronously
     |> ignore
 )

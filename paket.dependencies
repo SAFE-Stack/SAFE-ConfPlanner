@@ -13,6 +13,8 @@ nuget NUnit3TestAdapter
 nuget System.Net.NetworkInformation
 
 nuget Fable.Core
+nuget Fable.Elmish
+nuget Fable.Elmish.HMR
 nuget Fable.Elmish.React
 nuget Fable.Elmish.Browser
 nuget Fable.Elmish.Debugger

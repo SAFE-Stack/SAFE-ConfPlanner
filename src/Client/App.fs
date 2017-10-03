@@ -10,12 +10,14 @@ open Fable.Import.Browser
 open App.Types
 open App.State
 
+open Elmish.HMR
 open Elmish.React
 open Elmish.Debug
 
 // App
 Program.mkProgram init update App.View.view
 |> Program.toNavigable (parseHash pageParser) urlUpdate
+|> Program.withHMR
 |> Program.withReact "elmish-app"
 |> Program.withDebugger
 |> Program.run
