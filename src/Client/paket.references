@@ -5,3 +5,4 @@ Fable.Elmish.Browser
 Fable.Elmish.Debugger
 FSharp.NET.Sdk
 dotnet-fable
+Fable.Elmish.HMR

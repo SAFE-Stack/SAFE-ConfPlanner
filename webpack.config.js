@@ -36,6 +36,8 @@ module.exports = {
   devServer: {
     contentBase: resolve('./public'),
     port: 8080,
+    hot: true,
+    inline: true,
     proxy: {
       '/api/*': {
         target: 'http://localhost:' + suavePort,
@@ -72,5 +74,9 @@ module.exports = {
         ]
       }
     ]
-  }
+  },
+  plugins : isProduction ? [] : [
+    new webpack.HotModuleReplacementPlugin(),
+    new webpack.NamedModulesPlugin()
+  ]
 };
