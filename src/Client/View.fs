@@ -26,16 +26,14 @@ let menuItem label page currentPage =
 let menu currentPage =
   aside
     [ ClassName "menu" ]
-    [ p
-        [ ClassName "menu-label" ]
-        [ str "General" ]
+    [
       ul
         [ ClassName "menu-list" ]
         [
-          menuItem "Conference" Page.ConfPlanner currentPage
           menuItem "Counter" Page.Counter currentPage
+          menuItem "Conference" Page.ConfPlanner currentPage
+          menuItem "Dummy" Page.Websockets currentPage
           menuItem "About" Page.About currentPage
-          menuItem "Websockets" Page.Websockets currentPage
         ]
     ]
 

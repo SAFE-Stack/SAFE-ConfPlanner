@@ -5,7 +5,7 @@ open Infrastructure.Types
 open Server.ServerTypes
 
 type Msg =
-  | Received of ServerMsg<Events.Event,Dummy.QueryResult>
+  | Received of ServerMsg<Events.Event,ConferenceApi.QueryResult>
   | QueryState
 
 

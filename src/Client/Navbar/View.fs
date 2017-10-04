@@ -25,19 +25,20 @@ let navButtons logout =
         [ ClassName "nav-item" ]
         [ div
             [ ClassName "field is-grouped" ]
-            [ navButton "twitter" "https://twitter.com/FableCompiler" "fa-twitter" "Twitter"
-              navButton "github" "https://github.com/fable-compiler/fable-elmish" "fa-github" "Fork me"
-              navButton "github" "https://gitter.im/fable-compiler/Fable" "fa-comments" "Gitter" ]
-          span [ OnClick logout ] [ str "Logout"] ]
+            [
+              navButton "github" "https://github.com/rommsen/ConfPlanner" "fa-github" "Fork me"
+            ]
+          // span [ OnClick logout ] [ str "Logout"]
+        ]
 
 let root user logout =
-  let info =
-    match user with
-    | Some user ->
-        str (sprintf "Hi %s!" user.UserName)
+  // let info =
+  //   match user with
+  //   | Some user ->
+  //       str (sprintf "Hi %s!" user.UserName)
 
-    | None ->
-        str "Not Logged In"
+  //   | None ->
+  //       str "Not Logged In"
 
   nav
       [ ClassName "nav" ]
@@ -45,7 +46,8 @@ let root user logout =
           [ ClassName "nav-left" ]
           [ h1
               [ ClassName "nav-item is-brand title is-4" ]
-              [ str "Elmish / " ; info ] ]
+              // [ str "Elmish / " ; info ] ]
+              [ str "Domain Driven UI" ] ]
         div
           [ ClassName "nav-right" ]
           [ navButtons logout ] ]
