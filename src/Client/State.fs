@@ -12,7 +12,7 @@ let pageParser: Parser<Page->Page,Page> =
     map About (s "about")
     map Counter (s "counter")
     map Login (s "login")
-    map Conference (s "conference")
+    map ConfPlanner (s "conference")
     map Websockets (s "websockets")
   ]
 
@@ -33,21 +33,12 @@ let urlUpdate (result: Option<Page>) model =
   | Some (Page.Counter as page) ->
       requiresAuthentication page model
 
-  | Some (Page.Conference as page) ->
-      match model.CurrentUser with
-      | Some user ->
-          let conference,cmd = Conference.State.init <| Some user
-          { model with CurrentPage = page; ConferenceModel = conference }, Cmd.map ConferenceMsg cmd
-
-      | None ->
-          model, Cmd.ofMsg Logout
-
   | Some page ->
        { model with CurrentPage = page }, Cmd.none
 
 let init result =
   let user : UserData option = Client.Utils.load "user"
-  let (conference, conferenceCmd) = Conference.State.init user
+  let (conference, conferenceCmd) = Conference.State.init()
   let (counter, counterCmd) = Counter.State.init()
   let (login, loginCmd) = Login.State.init user
   let (ws, wsCmd) = Ws.init()

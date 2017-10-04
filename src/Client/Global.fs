@@ -7,7 +7,7 @@ type UserData =
     Token : JWT }
 
 type Page =
-  | Conference
+  | ConfPlanner
   | Counter
   | About
   | Login
@@ -19,5 +19,11 @@ let toHash page =
   | About -> "#about"
   | Counter -> "#counter"
   | Login -> "#login"
-  | Conference -> "#conference"
+  | ConfPlanner -> "#conference"
   | Websockets -> "#websockets"
+
+type RemoteData<'Result> =
+  | NotAsked
+  | Loading
+  | Failure of string
+  | Success of 'Result

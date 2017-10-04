@@ -6,41 +6,25 @@
     <ProjectReference Include="..\Domain\Domain.fsproj" />
   </ItemGroup>
   <ItemGroup>
-
-    <!-- Shared Code -->
     <Compile Include="../Infrastructure/Types.fs" />
     <Compile Include="../Server/AuthTypes.fs" />
     <Compile Include="../Server/ServerTypes.fs" />
     <Compile Include="../Server/Dummy.fs" />
-
-    <!-- Global to the app -->
     <Compile Include="Global.fs" />
     <Compile Include="Style.fs" />
     <Compile Include="Utils.fs" />
-
-    <!-- Info -->
     <Compile Include="Info/View.fs" />
-    <!-- Counter -->
     <Compile Include="Counter/Types.fs" />
     <Compile Include="Counter/State.fs" />
     <Compile Include="Counter/View.fs" />
-
-    <!-- Conference -->
     <Compile Include="Conference/Types.fs" />
     <Compile Include="Conference/State.fs" />
     <Compile Include="Conference/View.fs" />
-
-    <!-- Navbar -->
     <Compile Include="Navbar/View.fs" />
-
     <Compile Include="Websockets/websockets.fs" />
-
-    <!-- Login -->
     <Compile Include="Login/Types.fs" />
     <Compile Include="Login/State.fs" />
     <Compile Include="Login/View.fs" />
-
-    <!-- App -->
     <Compile Include="Types.fs" />
     <Compile Include="State.fs" />
     <Compile Include="View.fs" />

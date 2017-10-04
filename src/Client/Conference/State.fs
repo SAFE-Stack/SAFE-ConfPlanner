@@ -1,57 +1,66 @@
 module Conference.State
 
 open Elmish
-open Fable.PowerPack
-open Fable.PowerPack.Fetch.Fetch_types
+open Fable.Import.Browser
 open Fable.Core.JsInterop
 open Global
-open Conference.View
+open Conference.Types
+open Server.ServerTypes
+open Infrastructure.Types
+
+let mutable private sendPerWebsocket : ClientMsg<Dummy.Command,Dummy.QueryParameter,Dummy.QueryResult> -> unit =
+  fun _ -> failwith "WebSocket not connected"
+
+let private startWs dispatch =
+  let onMsg : System.Func<MessageEvent, obj> =
+    (fun (wsMsg:MessageEvent) ->
+      let msg =  ofJson<ServerMsg<Events.Event,Dummy.QueryResult>> <| unbox wsMsg.data
+      Msg.Received msg |> dispatch
+      null) |> unbox // temporary fix until Fable WS Import is upgraded to Fable 1.*
+
+  let ws = Fable.Import.Browser.WebSocket.Create("ws://127.0.0.1:8085/websocket")
+
+  let send msg =
+    ws.send (toJson msg)
+
+  ws.onopen <- (fun _ -> send (ClientMsg.Connect) ; null)
+  ws.onmessage <- onMsg
+  ws.onerror <- (fun err -> printfn "%A" err ; null)
+
+  sendPerWebsocket <- send
+
+  ()
 
 
-let init (user: UserData option) : Model * Cmd<Msg> =
-  match user with
-  | Some user ->
-      { Token = user.Token },Cmd.none
+let wsCmd cmd =
+  [fun _ -> sendPerWebsocket cmd]
 
-  | None ->
-      { Token = "" },Cmd.none
+let transactionId() =
+  TransactionId <| System.Guid.NewGuid()
 
-
-let postCommand (token,command: Commands.Command) =
-  promise {
-    let url = "api/commands"
-    let body = toJson command
-    let props =
-      [
-        RequestProperties.Method HttpMethod.POST
-        Fetch.requestHeaders
-          [
-            HttpRequestHeaders.Authorization ("Bearer " + token)
-            HttpRequestHeaders.ContentType "application/json"
-          ]
-        RequestProperties.Body !^body
-      ]
-
-    try
-      let! response = Fetch.fetch url props
-
-      if not response.Ok then
-        return! failwithf "Error: %d" response.Status
-      else
-        let! data = response.text()
-        return data
-    with
-    | _ -> return! failwithf "Could not post command."
+let createQuery query =
+  {
+    Query.Id = QueryId <| System.Guid.NewGuid()
+    Query.Parameter = query
   }
 
-let postCommandCmd data =
-  Cmd.ofPromise postCommand data PostCommandSuccess PostCommandError
 
-let update msg model =
-  match msg with
-  | FinishVotingPeriod ->
-      model, postCommandCmd (model.Token,Commands.Command.FinishVotingPeriod)
+let updateStateWithEvents state events =
+  match state with
+  | Success state ->
+       events
+        |> List.fold Projections.apply state
+        |> Success
 
-  | PostCommandSuccess status -> model, Cmd.none
+  | _ -> state
 
-  | PostCommandError(_) -> model, Cmd.none
+let init() =
+  {
+    Info = "noch nicht connected"
+    State = NotAsked
+  }, Cmd.ofSub startWs
+
+
+let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
+  model, Cmd.none
+

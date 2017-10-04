@@ -32,7 +32,7 @@ let menu currentPage =
       ul
         [ ClassName "menu-list" ]
         [
-          menuItem "Conference" Page.Conference currentPage
+          menuItem "Conference" Page.ConfPlanner currentPage
           menuItem "Counter" Page.Counter currentPage
           menuItem "About" Page.About currentPage
           menuItem "Websockets" Page.Websockets currentPage
@@ -46,7 +46,7 @@ let view model dispatch =
     | Page.About -> Info.View.root
     | Counter -> Counter.View.root model.CounterModel (CounterMsg >> dispatch)
     | Login -> Login.View.root model.LoginModel (LoginMsg >> dispatch)
-    | Conference -> Conference.View.root model.ConferenceModel (ConferenceMsg >> dispatch)
+    | ConfPlanner -> Conference.View.root model.ConferenceModel (ConferenceMsg >> dispatch)
     | Websockets -> Ws.root model.WsModel (WsMsg >> dispatch)
 
   div
