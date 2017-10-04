@@ -48,7 +48,7 @@ let private startWs dispatch =
       Msg.Received msg |> dispatch
       null) |> unbox // temporary fix until Fable WS Import is upgraded to Fable 1.*
 
-  let ws = Fable.Import.Browser.WebSocket.Create("ws://127.0.0.1:8085/websocket")
+  let ws = Fable.Import.Browser.WebSocket.Create("ws://127.0.0.1:8085/dummyWebsocket")
 
   let send msg =
     ws.send (toJson msg)

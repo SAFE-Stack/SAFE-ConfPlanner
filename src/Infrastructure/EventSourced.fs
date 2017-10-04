@@ -6,9 +6,9 @@ open ReadHandler
 open QueryManager
 open EventStore
 
-let eventSourced (behaviour : Behaviour<'CommandPayload,'Event>) (readmodels : Readmodel<'State,'Event,'QueryParameter,'QueryResult> list) : EventSourced<'CommandPayload,'Event,'QueryParameter,'State,'QueryResult> =
+let eventSourced (behaviour : Behaviour<'CommandPayload,'Event>) (readmodels : Readmodel<'State,'Event,'QueryParameter,'QueryResult> list) store : EventSourced<'CommandPayload,'Event,'QueryParameter,'State,'QueryResult> =
   let getAllEvents,addEventsToStore =
-    eventStore()
+    eventStore store
 
   let initCommandHandler,commandHandler,eventPublisher =
     commandHandler behaviour

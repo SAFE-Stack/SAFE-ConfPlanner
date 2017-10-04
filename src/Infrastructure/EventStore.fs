@@ -8,9 +8,7 @@ type Msg<'Event> =
   | GetAllEvents of AsyncReplyChannel<EventResult<'Event>>
   | Events of EventSet<'Event>
 
-let store = @".\eventstore.json"
-
-let eventStore() : (unit -> EventResult<'Event>) * Subscriber<EventSet<'Event>> =
+let eventStore store : (unit -> EventResult<'Event>) * Subscriber<EventSet<'Event>> =
   let mailbox =
     MailboxProcessor.Start(fun inbox ->
 
