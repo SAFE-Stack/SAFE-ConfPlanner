@@ -20,10 +20,19 @@ let dummyWebsocket =
   let read =
     {
       Readmodel.Projection = Dummy.projection
-      QueryHandler = Dummy.queryHandler
+      Readmodel.QueryHandler = Dummy.queryHandler
     }
 
-  websocket <| eventSourced Dummy.behaviour [read] @".\eventstore.json"
+  websocket <| eventSourced Dummy.behaviour [read] @".\dummy_eventstore.json"
+
+let conferenceWebsocket =
+  let read =
+    {
+      Readmodel.Projection = ConferenceApi.projection
+      Readmodel.QueryHandler = ConferenceApi.queryHandler
+    }
+
+  websocket <| eventSourced Behaviour.execute [read] @".\conference_eventstore.json"
 
 // Fire up our web server!
 let start clientPath port =
@@ -51,6 +60,8 @@ let start clientPath port =
             ]
 
             path "/dummyWebsocket" >=> handShake dummyWebsocket
+
+            path "/conferenceWebsocket" >=> handShake conferenceWebsocket
 
             NOT_FOUND "Page not found."
 
