@@ -23,7 +23,7 @@ let dummyWebsocket =
       Readmodel.QueryHandler = Dummy.queryHandler
     }
 
-  websocket <| eventSourced Dummy.behaviour [read] @".\dummy_eventstore.json"
+  websocket <| eventSourced Dummy.behaviour [read] @".\conference_eventstore.json"
 
 let conferenceWebsocket =
   let read =

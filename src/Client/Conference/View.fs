@@ -14,6 +14,7 @@ open Fable.Helpers.React.Props
 open Infrastructure.Types
 open Server.ServerTypes
 open Global
+open Model
 
 let proposedTalk(title): Model.ConferenceAbstract =
    {
@@ -25,14 +26,25 @@ let proposedTalk(title): Model.ConferenceAbstract =
       Type = Model.AbstractType.Talk
    }
 
+let name (speaker:Speaker) =
+  String.concat speaker.Lastname
 
 let talk (t:Model.ConferenceAbstract) =
-  div [] [ t.Text |> str ]
+    div [] [ t.Text |> str ]
 
+let simpleButton txt action dispatch =
+  div
+    [ ClassName "column" ]
+    [ a
+        [ ClassName "button"
+          OnClick (fun _ -> action |> dispatch) ]
+        [ str txt ] ]
 
 let root (model: Model) dispatch =
   div []
     [
+      div [ ClassName "columns is-vcentered" ]
+        [ simpleButton "Finish Votingperiod" FinishVotingperid dispatch ]
       div [ ClassName "columns is-vcentered" ]
         [
           div [ ClassName "column"] [ "Abstracts" |> str ]
