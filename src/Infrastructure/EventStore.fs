@@ -11,7 +11,7 @@ type Msg<'Event> =
 let eventStore store : (unit -> EventResult<'Event>) * Subscriber<EventSet<'Event>> =
   let mailbox =
     MailboxProcessor.Start(fun inbox ->
-
+      printfn "Start"
       let rec loop() =
           async {
             let! msg = inbox.Receive()
