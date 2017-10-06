@@ -39,6 +39,11 @@ let apply (state : Conference) event : Conference =
     | VotingPeriodWasFinished ->
         { state with VotingPeriod = Finished }
 
+    | VotingPeriodWasReopened ->
+        { state with
+            VotingPeriod = InProgess
+            Abstracts = state.Abstracts |> List.map (fun abstr -> { abstr with Status = AbstractStatus.Proposed }) }
+
     | VotingWasIssued voting ->
         { state with Votings = voting :: state.Votings }
 

@@ -8,6 +8,7 @@ type Msg =
   | Received of ServerMsg<Events.Event,ConferenceApi.QueryResult>
   | FinishVotingperiod
   | ToggleMode
+  | ReopenVotingperiod
   | MakeItSo
 
 type WhatIf =

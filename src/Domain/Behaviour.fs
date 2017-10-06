@@ -120,6 +120,19 @@ let handleFinishVotingPeriod givenHistory =
   |> conferenceState
   |> finishVotingPeriod
 
+let reopenVotingPeriod conference =
+  match conference.CallForPapers,conference.VotingPeriod with
+  | Closed,Finished ->
+      [VotingPeriodWasReopened]
+
+  | _,_ ->
+    [FinishingDenied "Call For Papers Not Closed"]
+
+let handleReopenVotingPeriod givenHistory =
+  givenHistory
+  |> conferenceState
+  |> reopenVotingPeriod
+
 let handleVote givenHistory voting =
   let state = (conferenceState givenHistory)
   match state.VotingPeriod with
@@ -135,6 +148,7 @@ let execute (given_history: Event list) (command: Command) : Event list =
   match command with
   | ProposeAbstract proposed -> handleProposeAbstract given_history proposed
   | FinishVotingPeriod -> handleFinishVotingPeriod given_history
+  | ReopenVotingPeriod -> handleReopenVotingPeriod given_history
   | Vote voting -> handleVote given_history voting
   | RevokeVoting(_) -> failwith "Not Implemented"
   | AcceptAbstract(_) -> failwith "Not Implemented"

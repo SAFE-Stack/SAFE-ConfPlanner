@@ -23,7 +23,7 @@ let dummyWebsocket =
       Readmodel.QueryHandler = Dummy.queryHandler
     }
 
-  websocket <| eventSourced Dummy.behaviour [read] @".\conference_eventstore.json"
+  websocket <| eventSourced Dummy.behaviour [read] @".\dummy_eventstore.json"
 
 let conferenceWebsocket =
   let read =
@@ -31,7 +31,6 @@ let conferenceWebsocket =
       Readmodel.Projection = ConferenceApi.projection
       Readmodel.QueryHandler = ConferenceApi.queryHandler
     }
-
   websocket <| eventSourced Behaviour.execute [read] @".\conference_eventstore.json"
 
 // Fire up our web server!

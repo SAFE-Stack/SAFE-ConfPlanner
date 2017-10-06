@@ -91,6 +91,29 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
       | _ ->
            model, Cmd.none
 
+  | ReopenVotingperiod ->
+      match (model.State, model.Mode) with
+      | Success conference, Live ->
+          model, wsCmd <| ClientMsg.Command (transactionId(),Commands.ReopenVotingPeriod)
+
+      | Success conference, WhatIf whatif ->
+          let events =
+            conference |> Behaviour.reopenVotingPeriod
+
+          let newConference =
+            events |> updateStateWithEvents conference
+
+          let commands =
+             (transactionId(),Commands.ReopenVotingPeriod) :: whatif.Commands
+
+          { model with
+              State = newConference |> Success
+              Mode = { whatif with Events = events ; Commands = commands } |> WhatIf
+          }, Cmd.none
+
+      | _ ->
+           model, Cmd.none
+
   | MakeItSo ->
       match model.Mode with
       | Live ->
@@ -124,6 +147,4 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
 
       | _ ->
           model, Cmd.none
-
-
 

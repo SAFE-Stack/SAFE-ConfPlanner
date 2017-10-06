@@ -101,19 +101,9 @@ let viewAbstracts conference mode dispatch =
     [
       div [ ClassName "columns is-vcentered" ]
         [
-          match conference.VotingPeriod with
-          | InProgess ->
-              yield simpleButton "Finish Votingperiod" FinishVotingperiod dispatch
-
-          | Finished ->
-              yield  div [ ClassName "column"] [ "Voting Period already Finished" |> str ]
-        ]
-
-      div [ ClassName "columns is-vcentered" ]
-        [
-          div [ ClassName "column"] [ "Proposed" |> str ]
-          div [ ClassName "column"] [ "Accepted" |> str ]
-          div [ ClassName "column"] [ "Rejected" |> str ]
+          div [ ClassName "column"; Style [ TextAlign "center" ]] [ "Proposed" |> str ]
+          div [ ClassName "column"; Style [ TextAlign "center" ]] [ "Accepted" |> str ]
+          div [ ClassName "column"; Style [ TextAlign "center" ]] [ "Rejected" |> str ]
         ]
 
       div [ ClassName "columns is-vcentered" ]
@@ -121,6 +111,16 @@ let viewAbstracts conference mode dispatch =
           proposedColumn conference
           acceptedColumn conference
           rejectedColumn conference
+        ]
+
+      div [ ClassName "columns is-vcentered" ]
+        [
+          match conference.VotingPeriod with
+          | InProgess ->
+              yield simpleButton "Finish Votingperiod" FinishVotingperiod dispatch
+
+          | Finished ->
+              yield simpleButton "Reopen Votingperiod" ReopenVotingperiod dispatch
         ]
     ]
 
