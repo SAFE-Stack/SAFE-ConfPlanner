@@ -29,9 +29,9 @@ let proposedTalk title =
       Type = Talk
    }
 
-let talk1 = proposedTalk "Event Storming ftw"
-let talk2 = proposedTalk "F# ftw"
-let talk3 = proposedTalk "DDD ftw"
+let talk1 = proposedTalk "Keynote: Modelling with Events"
+let talk2 = proposedTalk "Talk: Keep your F#nctions pure"
+let talk3 = proposedTalk "Talk: Elm is quite ok, I guess"
 
 let vote (abstr: ConferenceAbstract) (organizer: Organizer) (value: Points) =
    Voting.Vote (abstr.Id,organizer.Id, value)

@@ -61,6 +61,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
       model, query
 
   | Received (ServerMsg.Events eventSet) ->
+      printf "Ävents %A" eventSet
       eventSet
       |> snd
       |> List.iter (fun event -> printfn "%A" event)

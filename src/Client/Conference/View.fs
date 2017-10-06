@@ -19,8 +19,8 @@ open Model
 let name (speaker:Speaker) =
   String.concat speaker.Lastname
 
-let talk (t:Model.ConferenceAbstract) =
-    div [] [ t.Text |> str ]
+let talk color (t:Model.ConferenceAbstract) =
+    div [ Style [ Padding "10px"; Margin "10px"; BackgroundColor color ]] [ t.Text |> str ]
 
 let simpleButton txt action dispatch =
   div
@@ -35,16 +35,16 @@ let abstractColumn color filter conference  =
   let abstracts =
     conference.Abstracts
     |> List.filter filter
-    |> List.map talk
+    |> List.map (talk color)
 
   div
     [
       ClassName "column"
       Style
         [
-          BackgroundColor color
           Display Flex
           FlexDirection "column"
+          Height "-webkit-fill-available"
         ]
     ]
     abstracts
@@ -78,7 +78,11 @@ let viewAbstracts conference dispatch =
           div [ ClassName "column"] [ "Rejected" |> str ]
         ]
 
-      div [ ClassName "columns is-vcentered" ]
+      div
+        [
+          ClassName "columns is-vcentered"
+          Style [ Height "-webkit-fill-available"]
+        ]
         [
           proposedColumn conference
           acceptedColumn conference

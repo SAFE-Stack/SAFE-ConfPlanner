@@ -43,6 +43,7 @@ let eventStore store : (unit -> EventResult<'Event>) * Subscriber<EventSet<'Even
 
                 with
                 | :? System.Exception as ex ->
+                    printf "%A" ex
                     ex.Message
                     |> EventResult.Error
                     |> reply.Reply
