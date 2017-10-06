@@ -16,26 +16,20 @@ open Fable.Helpers.React
 open Fable.Helpers.React.Props
 
 let menuItem label page currentPage =
-    li
-      [ ]
-      [ a
-          [ classList [ "is-active", page = currentPage ]
-            Href (toHash page) ]
-          [ str label ] ]
+    li [ classList [ "is-active", page = currentPage ] ]
+      [
+        a [ Href <| toHash page ] [ str label ]
+      ]
 
-let menu currentPage =
-  aside
-    [ ClassName "menu" ]
-    [ p
-        [ ClassName "menu-label" ]
-        [ str "General" ]
-      ul
-        [ ClassName "menu-list" ]
+let tabs currentPage =
+  div [ClassName "tabs is-centered"]
+    [
+      ul []
         [
-          menuItem "Conference" Page.Conference currentPage
           menuItem "Counter" Page.Counter currentPage
+          menuItem "Conference" Page.ConfPlanner currentPage
+          menuItem "Dummy" Page.Websockets currentPage
           menuItem "About" Page.About currentPage
-          menuItem "Websockets" Page.Websockets currentPage
         ]
     ]
 
@@ -46,25 +40,17 @@ let view model dispatch =
     | Page.About -> Info.View.root
     | Counter -> Counter.View.root model.CounterModel (CounterMsg >> dispatch)
     | Login -> Login.View.root model.LoginModel (LoginMsg >> dispatch)
-    | Conference -> Conference.View.root model.ConferenceModel (ConferenceMsg >> dispatch)
+    | ConfPlanner -> Conference.View.root model.ConferenceModel (ConferenceMsg >> dispatch)
     | Websockets -> Ws.root model.WsModel (WsMsg >> dispatch)
 
-  div
-    []
-    [ div
-        [ ClassName "navbar-bg" ]
+  div []
+    [
+      div [ ClassName "navbar-bg" ]
         [ div
             [ ClassName "container" ]
             [ Navbar.View.root model.CurrentUser (fun _ -> Logout |> dispatch) ] ]
-      div
-        [ ClassName "section" ]
-        [ div
-            [ ClassName "container" ]
-            [ div
-                [ ClassName "columns" ]
-                [ div
-                    [ ClassName "column is-3" ]
-                    [ menu model.CurrentPage ]
-                  div
-                    [ ClassName "column" ]
-                    [ pageHtml model.CurrentPage ] ] ] ] ]
+
+      tabs model.CurrentPage
+      pageHtml model.CurrentPage
+    ]
+

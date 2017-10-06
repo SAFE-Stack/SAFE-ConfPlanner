@@ -72,8 +72,8 @@ let scoreAbstracts state =
       |> List.map extractPoints
       |> List.filter (fun (id,_) -> id = abstractId)
       |> List.map (fun (id,points) -> points)
-      |> List.sumBy (fun points -> match points with | Zero -> 0| One -> 1 | Two -> 2)  
-      
+      |> List.sumBy (fun points -> match points with | Zero -> 0| One -> 1 | Two -> 2)
+
   let accepted =
     withoutVetos
     |> Seq.sortByDescending sumPoints
@@ -90,43 +90,65 @@ let scoreAbstracts state =
   |> List.map AbstractWasAccepted
   |> (@) (rejected |> List.map AbstractWasRejected)
 
-let handleFinishVotingPeriod givenHistory =
-  let state = (conferenceState givenHistory)
-  match state.CallForPapers,state.VotingPeriod with
+let finishVotingPeriod conference =
+  match conference.CallForPapers,conference.VotingPeriod with
   | Closed,InProgess ->
       let unfinishedVotings =
-        state.Abstracts
+        conference.Abstracts
         |> Seq.map (fun abstr ->
-            state.Votings
+            conference.Votings
             |> List.map extractAbstractId
             |> List.filter (fun id -> id = abstr.Id)
             |> List.length)
         |> Seq.filter (fun votes ->
-            votes <> state.Organizers.Length)
+            votes <> conference.Organizers.Length)
         |> Seq.length
       let events =
         match unfinishedVotings with
         | 0 ->
             [VotingPeriodWasFinished]
-            |> (@) (scoreAbstracts state)
+            |> (@) (scoreAbstracts conference)
         | _ -> [FinishingDenied "Not all abstracts have been voted for by all organisers"]
       events
+
   | Closed,Finished -> [FinishingDenied "Voting Period Already Finished"]
+
   | _,_ -> [FinishingDenied "Call For Papers Not Closed"]
+
+let handleFinishVotingPeriod givenHistory =
+  givenHistory
+  |> conferenceState
+  |> finishVotingPeriod
+
+let reopenVotingPeriod conference =
+  match conference.CallForPapers,conference.VotingPeriod with
+  | Closed,Finished ->
+      [VotingPeriodWasReopened]
+
+  | _,_ ->
+    [FinishingDenied "Call For Papers Not Closed"]
+
+let handleReopenVotingPeriod givenHistory =
+  givenHistory
+  |> conferenceState
+  |> reopenVotingPeriod
 
 let handleVote givenHistory voting =
   let state = (conferenceState givenHistory)
   match state.VotingPeriod with
   | Finished -> [VotingDenied "Voting Period Already Finished"]
-  | InProgress -> 
+  | InProgress ->
     match voting with
-    | VoterIsNotAnOrganizer state.Organizers _ -> [VotingDenied "Voter Is Not An Organizer"]
+    | VoterIsNotAnOrganizer state.Organizers _ ->
+        [VotingDenied "Voter Is Not An Organizer"]
+
     | _ -> [VotingWasIssued voting]
 
 let execute (given_history: Event list) (command: Command) : Event list =
   match command with
   | ProposeAbstract proposed -> handleProposeAbstract given_history proposed
   | FinishVotingPeriod -> handleFinishVotingPeriod given_history
+  | ReopenVotingPeriod -> handleReopenVotingPeriod given_history
   | Vote voting -> handleVote given_history voting
   | RevokeVoting(_) -> failwith "Not Implemented"
   | AcceptAbstract(_) -> failwith "Not Implemented"

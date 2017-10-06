@@ -44,11 +44,11 @@ let mutable private sendPerWebsocket : ClientMsg<Dummy.Command,Dummy.QueryParame
 let private startWs dispatch =
   let onMsg : System.Func<MessageEvent, obj> =
     (fun (wsMsg:MessageEvent) ->
-      let msg =  ofJson<ServerMsg<Dummy.Event,Dummy.QueryResult>> <| unbox wsMsg.data
+      let msg = ofJson<ServerMsg<Dummy.Event,Dummy.QueryResult>> <| unbox wsMsg.data
       Msg.Received msg |> dispatch
       null) |> unbox // temporary fix until Fable WS Import is upgraded to Fable 1.*
 
-  let ws = Fable.Import.Browser.WebSocket.Create("ws://127.0.0.1:8085/websocket")
+  let ws = Fable.Import.Browser.WebSocket.Create("ws://127.0.0.1:8085/dummyWebsocket")
 
   let send msg =
     ws.send (toJson msg)

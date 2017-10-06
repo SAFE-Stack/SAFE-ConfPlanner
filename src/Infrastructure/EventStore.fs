@@ -8,12 +8,10 @@ type Msg<'Event> =
   | GetAllEvents of AsyncReplyChannel<EventResult<'Event>>
   | Events of EventSet<'Event>
 
-let store = @".\eventstore.json"
-
-let eventStore() : (unit -> EventResult<'Event>) * Subscriber<EventSet<'Event>> =
+let eventStore store : (unit -> EventResult<'Event>) * Subscriber<EventSet<'Event>> =
   let mailbox =
     MailboxProcessor.Start(fun inbox ->
-
+      printfn "Start"
       let rec loop() =
           async {
             let! msg = inbox.Receive()
@@ -45,6 +43,7 @@ let eventStore() : (unit -> EventResult<'Event>) * Subscriber<EventSet<'Event>> 
 
                 with
                 | :? System.Exception as ex ->
+                    printf "%A" ex
                     ex.Message
                     |> EventResult.Error
                     |> reply.Reply

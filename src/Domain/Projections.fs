@@ -12,27 +12,61 @@ let updateAbstractStatus abstractId status (abstr: ConferenceAbstract) =
 
 let apply (state : Conference) event : Conference =
   match event with
-    | OrganizerRegistered o -> { state with Organizers = o :: state.Organizers }
-    | TalkWasProposed t -> { state with Abstracts = t :: state.Abstracts }
-    | CallForPapersOpened -> { state with CallForPapers = Open }
-    | CallForPapersClosed -> { state with CallForPapers = Closed; VotingPeriod = InProgess }
-    | NumberOfSlotsDecided i -> { state with AvailableSlotsForTalks = i }
-    | AbstractWasProposed proposed -> { state with Abstracts = proposed :: state.Abstracts }
-    | AbstractWasAccepted abstractId -> { state with Abstracts = state.Abstracts |> List.map (updateAbstractStatus abstractId AbstractStatus.Accepted) }
-    | AbstractWasRejected abstractId -> { state with Abstracts = state.Abstracts |> List.map (updateAbstractStatus abstractId AbstractStatus.Rejected) }
-    | VotingPeriodWasFinished -> { state with VotingPeriod = Finished }
-    | VotingWasIssued voting -> { state with Votings = voting :: state.Votings }
-    | FinishingDenied(_) -> state
-    | VotingDenied(_) -> state
-    | ProposingDenied(_) -> state
+    | OrganizerRegistered o ->
+        { state with Organizers = o :: state.Organizers }
 
-let conferenceState (givenHistory: Event list) = 
+    | TalkWasProposed t ->
+        { state with Abstracts = t :: state.Abstracts }
+
+    | CallForPapersOpened ->
+        { state with CallForPapers = Open }
+
+    | CallForPapersClosed ->
+        { state with CallForPapers = Closed; VotingPeriod = InProgess }
+
+    | NumberOfSlotsDecided i ->
+        { state with AvailableSlotsForTalks = i }
+
+    | AbstractWasProposed proposed ->
+        { state with Abstracts = proposed :: state.Abstracts }
+
+    | AbstractWasAccepted abstractId ->
+        { state with Abstracts = state.Abstracts |> List.map (updateAbstractStatus abstractId AbstractStatus.Accepted) }
+
+    | AbstractWasRejected abstractId ->
+        { state with Abstracts = state.Abstracts |> List.map (updateAbstractStatus abstractId AbstractStatus.Rejected) }
+
+    | VotingPeriodWasFinished ->
+        { state with VotingPeriod = Finished }
+
+    | VotingPeriodWasReopened ->
+        { state with
+            VotingPeriod = InProgess
+            Abstracts = state.Abstracts |> List.map (fun abstr -> { abstr with Status = AbstractStatus.Proposed }) }
+
+    | VotingWasIssued voting ->
+        { state with Votings = voting :: state.Votings }
+
+    | FinishingDenied _ ->
+        state
+
+    | VotingDenied _ ->
+        state
+
+    | ProposingDenied _ ->
+        state
+
+let emptyConference : Conference =
+  {
+    Id = ConferenceId <| Guid.Empty
+    CallForPapers = NotOpened
+    VotingPeriod = InProgess
+    Abstracts = List.empty
+    Votings = List.empty
+    Organizers = List.empty
+    AvailableSlotsForTalks = 0
+  }
+
+let conferenceState (givenHistory: Event list) =
     givenHistory
-    |> Seq.fold apply {
-      Id = ConferenceId <| Guid.Empty
-      CallForPapers = NotOpened
-      VotingPeriod = InProgess
-      Abstracts = List.empty
-      Votings = List.empty
-      Organizers = List.empty
-      AvailableSlotsForTalks = 0}
+    |> List.fold apply emptyConference
