@@ -16,19 +16,42 @@ open Server.ServerTypes
 open Global
 open Model
 
-let name (speaker:Speaker) =
-  String.concat speaker.Lastname
+let speaker (speakers : Speaker list) =
+  speakers
+  |> List.map (fun s -> s.Firstname + " " + s.Lastname)
+  |> String.concat ", "
 
 let talk (t:Model.ConferenceAbstract) =
-    div [] [ t.Text |> str ]
+  div [ ClassName "card" ]
+    [
+      div [ ClassName "card-content" ]
+        [
+          div [ ClassName "media" ]
+            [
+              div [ ClassName "media-content" ]
+                [
+                  p [ ClassName "title is-4" ] [ str <| t.Text]
+                  p [ ClassName "subtitle is-6" ] [ str <| speaker t.Speakers ]
+                ]
+            ]
+
+          div [ ClassName "content" ]
+            [
+              str "Lorem ipsum dolor sit amet, consectetur adipiscing elit.Phasellus nec iaculis mauris."
+            ]
+        ]
+    ]
 
 let simpleButton txt action dispatch =
   div
     [ ClassName "column" ]
     [ a
-        [ ClassName "button"
-          OnClick (fun _ -> action |> dispatch) ]
-        [ str txt ] ]
+        [
+          ClassName "button"
+          OnClick (fun _ -> action |> dispatch)
+        ]
+        [ str txt ]
+    ]
 
 
 let abstractColumn color filter conference  =
@@ -45,6 +68,7 @@ let abstractColumn color filter conference  =
           BackgroundColor color
           Display Flex
           FlexDirection "column"
+          MinHeight 600
         ]
     ]
     abstracts
@@ -58,14 +82,28 @@ let acceptedColumn =
 let rejectedColumn =
   abstractColumn "#ffdddd" (fun abs -> abs.Status = Rejected)
 
-let viewAbstracts conference dispatch =
-  div []
+let toggleModeButtons mode dispatch =
+  let buttons =
+    match mode with
+    | Live ->
+        [ simpleButton "Switch to WhatIf-Mode" ToggleMode dispatch ]
+
+    | WhatIf _ ->
+        [
+          simpleButton "Switch to Live-Mode" ToggleMode dispatch
+          simpleButton "Make It So" MakeItSo dispatch
+        ]
+
+  div [ ClassName "columns" ] buttons
+
+let viewAbstracts conference mode dispatch =
+  div [ ClassName "section"]
     [
       div [ ClassName "columns is-vcentered" ]
         [
           match conference.VotingPeriod with
           | InProgess ->
-              yield simpleButton "Finish Votingperiod" FinishVotingperid dispatch
+              yield simpleButton "Finish Votingperiod" FinishVotingperiod dispatch
 
           | Finished ->
               yield  div [ ClassName "column"] [ "Voting Period already Finished" |> str ]
@@ -86,10 +124,67 @@ let viewAbstracts conference dispatch =
         ]
     ]
 
+let messageWindow name content =
+  let mapper =
+     sprintf "%A" >> str >> List.singleton >> li []
+
+  article [ ClassName "message is-info" ]
+    [
+      div  [ ClassName "message-header" ]
+        [
+          name |> str
+        ]
+      div [ ClassName "message-body" ]
+        [
+          ul []
+            [
+              yield! content |> List.map mapper
+            ]
+        ]
+    ]
+
+let footer mode lastEvents dispatch =
+  let content =
+    match mode with
+    | WhatIf whatif ->
+        let commands =
+          whatif.Commands |> List.map snd
+
+        div []
+          [
+            messageWindow "Potential Commands" commands
+            messageWindow "Potential Events" whatif.Events
+          ]
+
+    | Live ->
+        div []
+          [
+            messageWindow "Last Events" lastEvents
+          ]
+
+  footer [ ClassName "footer" ]
+    [
+      div [ ClassName "container" ]
+        [
+          div [ ClassName "content" ]
+            [
+              toggleModeButtons mode dispatch
+              content
+            ]
+        ]
+    ]
+
+let viewPage conference lastEvents mode dispatch =
+  div []
+    [
+      viewAbstracts conference mode dispatch
+      footer mode lastEvents dispatch
+    ]
+
 let root (model: Model) dispatch =
   match model.State with
      | Success conference ->
-         viewAbstracts conference dispatch
+         viewPage conference model.LastEvents model.Mode dispatch
 
      | _ ->
         div [ ClassName "columns is-vcentered" ]

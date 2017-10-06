@@ -19,19 +19,25 @@ let heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = Organizer
 let fellien = { Firstname = "Janek";  Lastname = "Felien"; Id = OrganizerId <| Guid.NewGuid() }
 let poepke = { Firstname = "Conrad";  Lastname = "Poepke"; Id = OrganizerId <| Guid.NewGuid() }
 
-let proposedTalk title =
-   {
-      Id = AbstractId <| Guid.NewGuid()
-      Duration = 45.
-      Speakers = []
-      Text = title
-      Status = Proposed
-      Type = Talk
-   }
+let proposedTalk title firstname lastname =
+  let speaker =
+    {
+      Speaker.Id = SpeakerId <| Guid.NewGuid()
+      Firstname = firstname
+      Lastname = lastname
+    }
+  {
+    Id = AbstractId <| Guid.NewGuid()
+    Duration = 45.
+    Speakers = [speaker]
+    Text = title
+    Status = Proposed
+    Type = Talk
+  }
 
-let talk1 = proposedTalk "Event Storming ftw"
-let talk2 = proposedTalk "F# ftw"
-let talk3 = proposedTalk "DDD ftw"
+let talk1 = proposedTalk "Event Storming ftw" "Alberto" "Brandolino"
+let talk2 = proposedTalk "F# ftw" "Don" "Syme"
+let talk3 = proposedTalk "DDD ftw" "Eric" "Evans"
 
 let vote (abstr: ConferenceAbstract) (organizer: Organizer) (value: Points) =
    Voting.Vote (abstr.Id,organizer.Id, value)

@@ -2,7 +2,8 @@ module  Model
 
 open System
 
-type SpeakerId = Speaker of Guid
+type SpeakerId = SpeakerId of Guid
+
 type Speaker = {
   Id : SpeakerId
   Firstname : string
