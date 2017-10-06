@@ -12,6 +12,7 @@ open Infrastructure.Types
 
 type Msg<'CommandPayload,'Event,'QueryParameter,'QueryResult> =
   | Connected
+  | Closed
   | Received of ClientMsg<'CommandPayload,'QueryParameter,'QueryResult>
   | Events of EventSet<'Event>
   | QueryResponse of QueryResponse<'QueryResult>
@@ -82,6 +83,9 @@ let websocket
                   |> send webSocket
 
                 return! loop()
+
+            | Closed ->
+                 printfn "Client closed connection"
           }
 
         loop()
@@ -111,6 +115,7 @@ let websocket
 
             | (Close, _, _) ->
                 printfn "%s %s" "Connection closed..." (webSocket.ToString())
+                Msg.Closed |> webSocketHandler.Post
                 do! webSocket.send Close emptyResponse true
                 loop <- false
 
