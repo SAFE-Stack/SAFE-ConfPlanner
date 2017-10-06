@@ -22,11 +22,12 @@ let name (speaker:Speaker) =
 let talk color (t:Model.ConferenceAbstract) =
     div [ Style [ Padding "10px"; Margin "10px"; BackgroundColor color ]] [ t.Text |> str ]
 
-let simpleButton txt action dispatch =
+let simpleButton txt color action dispatch =
   div
     [ ClassName "column" ]
     [ a
         [ ClassName "button"
+          Style [BackgroundColor color]
           OnClick (fun _ -> action |> dispatch) ]
         [ str txt ] ]
 
@@ -44,7 +45,6 @@ let abstractColumn color filter conference  =
         [
           Display Flex
           FlexDirection "column"
-          Height "-webkit-fill-available"
         ]
     ]
     abstracts
@@ -64,29 +64,30 @@ let viewAbstracts conference dispatch =
       div [ ClassName "columns is-vcentered" ]
         [
           match conference.VotingPeriod with
-          | InProgess ->
-              yield simpleButton "Finish Votingperiod" FinishVotingperid dispatch
-
           | Finished ->
               yield  div [ ClassName "column"] [ "Voting Period already Finished" |> str ]
+          | InProgress -> ignore
         ]
 
       div [ ClassName "columns is-vcentered" ]
         [
-          div [ ClassName "column"] [ "Proposed" |> str ]
-          div [ ClassName "column"] [ "Accepted" |> str ]
-          div [ ClassName "column"] [ "Rejected" |> str ]
+          div [ ClassName "column"; Style [ TextAlign "center" ]] [ "Proposed" |> str ]
+          div [ ClassName "column"; Style [ TextAlign "center" ]] [ "Accepted" |> str ]
+          div [ ClassName "column"; Style [ TextAlign "center" ]] [ "Rejected" |> str ]
         ]
 
-      div
-        [
-          ClassName "columns is-vcentered"
-          Style [ Height "-webkit-fill-available"]
-        ]
+      div [ ClassName "columns is-vcentered" ]
         [
           proposedColumn conference
           acceptedColumn conference
           rejectedColumn conference
+        ]
+
+      div [ ClassName "columns is-vcentered" ]
+        [
+          (match conference.VotingPeriod with
+          | InProgess -> simpleButton "Finish Votingperiod" "#ddffdd" FinishVotingperid dispatch
+          | Finished -> simpleButton "Reopen Votingperiod" "#ffdddd" ReopenVotingperid dispatch)
         ]
     ]
 

@@ -7,6 +7,7 @@ open Server.ServerTypes
 type Msg =
   | Received of ServerMsg<Events.Event,ConferenceApi.QueryResult>
   | QueryState
+  | ReopenVotingperid
   | FinishVotingperid
 
 

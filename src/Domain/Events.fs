@@ -10,6 +10,7 @@ type Event =
   | NumberOfSlotsDecided of int
   | VotingWasIssued of Voting
   | VotingPeriodWasFinished
+  | VotingPeriodWasReopened
   | AbstractWasProposed of ConferenceAbstract
   | AbstractWasAccepted of AbstractId
   | AbstractWasRejected of AbstractId
