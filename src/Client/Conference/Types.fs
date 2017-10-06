@@ -12,6 +12,5 @@ type Msg =
 
 type Model =
   {
-    Info : string
     State : RemoteData<Model.Conference>
   }

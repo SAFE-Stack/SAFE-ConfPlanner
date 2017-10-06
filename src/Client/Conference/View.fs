@@ -16,16 +16,6 @@ open Server.ServerTypes
 open Global
 open Model
 
-let proposedTalk(title): Model.ConferenceAbstract =
-   {
-      Id = Model.AbstractId <| Guid.NewGuid()
-      Duration = 45.
-      Speakers = []
-      Text = title
-      Status = Model.AbstractStatus.Proposed
-      Type = Model.AbstractType.Talk
-   }
-
 let name (speaker:Speaker) =
   String.concat speaker.Lastname
 
@@ -40,52 +30,69 @@ let simpleButton txt action dispatch =
           OnClick (fun _ -> action |> dispatch) ]
         [ str txt ] ]
 
-let root (model: Model) dispatch =
+
+let abstractColumn color filter conference  =
+  let abstracts =
+    conference.Abstracts
+    |> List.filter filter
+    |> List.map talk
+
+  div
+    [
+      ClassName "column"
+      Style
+        [
+          BackgroundColor color
+          Display Flex
+          FlexDirection "column"
+        ]
+    ]
+    abstracts
+
+let proposedColumn =
+  abstractColumn "#dddddd" (fun abs -> abs.Status = Proposed)
+
+let acceptedColumn =
+  abstractColumn "#ddffdd" (fun abs -> abs.Status = Accepted)
+
+let rejectedColumn =
+  abstractColumn "#ffdddd" (fun abs -> abs.Status = Rejected)
+
+let viewAbstracts conference dispatch =
   div []
     [
       div [ ClassName "columns is-vcentered" ]
-        [ simpleButton "Finish Votingperiod" FinishVotingperid dispatch ]
+        [
+          match conference.VotingPeriod with
+          | InProgess ->
+              yield simpleButton "Finish Votingperiod" FinishVotingperid dispatch
+
+          | Finished ->
+              yield  div [ ClassName "column"] [ "Voting Period already Finished" |> str ]
+        ]
+
       div [ ClassName "columns is-vcentered" ]
         [
-          div [ ClassName "column"] [ "Abstracts" |> str ]
+          div [ ClassName "column"] [ "Proposed" |> str ]
           div [ ClassName "column"] [ "Accepted" |> str ]
           div [ ClassName "column"] [ "Rejected" |> str ]
         ]
+
       div [ ClassName "columns is-vcentered" ]
-        [ div
-            [
-              ClassName "column"
-              Style
-                [
-                  BackgroundColor "#dddddd"
-                  Display Flex
-                  FlexDirection "column"
-                ]
-            ]
-            (match model.State with
-             | Success s -> s.Abstracts |> List.map talk
-             | _ -> [] )
-          div
-            [
-              ClassName "column"
-              Style
-                [
-                  BackgroundColor "#ddffdd"
-                  Display Flex
-                  FlexDirection "column"
-                ]
-            ]
-            []
-          div
-            [
-              ClassName "column"
-              Style
-                [
-                  BackgroundColor "#ffdddd"
-                  Display Flex
-                  FlexDirection "column"
-                ]
-            ]
-            []
+        [
+          proposedColumn conference
+          acceptedColumn conference
+          rejectedColumn conference
         ]
     ]
+
+let root (model: Model) dispatch =
+  match model.State with
+     | Success conference ->
+         viewAbstracts conference dispatch
+
+     | _ ->
+        div [ ClassName "columns is-vcentered" ]
+          [
+            div [ ClassName "column"] [ "State Not Loaded" |> str ]
+          ]
