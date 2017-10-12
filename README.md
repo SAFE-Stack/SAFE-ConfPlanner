@@ -2,7 +2,8 @@
 
 Steps to Reproduce
 
-* Checkout branch
+* Clone Repo: `git clone git@github.com:rommsen/ConfPlanner.git`
+* Checkout branch `git checkout Suave-Problems`
 * go to directory and 
   * run `dotnet restore`
   * run `yarn install`
