@@ -26,10 +26,7 @@ let tabs currentPage =
     [
       ul []
         [
-          menuItem "Counter" Page.Counter currentPage
-          menuItem "Conference" Page.ConfPlanner currentPage
-          menuItem "Dummy" Page.Websockets currentPage
-          menuItem "About" Page.About currentPage
+          menuItem "Websockets" Page.Websockets currentPage
         ]
     ]
 
@@ -37,10 +34,6 @@ let view model dispatch =
 
   let pageHtml =
     function
-    | Page.About -> Info.View.root
-    | Counter -> Counter.View.root model.CounterModel (CounterMsg >> dispatch)
-    | Login -> Login.View.root model.LoginModel (LoginMsg >> dispatch)
-    | ConfPlanner -> Conference.View.root model.ConferenceModel (ConferenceMsg >> dispatch)
     | Websockets -> Ws.root model.WsModel (WsMsg >> dispatch)
 
   div []
@@ -48,7 +41,7 @@ let view model dispatch =
       div [ ClassName "navbar-bg" ]
         [ div
             [ ClassName "container" ]
-            [ Navbar.View.root model.CurrentUser (fun _ -> Logout |> dispatch) ] ]
+            [ Navbar.View.root () ] ]
 
       tabs model.CurrentPage
       pageHtml model.CurrentPage

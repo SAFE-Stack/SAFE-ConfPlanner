@@ -31,23 +31,14 @@ let navButtons logout =
           // span [ OnClick logout ] [ str "Logout"]
         ]
 
-let root user logout =
-  // let info =
-  //   match user with
-  //   | Some user ->
-  //       str (sprintf "Hi %s!" user.UserName)
-
-  //   | None ->
-  //       str "Not Logged In"
-
+let root() =
   nav
       [ ClassName "nav" ]
       [ div
           [ ClassName "nav-left" ]
           [ h1
               [ ClassName "nav-item is-brand title is-4" ]
-              // [ str "Elmish / " ; info ] ]
-              [ str "Domain Driven UI" ] ]
+              [ str "Websockets" ] ]
         div
           [ ClassName "nav-right" ]
-          [ navButtons logout ] ]
+          [ ] ]

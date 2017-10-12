@@ -3,30 +3,12 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Domain\Domain.fsproj" />
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="../Infrastructure/Types.fs" />
-    <Compile Include="../Server/AuthTypes.fs" />
     <Compile Include="../Server/ServerTypes.fs" />
     <Compile Include="../Server/Dummy.fs" />
-    <Compile Include="../Server/ConferenceApi.fs" />
     <Compile Include="Global.fs" />
-    <Compile Include="Style.fs" />
-    <Compile Include="Utils.fs" />
-    <Compile Include="Info/View.fs" />
-    <Compile Include="Counter/Types.fs" />
-    <Compile Include="Counter/State.fs" />
-    <Compile Include="Counter/View.fs" />
-    <Compile Include="Conference/Types.fs" />
-    <Compile Include="Conference/Ws.fs" />
-    <Compile Include="Conference/State.fs" />
-    <Compile Include="Conference/View.fs" />
     <Compile Include="Navbar/View.fs" />
     <Compile Include="Websockets/websockets.fs" />
-    <Compile Include="Login/Types.fs" />
-    <Compile Include="Login/State.fs" />
-    <Compile Include="Login/View.fs" />
     <Compile Include="Types.fs" />
     <Compile Include="State.fs" />
     <Compile Include="View.fs" />

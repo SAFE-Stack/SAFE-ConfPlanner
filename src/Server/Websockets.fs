@@ -115,7 +115,7 @@ let websocket
 
             | (Close, _, _) ->
                 printfn "%s %s" "Connection closed..." (webSocket.ToString())
-                Msg.Closed |> webSocketHandler.Post
+                // Msg.Closed |> webSocketHandler.Post
                 do! webSocket.send Close emptyResponse true
                 loop <- false
 

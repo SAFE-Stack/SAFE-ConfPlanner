@@ -25,14 +25,6 @@ let dummyWebsocket =
 
   websocket <| eventSourced Dummy.behaviour [read] @".\dummy_eventstore.json"
 
-let conferenceWebsocket =
-  let read =
-    {
-      Readmodel.Projection = ConferenceApi.projection
-      Readmodel.QueryHandler = ConferenceApi.queryHandler
-    }
-  websocket <| eventSourced Behaviour.execute [read] @".\conference_eventstore.json"
-
 // Fire up our web server!
 let start clientPath port =
     printfn "Client-HomePath: %A" clientPath
@@ -54,13 +46,7 @@ let start clientPath port =
                 pathRegex @"/(public|js|css|Images)/(.*)\.(css|png|gif|jpg|js|map)" >=> Files.browseHome
               ]
 
-            POST >=> choose [
-                path "/api/users/login" >=> Auth.login
-            ]
-
             path "/dummyWebsocket" >=> handShake dummyWebsocket
-
-            path "/conferenceWebsocket" >=> handShake conferenceWebsocket
 
             NOT_FOUND "Page not found."
 
