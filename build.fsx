@@ -16,6 +16,8 @@ let clientPath = "./src/Client" |> FullName
 let testsPath = "./src/Domain.Tests" |> FullName
 let serverPath = "./src/Server" |> FullName
 
+let supportPath = "./src/Support" |> FullName
+
 
 let dotnetcliVersion = "2.0.0"
 
@@ -109,44 +111,10 @@ Target "BuildClient" (fun _ ->
     runDotnet clientPath "fable yarn-run build"
 )
 
-// --------------------------------------------------------------------------------------
-// Rename driver for macOS or Linux
+Target "RunFixtures" (fun _ ->
+    runDotnet supportPath "run"
+)
 
-// Target "RenameDrivers" (fun _ ->
-//     if not isWindows then
-//         run npmTool "install phantomjs" ""
-//     try
-//         if isMacOS && not <| File.Exists "test/UITests/bin/Debug/net461/chromedriver" then
-//             Fake.FileHelper.Rename "test/UITests/bin/Debug/net461/chromedriver" "test/UITests/bin/Debug/net461/chromedriver_macOS"
-//         elif isLinux && not <| File.Exists "test/UITests/bin/Debug/net461/chromedriver" then
-//             Fake.FileHelper.Rename "test/UITests/bin/Debug/net461/chromedriver" "test/UITests/bin/Debug/net461/chromedriver_linux64"
-//     with
-//     | exn -> failwithf "Could not rename chromedriver at test/UITests/bin/Debug/net461/chromedriver. Message: %s" exn.Message
-// )
-
-// Target "RunServerTests" (fun _ ->
-//     runDotnet serverTestsPath "run"
-// )
-
-// Target "RunClientTests" (fun _ ->
-//     ActivateFinalTarget "KillProcess"
-
-//     let serverProcess =
-//         let info = System.Diagnostics.ProcessStartInfo()
-//         info.FileName <- dotnetExePath
-//         info.WorkingDirectory <- serverPath
-//         info.Arguments <- " run"
-//         info.UseShellExecute <- false
-//         System.Diagnostics.Process.Start info
-
-//     System.Threading.Thread.Sleep 5000 |> ignore  // give server some time to start
-
-//     !! clientTestExecutables
-//     |> Expecto (fun p -> { p with Parallel = false } )
-//     |> ignore
-
-//     serverProcess.Kill()
-// )
 
 // --------------------------------------------------------------------------------------
 // Run the Website
@@ -161,15 +129,6 @@ let port = 8080
 
 
 Target "Run" (fun _ ->
-    // let unitTestsWatch = async {
-    //     let result =
-    //         ExecProcess (fun info ->
-    //             info.FileName <- dotnetExePath
-    //             info.WorkingDirectory <- serverTestsPath
-    //             info.Arguments <- "watch msbuild /t:TestAndRun") TimeSpan.MaxValue
-
-    //     if result <> 0 then failwith "Website shut down." }
-
     let suave = async { runDotnet serverPath "run" }
     let fablewatch = async { runDotnet clientPath "fable yarn-run start" } // nicht  webpack-dev-server, sonst wird webpack config nicht gefunden
     let openBrowser = async {
@@ -201,5 +160,8 @@ Target "All" DoNothing
 
 "BuildTests"
   ==> "RunTests"
+
+"Restore"
+  ==> "RunFixtures"
 
 RunTargetOrDefault "All"
