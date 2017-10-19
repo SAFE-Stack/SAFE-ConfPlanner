@@ -15,6 +15,18 @@ open Infrastructure.Types
 open Server.ServerTypes
 open Global
 open Model
+open Events
+
+type MessageType =
+  | Info
+  | Success
+  | Error
+
+let renderMessageType messageType =
+    match messageType with
+    | Info -> "is-info"
+    | Success -> "is-success"
+    | Error -> "is-danger"
 
 let speaker (speakers : Speaker list) =
   speakers
@@ -68,7 +80,7 @@ let abstractColumn color filter conference  =
           BackgroundColor color
           Display Flex
           FlexDirection "column"
-          MinHeight 600
+          MinHeight 650
         ]
     ]
     abstracts
@@ -124,11 +136,11 @@ let viewAbstracts conference mode dispatch =
         ]
     ]
 
-let messageWindow name content =
+let messageWindow name content messageType =
   let mapper =
      sprintf "%A" >> str >> List.singleton >> li []
 
-  article [ ClassName "message is-info" ]
+  article [ ClassName <| "message " + renderMessageType messageType ]
     [
       div  [ ClassName "message-header" ]
         [
@@ -143,6 +155,11 @@ let messageWindow name content =
         ]
     ]
 
+let messageWindowType events =
+  match events |> List.exists isError with
+  | true -> MessageType.Error
+  | false -> MessageType.Success
+
 let footer mode lastEvents dispatch =
   let content =
     match mode with
@@ -152,14 +169,14 @@ let footer mode lastEvents dispatch =
 
         div []
           [
-            messageWindow "Potential Commands" commands
-            messageWindow "Potential Events" whatif.Events
+            messageWindow "Potential Commands" commands MessageType.Info
+            messageWindow "Potential Events" whatif.Events <| messageWindowType whatif.Events
           ]
 
     | Live ->
         div []
           [
-            messageWindow "Last Events" lastEvents
+            messageWindow "Last Events" lastEvents <| messageWindowType lastEvents
           ]
 
   footer [ ClassName "footer" ]
@@ -181,9 +198,9 @@ let viewPage conference lastEvents mode dispatch =
       footer mode lastEvents dispatch
     ]
 
-let root (model: Model) dispatch =
+let root (model : Model) dispatch =
   match model.State with
-     | Success conference ->
+     | RemoteData.Success conference ->
          viewPage conference model.LastEvents model.Mode dispatch
 
      | _ ->
