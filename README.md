@@ -1,5 +1,5 @@
 # ConfPlanner
-This is the sample project that is used in the talk "Domain Driven UI" ([Slides](http://bit.ly/DomainDrivenUi). The title is a bit misleading as it is a bad name for "Reusing your datatypes and behaviour from your CQRS/Event-Sourced models in your Elm-architecture application."
+This is the sample project that is used in the talk "Domain Driven UI" ([Slides](http://bit.ly/DomainDrivenUi)). The title is a bit misleading as it is a bad name for "Reusing your datatypes and behaviour from your CQRS/Event-Sourced models in your Elm-architecture application."
 
 Given you use F# and Fable, you can actually build simple eventually connected systems and have the exact same model working in back and frontend.
 
