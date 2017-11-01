@@ -58,6 +58,8 @@ type Readmodel<'State,'Event,'QueryParameter,'QueryResult> =
     QueryHandler : QueryHandlerWithState<'QueryParameter,'State,'QueryResult>
   }
 
+// type StreamId = StreamId of string
+
 type Command<'CommandPayload> =
   TransactionId * 'CommandPayload
 

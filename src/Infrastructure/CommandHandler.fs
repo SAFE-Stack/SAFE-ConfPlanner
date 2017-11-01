@@ -3,11 +3,12 @@ module Infrastructure.CommandHandler
 open Types
 
 type Msg<'CommandPayload,'Event> =
-  | Init of EventResult<'Event>
+  | Init
   | Command of Command<'CommandPayload>
   | AddEventSubscriber of Subscriber<EventSet<'Event>>
 
 type State<'Event> = {
+  InitialEvents : EventSet<'Event> list
   Events : 'Event list
   EventSubscriber : Subscriber<EventSet<'Event>> list
 }
@@ -15,9 +16,9 @@ type State<'Event> = {
 let informSubscribers data subscribers =
   subscribers |> List.iter (fun sub -> data |> sub)
 
-let commandHandler (behaviour : Behaviour<'CommandPayload,'Event>) : (EventResult<'Event> -> unit) * CommandHandler<'CommandPayload> * EventPublisher<'Event> =
-
+let commandHandler read (behaviour : Behaviour<'CommandPayload,'Event>) : CommandHandler<'CommandPayload> * EventPublisher<'Event> =
     let state : State<'Event> = {
+      InitialEvents = []
       Events = []
       EventSubscriber = []
     }
@@ -30,18 +31,11 @@ let commandHandler (behaviour : Behaviour<'CommandPayload,'Event>) : (EventResul
             let! msg = inbox.Receive()
 
             match msg with
-            | Init eventResult ->
-                match eventResult with
-                | EventResult.Ok events ->
-                    printfn "initial events %A" events
+            | Init ->
+                state.InitialEvents
+                |> List.iter (fun data -> state.EventSubscriber |> informSubscribers data)
 
-                    events
-                    |> List.iter (fun data -> state.EventSubscriber |>  informSubscribers data)
-
-                    return! loop { state with Events = events |> List.collect snd  }
-
-                | EventResult.Error _ ->
-                    return! loop state
+                return! loop state
 
             | Command (transactionId,payload) ->
                 printfn "CommandHandler received command: %A" (transactionId,payload)
@@ -58,11 +52,17 @@ let commandHandler (behaviour : Behaviour<'CommandPayload,'Event>) : (EventResul
                 return! loop { state with EventSubscriber = subscriber :: state.EventSubscriber }
           }
 
-        loop state
-    )
+        let initialEvents =
+          match read() with
+          | EventResult.Ok events ->
+              printfn "initial events %A" events
+              events
 
-    let init =
-      Init >> mailbox.Post
+          | EventResult.Error _ ->
+              []
+
+        loop { state with InitialEvents = initialEvents}
+    )
 
     let commandHandler =
       Command >> mailbox.Post
@@ -70,6 +70,6 @@ let commandHandler (behaviour : Behaviour<'CommandPayload,'Event>) : (EventResul
     let eventPublisher =
       AddEventSubscriber >> mailbox.Post
 
-    init,commandHandler,eventPublisher
+    commandHandler,eventPublisher
 
 

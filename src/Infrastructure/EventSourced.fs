@@ -10,19 +10,16 @@ let eventSourced (behaviour : Behaviour<'CommandPayload,'Event>) (readmodels : R
   let getAllEvents,addEventsToStore =
     eventStore store
 
-  let initCommandHandler,commandHandler,eventPublisher =
-    commandHandler behaviour
+  let commandHandler,eventPublisher =
+    commandHandler getAllEvents behaviour
 
   let projections,queryHandlers =
     readmodels |> initializeReadSide
 
-  // subscribe projections to new events
+  // subscribe Projections to new events
   do projections |> List.iter eventPublisher
 
-  // initialize CommandHandler with events before eventStore subscribes to new events
-  do getAllEvents() |> initCommandHandler
-
-  // subscribe eventStore to new events
+  // subscribe EventStore to new events
   do addEventsToStore |> eventPublisher
 
   {

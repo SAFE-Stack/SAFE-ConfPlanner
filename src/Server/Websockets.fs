@@ -49,26 +49,26 @@ let websocket
                 printfn "webSocketHandler connected"
                 return! loop()
 
-            | Msg.Received clientMsg  ->
+            | Received clientMsg  ->
                 match clientMsg with
-                | ClientMsg.Command (transactionId,command) ->
+                | Command (transactionId,command) ->
                     printfn "handle incoming command with transactionId %A..." transactionId
                     eventSourced.CommandHandler (transactionId,command)
                     return! loop()
 
-                | ClientMsg.Query query ->
+                | Query query ->
                     printfn "handle incoming query %A..." query
                     eventSourced.QueryManager (query,queryReplyChannel)
                     return! loop()
 
-                | ClientMsg.Connect ->
+                | Connect ->
                     printfn "ClientMsg.Connect"
                     ServerMsg.Connected
                     |> send webSocket
 
                     return! loop()
 
-            | Msg.Events (transactionId,events) ->
+            | Events (transactionId,events) ->
                 printfn "events %A for transactionId %A will be send to client..." events transactionId
                 let response =
                   ServerMsg.Events (transactionId,events)
@@ -96,7 +96,7 @@ let websocket
         while loop do
             let! msg = webSocket.read()
             match msg with
-            | (Opcode.Text, data, true) ->
+            | (Text, data, true) ->
                 let str =
                   data
                   |> System.Text.Encoding.UTF8.GetString
