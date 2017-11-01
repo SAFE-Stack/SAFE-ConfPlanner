@@ -8,7 +8,7 @@ type Msg<'Event> =
   | GetAllEvents of AsyncReplyChannel<EventResult<'Event>>
   | Events of EventSet<'Event>
 
-let eventStore store : (unit -> EventResult<'Event>) * Subscriber<EventSet<'Event>> =
+let eventStore store : (unit -> EventResult<'Event> Async) * Subscriber<EventSet<'Event>> =
   let mailbox =
     MailboxProcessor.Start(fun inbox ->
       printfn "Start"
@@ -55,13 +55,13 @@ let eventStore store : (unit -> EventResult<'Event>) * Subscriber<EventSet<'Even
 
     )
 
-  let getAllEvents() =
-    mailbox.PostAndReply(GetAllEvents)
+  let read() =
+    mailbox.PostAndAsyncReply(GetAllEvents)
 
-  let eventSubscriber =
+  let append =
     Events >> mailbox.Post
 
-  getAllEvents,eventSubscriber
+  read,append
 
 
 

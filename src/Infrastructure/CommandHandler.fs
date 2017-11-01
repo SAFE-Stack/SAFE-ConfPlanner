@@ -52,16 +52,19 @@ let commandHandler read (behaviour : Behaviour<'CommandPayload,'Event>) : Comman
                 return! loop { state with EventSubscriber = subscriber :: state.EventSubscriber }
           }
 
-        let initialEvents =
-          match read() with
-          | EventResult.Ok events ->
-              printfn "initial events %A" events
-              events
+        async {
+          let! eventResult = read()
+          let initialEvents =
+            match eventResult with
+            | EventResult.Ok events ->
+                printfn "initial events %A" events
+                events
 
-          | EventResult.Error _ ->
-              []
+            | EventResult.Error _ ->
+                []
 
-        loop { state with InitialEvents = initialEvents}
+          return! loop { state with InitialEvents = initialEvents}
+        }
     )
 
     let commandHandler =
