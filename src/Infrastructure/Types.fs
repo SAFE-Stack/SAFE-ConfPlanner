@@ -49,6 +49,12 @@ type EventSet<'Event> =
 type EventResult<'Event> =
   Result<EventSet<'Event> list, string>
 
+type ReadEvents<'Event> =
+  unit -> EventResult<'Event> Async
+
+type AppendEvents<'Event> =
+  EventSet<'Event> -> Async<unit>
+
 type Projection<'Event> =
   EventSet<'Event> -> unit
 

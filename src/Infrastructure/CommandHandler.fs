@@ -3,12 +3,11 @@ module Infrastructure.CommandHandler
 open Types
 
 type Msg<'CommandPayload,'Event> =
-  | Init
+  | Init of EventSet<'Event> list * AsyncReplyChannel<unit>
   | Command of Command<'CommandPayload>
   | AddEventSubscriber of Subscriber<EventSet<'Event>>
 
 type State<'Event> = {
-  InitialEvents : EventSet<'Event> list
   Events : 'Event list
   EventSubscriber : Subscriber<EventSet<'Event>> list
 }
@@ -16,11 +15,16 @@ type State<'Event> = {
 let informSubscribers data subscribers =
   subscribers |> List.iter (fun sub -> data |> sub)
 
-let commandHandler read (behaviour : Behaviour<'CommandPayload,'Event>) : CommandHandler<'CommandPayload> * EventPublisher<'Event> =
+let commandHandler
+  (readEvents : ReadEvents<'Event>)
+  (appendEvents : AppendEvents<'Event>)
+  (behaviour : Behaviour<'CommandPayload,'Event>)
+  (projections :  Projection<'Event> list)
+  : CommandHandler<'CommandPayload> * EventPublisher<'Event> =
+
     let state : State<'Event> = {
-      InitialEvents = []
       Events = []
-      EventSubscriber = []
+      EventSubscriber = projections
     }
 
     let mailbox =
@@ -31,18 +35,22 @@ let commandHandler read (behaviour : Behaviour<'CommandPayload,'Event>) : Comman
             let! msg = inbox.Receive()
 
             match msg with
-            | Init ->
-                state.InitialEvents
+            | Init (initialEvents,reply) ->
+                initialEvents
                 |> List.iter (fun data -> state.EventSubscriber |> informSubscribers data)
 
-                return! loop state
+                reply.Reply ()
+                return! loop { state with Events = initialEvents |> List.collect snd }
 
             | Command (transactionId,payload) ->
                 printfn "CommandHandler received command: %A" (transactionId,payload)
+
                 let newEvents = behaviour state.Events payload
                 let allEvents = state.Events @ newEvents
 
                 printfn "CommandHandler new Events: %A" newEvents
+
+                do! (transactionId,newEvents) |> appendEvents
 
                 state.EventSubscriber |> informSubscribers (transactionId,newEvents)
 
@@ -52,20 +60,25 @@ let commandHandler read (behaviour : Behaviour<'CommandPayload,'Event>) : Comman
                 return! loop { state with EventSubscriber = subscriber :: state.EventSubscriber }
           }
 
-        async {
-          let! eventResult = read()
-          let initialEvents =
-            match eventResult with
-            | EventResult.Ok events ->
-                printfn "initial events %A" events
-                events
-
-            | EventResult.Error _ ->
-                []
-
-          return! loop { state with InitialEvents = initialEvents}
-        }
+        loop state
     )
+
+    let initialEvents =
+      async {
+        let! eventResult = readEvents()
+        let initialEvents =
+          match eventResult with
+          | EventResult.Ok events ->
+              printfn "initial events %A" events
+              events
+
+          | EventResult.Error _ ->
+              []
+
+        return initialEvents
+      } |> Async.RunSynchronously
+
+    mailbox.PostAndReply(fun reply -> (initialEvents,reply) |> Init)
 
     let commandHandler =
       Command >> mailbox.Post

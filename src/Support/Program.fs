@@ -4,7 +4,7 @@ open Infrastructure.EventStore
 open Events
 open Model
 
-let getAllEvents,(storeEvents : Subscriber<EventSet<Event>>) =
+let readEvents,appendEvents =
   eventStore @"..\Server\conference_eventstore.json"
 
 let transactionId () =
@@ -74,22 +74,8 @@ let events =
 let main argv =
     events
     |> makeEventSets
-    |> List.iter storeEvents
-
-    (*
-      dirty hack to wait for all storeEvents calls to finish
-
-      I need to change it to
-      events
-      |> makeEventSets
-      |> List.map (fun eventSet -> async { do! storeEvents eventSet})
-      |> Async.Parallel
-      |> Async.RunSynchronously
-      |> ignore
-
-      but for this I need to change the type Subscriber<'a> to 'a -> Async<unit>
-      and this needs to be implemented everywhere
-    *)
-    printfn "allEvents %A" <| getAllEvents()
+    |> List.map (fun eventSet -> async { do! appendEvents eventSet})
+    |> List.iter Async.RunSynchronously
+    |> ignore
 
     0
