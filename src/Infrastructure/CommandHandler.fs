@@ -8,9 +8,15 @@ type Msg<'CommandPayload,'Event> =
   | AddEventSubscriber of Subscriber<EventSet<'Event>>
 
 type State<'Event> = {
-  Events : 'Event list
+  EventSets : EventSet<'Event> list
   EventSubscriber : Subscriber<EventSet<'Event>> list
 }
+
+let getStream streamId events =
+  events
+  |> List.filter (fun ((_,id), _) -> streamId = id)
+  |> List.collect (fun (_,events) -> events)
+
 
 let informSubscribers data subscribers =
   subscribers |> List.iter (fun sub -> data |> sub)
@@ -23,7 +29,7 @@ let commandHandler
   : CommandHandler<'CommandPayload> * EventPublisher<'Event> =
 
     let state : State<'Event> = {
-      Events = []
+      EventSets = []
       EventSubscriber = projections
     }
 
@@ -40,21 +46,23 @@ let commandHandler
                 |> List.iter (fun data -> state.EventSubscriber |> informSubscribers data)
 
                 reply.Reply ()
-                return! loop { state with Events = initialEvents |> List.collect snd }
+                return! loop { state with EventSets = initialEvents }
 
-            | Command (transactionId,payload) ->
-                printfn "CommandHandler received command: %A" (transactionId,payload)
+            | Command ((transactionId,streamId),payload) ->
+                printfn "CommandHandler received command: %A" ((transactionId,streamId),payload)
 
-                let newEvents = behaviour state.Events payload
-                let allEvents = state.Events @ newEvents
+                let stream = state.EventSets |> getStream streamId
+                let newEvents = behaviour stream payload  // Todo flip und pipe
+                let newEventSet = ((transactionId,streamId),newEvents)
+                let allEvents = state.EventSets @ [newEventSet]
 
-                printfn "CommandHandler new Events: %A" newEvents
+                printfn "CommandHandler new newEventSet: %A" newEventSet
 
-                do! (transactionId,newEvents) |> appendEvents
+                do! newEventSet |> appendEvents
 
-                state.EventSubscriber |> informSubscribers (transactionId,newEvents)
+                state.EventSubscriber |> informSubscribers newEventSet
 
-                return! loop { state with Events = allEvents }
+                return! loop { state with EventSets = allEvents }
 
             | AddEventSubscriber subscriber ->
                 return! loop { state with EventSubscriber = subscriber :: state.EventSubscriber }

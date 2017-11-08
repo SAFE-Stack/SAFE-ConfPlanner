@@ -1,12 +1,9 @@
 module Conference.Ws
 
-open Elmish
 open Fable.Import.Browser
 open Fable.Core.JsInterop
-open Global
 open Conference.Types
 open Server.ServerTypes
-open Server
 open Infrastructure.Types
 
 let mutable private sendPerWebsocket : ClientMsg<Commands.Command,ConferenceApi.QueryParameter,ConferenceApi.QueryResult> -> unit =

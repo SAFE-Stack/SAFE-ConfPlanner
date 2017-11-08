@@ -14,7 +14,7 @@ type QueryResult =
 
 let projection : Projection<Conference, Event>=
   {
-    InitialState = emptyConference
+    InitialState = emptyConference()
     UpdateState = apply
   }
 

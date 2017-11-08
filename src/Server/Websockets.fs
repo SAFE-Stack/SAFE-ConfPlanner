@@ -1,7 +1,6 @@
 module Websocket
 
 open Suave
-open Suave.Sockets
 open Suave.Sockets.Control
 open Suave.WebSocket
 
@@ -22,17 +21,19 @@ let send (webSocket : WebSocket) (msg : ServerMsg<'Event,'QueryResult>) =
     msg
     |> toJson
     |> System.Text.Encoding.ASCII.GetBytes
-    |> ByteSegment
+    |> Suave.Sockets.ByteSegment
 
   webSocket.send Text byteResponse true
     |> Async.Ignore
     |> Async.Start
 
+let emptyResponse =
+  [||] |> Suave.Sockets.ByteSegment
+
 let websocket
   (eventSourced : EventSourced<'CommandPayload,'Event,'QueryParameter,'State,'QueryResult>)
   (webSocket : WebSocket)
   (context: HttpContext) =
-    let emptyResponse = [||] |> ByteSegment
 
     let webSocketHandler =
       MailboxProcessor.Start(fun inbox ->
@@ -51,9 +52,9 @@ let websocket
 
             | Received clientMsg  ->
                 match clientMsg with
-                | Command (transactionId,command) ->
-                    printfn "handle incoming command with transactionId %A..." transactionId
-                    eventSourced.CommandHandler (transactionId,command)
+                | Command (header,command as payload) ->
+                    printfn "handle incoming command with header %A..." header
+                    eventSourced.CommandHandler payload
                     return! loop()
 
                 | Query query ->
@@ -68,10 +69,10 @@ let websocket
 
                     return! loop()
 
-            | Events (transactionId,events) ->
-                printfn "events %A for transactionId %A will be send to client..." events transactionId
+            | Events (header,events as payload) ->
+                printfn "events %A for header %A will be send to client..." events header
                 let response =
-                  ServerMsg.Events (transactionId,events)
+                  ServerMsg.Events payload
                   |> send webSocket
 
                 return! loop()

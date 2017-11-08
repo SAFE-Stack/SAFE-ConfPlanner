@@ -10,10 +10,15 @@ let readEvents,appendEvents =
 let transactionId () =
   TransactionId <| Guid.NewGuid()
 
-let makeEventSets events =
+let makeEventSets streamId events : EventSet<Event> list =
   events
-  |> List.map (fun event -> transactionId(), [event])
+  |> List.map (fun event -> (transactionId(), streamId), [event])
 
+let conference =
+  emptyConference()
+
+let makeStreamId (ConferenceId id) =
+  id |> string |> StreamId
 
 let heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }
 let fellien = { Firstname = "Janek";  Lastname = "Felien"; Id = OrganizerId <| Guid.NewGuid() }
@@ -47,6 +52,7 @@ let veto (abstr: ConferenceAbstract) (organizer: Organizer) =
 
 let events =
   [
+    ConferenceScheduled conference
     OrganizerRegistered heimeshoff
     OrganizerRegistered fellien
     OrganizerRegistered poepke
@@ -70,10 +76,13 @@ let events =
   ]
 
 
+let streamId =
+  conference.Id |> makeStreamId
+
 [<EntryPoint>]
 let main argv =
     events
-    |> makeEventSets
+    |> makeEventSets streamId
     |> List.map (fun eventSet -> async { do! appendEvents eventSet})
     |> List.iter Async.RunSynchronously
     |> ignore

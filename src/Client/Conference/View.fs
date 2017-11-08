@@ -2,17 +2,9 @@ module Conference.View
 
 open Conference.Types
 
-open System
-open Elmish
-open Fable.Core
-open Fable.Core.JsInterop
-open Fable.Import
-open Fable.Import.Browser
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
 
-open Infrastructure.Types
-open Server.ServerTypes
 open Global
 open Model
 open Events
@@ -165,7 +157,7 @@ let footer mode lastEvents dispatch =
     match mode with
     | WhatIf whatif ->
         let commands =
-          whatif.Commands |> List.map snd
+          whatif.Commands |> List.map (fun (_,commands) -> commands)
 
         div []
           [

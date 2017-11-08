@@ -43,8 +43,13 @@ type QueryHandlerWithState<'QueryParameter,'State,'QueryResult> =
 type QueryResponseChannel<'QueryResult> =
   QueryResponse<'QueryResult> -> unit
 
+type StreamId = StreamId of string
+
+type MessageHeader =
+  TransactionId * StreamId
+
 type EventSet<'Event> =
-  TransactionId * 'Event list
+  MessageHeader * 'Event list
 
 type EventResult<'Event> =
   Result<EventSet<'Event> list, string>
@@ -64,10 +69,8 @@ type Readmodel<'State,'Event,'QueryParameter,'QueryResult> =
     QueryHandler : QueryHandlerWithState<'QueryParameter,'State,'QueryResult>
   }
 
-// type StreamId = StreamId of string
-
 type Command<'CommandPayload> =
-  TransactionId * 'CommandPayload
+  MessageHeader * 'CommandPayload
 
 type CommandHandler<'CommandPayload> =
   Command<'CommandPayload> -> unit

@@ -1,16 +1,13 @@
 module Ws
 
 open Elmish
-open Fable.Core
 open Fable.Core.JsInterop
-open Fable.Import
 open Fable.Import.Browser
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
 
 open Infrastructure.Types
 open Server.ServerTypes
-
 
 type RemoteData<'Result> =
   | NotAsked
@@ -35,8 +32,6 @@ type Msg =
   | QueryState
   | QueryStateTimesX of int
   | QueryCanNotBeHandled
-
-
 
 let mutable private sendPerWebsocket : ClientMsg<Dummy.Command,Dummy.QueryParameter,Dummy.QueryResult> -> unit =
   fun _ -> failwith "WebSocket not connected"
@@ -76,6 +71,9 @@ let wsCmd cmd =
 let transactionId() =
   TransactionId <| System.Guid.NewGuid()
 
+let commandHeader () =
+  transactionId(), "dummy" |> StreamId
+
 let createQuery query =
   {
     Query.Id = QueryId <| System.Guid.NewGuid()
@@ -98,7 +96,7 @@ let update msg model =
   | Received (ServerMsg.Connected) ->
     { model with Info = "connected" }, Cmd.none
 
-  | Received (ServerMsg.Events (transactionId,events)) ->
+  | Received (ServerMsg.Events ((transactionId,streamId),events)) ->
       console.log (sprintf "New Events %A" events)
       { model with
           Events = model.Events @ events
@@ -123,16 +121,16 @@ let update msg model =
               model, Cmd.none
 
   | CommandOne ->
-      model, wsCmd <| ClientMsg.Command (transactionId(),Dummy.Command.One)
+      model, wsCmd <| ClientMsg.Command (commandHeader(),Dummy.Command.One)
 
   | CommandTwo ->
-      model, wsCmd <| ClientMsg.Command (transactionId(),Dummy.Command.Two)
+      model, wsCmd <| ClientMsg.Command (commandHeader(),Dummy.Command.Two)
 
   | CommandThree ->
-      model, wsCmd <| ClientMsg.Command (transactionId(),Dummy.Command.Three)
+      model, wsCmd <| ClientMsg.Command (commandHeader(),Dummy.Command.Three)
 
   | CommandFour ->
-      model, wsCmd <| ClientMsg.Command (transactionId(),Dummy.Command.Four)
+      model, wsCmd <| ClientMsg.Command (commandHeader(),Dummy.Command.Four)
 
 
   | QueryState ->
@@ -165,8 +163,6 @@ let update msg model =
 
 
 // ------------ VIEW -------------
-open Fable.Helpers.React
-open Fable.Helpers.React.Props
 
 let simpleButton txt action dispatch =
   div

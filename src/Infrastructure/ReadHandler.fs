@@ -25,7 +25,7 @@ let private readHandler (read : Readmodel<'State,'Event,'QueryParameter,'QueryRe
             let! msg = inbox.Receive()
 
             match msg with
-            | Events (_,events) ->
+            | Events (_,events) ->  // todo include stream id
                 printfn "ReadModel received new events: %A" events
                 let newReadModel =
                   events

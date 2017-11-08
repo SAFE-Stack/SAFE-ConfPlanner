@@ -2,10 +2,6 @@ module Conference.State
 
 open Elmish
 open Global
-open Fable.Core
-open Fable.Core.JsInterop
-open Fable.Import
-open Fable.Import.Browser
 
 open Server.ServerTypes
 open Infrastructure.Types
@@ -14,8 +10,14 @@ open Conference.Types
 open Conference.Ws
 open ConferenceApi
 
-let updateStateWithEvents conference events  =
+let private updateStateWithEvents conference events  =
   events |> List.fold Projections.apply conference
+
+let private makeStreamId (Model.ConferenceId id) =
+  id |> string |> StreamId
+
+let private commandHeader id =
+  transactionId(), id |> makeStreamId
 
 let queryForState () =
   ConferenceApi.QueryParameter.State
@@ -55,7 +57,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
       match (model.State, model.Mode) with
       | Success conference, Live ->
           let events =
-            eventSet |> snd
+            eventSet |> (fun (_,events) -> events)
 
           let newConference =
             events |> updateStateWithEvents conference
@@ -71,7 +73,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
   | FinishVotingperiod ->
       match (model.State, model.Mode) with
       | Success conference, Live ->
-          model, wsCmd <| ClientMsg.Command (transactionId(),Commands.FinishVotingPeriod)
+          model, wsCmd <| ClientMsg.Command (conference.Id |> commandHeader,Commands.FinishVotingPeriod)
 
       | Success conference, WhatIf whatif ->
           let events =
@@ -81,7 +83,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
             events |> updateStateWithEvents conference
 
           let commands =
-             (transactionId(),Commands.FinishVotingPeriod) :: whatif.Commands
+             (conference.Id |> commandHeader,Commands.FinishVotingPeriod) :: whatif.Commands
 
           { model with
               State = newConference |> Success
@@ -94,7 +96,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
   | ReopenVotingperiod ->
       match (model.State, model.Mode) with
       | Success conference, Live ->
-          model, wsCmd <| ClientMsg.Command (transactionId(),Commands.ReopenVotingPeriod)
+          model, wsCmd <| ClientMsg.Command (conference.Id |> commandHeader,Commands.ReopenVotingPeriod)
 
       | Success conference, WhatIf whatif ->
           let events =
@@ -104,7 +106,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
             events |> updateStateWithEvents conference
 
           let commands =
-             (transactionId(),Commands.ReopenVotingPeriod) :: whatif.Commands
+             (conference.Id |> commandHeader,Commands.ReopenVotingPeriod) :: whatif.Commands
 
           { model with
               State = newConference |> Success

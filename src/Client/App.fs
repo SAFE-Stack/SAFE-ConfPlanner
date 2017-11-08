@@ -3,11 +3,6 @@ module App.App
 open Elmish
 open Elmish.Browser.Navigation
 open Elmish.Browser.UrlParser
-open Fable.Core
-open Fable.Core.JsInterop
-open Fable.Import
-open Fable.Import.Browser
-open App.Types
 open App.State
 
 open Elmish.HMR
