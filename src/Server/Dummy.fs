@@ -20,7 +20,6 @@ type QueryParameter =
   | StateTimesX of int
   | CanNotBeHandled
 
-
 type QueryResult =
   | State of int
   | StateTimesX of int
@@ -33,16 +32,18 @@ let updateState (state: State) (msg : Event) : State =
   | Event.EventTwo -> state + 2
   | Event.EventThree -> state + 3
 
+let private evolveState state (_, events) =
+  events |> List.fold updateState state
+
 let projection : Projection<State, Event>=
   {
     InitialState = initialState
-    UpdateState = updateState
+    UpdateState = evolveState
   }
 
 let behaviour events command : Event list =
   let state =
-    events
-    |> List.fold projection.UpdateState projection.InitialState
+    events |> List.fold updateState initialState
 
   match command with
   | Command.One ->

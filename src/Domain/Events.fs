@@ -3,6 +3,8 @@ module Events
 open Model
 
 type Event =
+  | ConferenceScheduled of Conference
+  | ConferenceAlreadyScheduled
   | OrganizerRegistered of Organizer
   | TalkWasProposed of ConferenceAbstract
   | CallForPapersOpened
@@ -20,6 +22,8 @@ type Event =
 
 let isError event =
   match event with
+  | ConferenceScheduled _ -> false
+  | ConferenceAlreadyScheduled -> true
   | OrganizerRegistered _ -> false
   | TalkWasProposed _ -> false
   | CallForPapersOpened -> false

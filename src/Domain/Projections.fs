@@ -9,54 +9,59 @@ let updateAbstractStatus abstractId status (abstr: ConferenceAbstract) =
     | true -> { abstr with Status = status }
     | false -> abstr
 
-
-let apply (state : Conference) event : Conference =
+let apply (conference : Conference) event : Conference =
   match event with
+    | ConferenceScheduled conference ->
+        conference
+
     | OrganizerRegistered o ->
-        { state with Organizers = o :: state.Organizers }
+        { conference with Organizers = o :: conference.Organizers }
 
     | TalkWasProposed t ->
-        { state with Abstracts = t :: state.Abstracts }
+        { conference with Abstracts = t :: conference.Abstracts }
 
     | CallForPapersOpened ->
-        { state with CallForPapers = Open }
+        { conference with CallForPapers = Open }
 
     | CallForPapersClosed ->
-        { state with CallForPapers = Closed; VotingPeriod = InProgess }
+        { conference with CallForPapers = Closed; VotingPeriod = InProgess }
 
     | NumberOfSlotsDecided i ->
-        { state with AvailableSlotsForTalks = i }
+        { conference with AvailableSlotsForTalks = i }
 
     | AbstractWasProposed proposed ->
-        { state with Abstracts = proposed :: state.Abstracts }
+        { conference with Abstracts = proposed :: conference.Abstracts }
 
     | AbstractWasAccepted abstractId ->
-        { state with Abstracts = state.Abstracts |> List.map (updateAbstractStatus abstractId AbstractStatus.Accepted) }
+        { conference with Abstracts = conference.Abstracts |> List.map (updateAbstractStatus abstractId AbstractStatus.Accepted) }
 
     | AbstractWasRejected abstractId ->
-        { state with Abstracts = state.Abstracts |> List.map (updateAbstractStatus abstractId AbstractStatus.Rejected) }
+        { conference with Abstracts = conference.Abstracts |> List.map (updateAbstractStatus abstractId AbstractStatus.Rejected) }
 
     | VotingPeriodWasFinished ->
-        { state with VotingPeriod = Finished }
+        { conference with VotingPeriod = Finished }
 
     | VotingPeriodWasReopened ->
-        { state with
+        { conference with
             VotingPeriod = InProgess
-            Abstracts = state.Abstracts |> List.map (fun abstr -> { abstr with Status = AbstractStatus.Proposed }) }
+            Abstracts = conference.Abstracts |> List.map (fun abstr -> { abstr with Status = AbstractStatus.Proposed }) }
 
     | VotingWasIssued voting ->
-        { state with Votings = voting :: state.Votings }
+        { conference with Votings = voting :: conference.Votings }
 
     | FinishingDenied _ ->
-        state
+        conference
 
     | VotingDenied _ ->
-        state
+        conference
 
     | ProposingDenied _ ->
-        state
+        conference
 
-let emptyConference : Conference =
+    | ConferenceAlreadyScheduled ->
+        conference
+
+let private emptyConference : Conference =
   {
     Id = ConferenceId <| Guid.Empty
     CallForPapers = NotOpened
@@ -67,6 +72,6 @@ let emptyConference : Conference =
     AvailableSlotsForTalks = 0
   }
 
-let conferenceState (givenHistory: Event list) =
+let conferenceState (givenHistory : Event list) =
     givenHistory
     |> List.fold apply emptyConference

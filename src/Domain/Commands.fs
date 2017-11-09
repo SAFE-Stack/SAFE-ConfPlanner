@@ -3,6 +3,7 @@ module Commands
 open Model
 
 type Command =
+  | ScheduleConference of Conference
   | Vote of Voting
   | RevokeVoting of Voting
   | FinishVotingPeriod

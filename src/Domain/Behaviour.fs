@@ -1,6 +1,5 @@
 module Behaviour
 
-open System
 open Model
 open Commands
 open Events
@@ -144,8 +143,19 @@ let handleVote givenHistory voting =
 
     | _ -> [VotingWasIssued voting]
 
-let execute (given_history: Event list) (command: Command) : Event list =
+let handleScheduleConference givenHistory conference =
+  printfn "conference %A" conference
+  if givenHistory |> List.isEmpty then
+    [ConferenceScheduled conference]
+  else
+    [ConferenceAlreadyScheduled]
+
+let execute (given_history : Event list) (command : Command) : Event list =
   match command with
+  | ScheduleConference conference ->
+      printfn "ScheduleConference %A" conference
+      conference |> handleScheduleConference given_history
+
   | ProposeAbstract proposed -> handleProposeAbstract given_history proposed
   | FinishVotingPeriod -> handleFinishVotingPeriod given_history
   | ReopenVotingPeriod -> handleReopenVotingPeriod given_history

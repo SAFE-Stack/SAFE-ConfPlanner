@@ -7,9 +7,8 @@ module Server.JsonWebToken
 open System.IO
 open System.Text
 open Newtonsoft.Json
-open System.Security.Cryptography
 
-let private createPassPhrase() = 
+let private createPassPhrase() =
     let crypto = System.Security.Cryptography.RandomNumberGenerator.Create()
     let randomNumber = Array.init 32 byte
     crypto.GetBytes(randomNumber)

@@ -1,8 +1,6 @@
 /// Module of server domain types.
 module Server.ServerTypes
 
-open System
-
 open Infrastructure.Types
 
 

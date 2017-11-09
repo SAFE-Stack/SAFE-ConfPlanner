@@ -79,3 +79,13 @@ type Conference = {
   Organizers : Organizer list
   AvailableSlotsForTalks : int
 }
+
+let emptyConference() = {
+  Id = System.Guid.NewGuid() |> ConferenceId
+  CallForPapers = NotOpened
+  VotingPeriod = InProgess
+  Abstracts = []
+  Votings = []
+  Organizers = []
+  AvailableSlotsForTalks = 2
+}
