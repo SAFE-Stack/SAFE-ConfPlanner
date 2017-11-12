@@ -14,5 +14,6 @@ Program.mkProgram init update App.View.view
 |> Program.toNavigable (parseHash pageParser) urlUpdate
 |> Program.withHMR
 |> Program.withReact "elmish-app"
+|> Program.withConsoleTrace
 |> Program.withDebugger
 |> Program.run

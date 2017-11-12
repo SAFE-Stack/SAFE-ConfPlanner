@@ -16,6 +16,7 @@ let makeEventSets streamId events : EventSet<Event> list =
 
 let conference =
   emptyConference()
+  |> (fun conf -> { conf with Id = ConferenceId <| System.Guid.Parse "37b5252a-8887-43bb-87a0-62fbf8d21799" })
 
 let makeStreamId (ConferenceId id) =
   id |> string |> StreamId

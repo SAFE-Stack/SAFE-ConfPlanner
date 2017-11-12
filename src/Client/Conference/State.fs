@@ -9,6 +9,7 @@ open Infrastructure.Types
 open Conference.Types
 open Conference.Ws
 open ConferenceApi
+open Model
 
 let private updateStateWithEvents conference events  =
   events |> List.fold Projections.apply conference
@@ -19,8 +20,11 @@ let private makeStreamId (Model.ConferenceId id) =
 let private commandHeader id =
   transactionId(), id |> makeStreamId
 
-let queryForState () =
-  ConferenceApi.QueryParameter.State
+let queryConference () =
+  "37b5252a-8887-43bb-87a0-62fbf8d21799"
+  |> System.Guid.Parse
+  |> ConferenceId
+  |> ConferenceApi.QueryParameter.Conference
   |> createQuery
   |> ClientMsg.Query
   |> wsCmd
@@ -41,17 +45,14 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
 
       | Handled result ->
           match result with
-          | QueryResult.State state ->
+          | QueryResult.Conference state ->
               { model with State = state |> Success }, Cmd.none
 
-  | Received (ServerMsg.Connected) ->
-      let query =
-        ConferenceApi.QueryParameter.State
-          |> createQuery
-          |> ClientMsg.Query
-          |> wsCmd
+          | QueryResult.ConferenceNotFound ->
+              model,Cmd.none
 
-      model, query
+  | Received (ServerMsg.Connected) ->
+      model, queryConference ()
 
   | Received (ServerMsg.Events eventSet) ->
       match (model.State, model.Mode) with
@@ -130,7 +131,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
           { model with
               State = whatif.Conference |> Success
               Mode = Live
-          }, wsCmds @ queryForState ()
+          }, wsCmds @ queryConference ()
 
   | ToggleMode ->
       match (model.State, model.Mode) with
@@ -145,7 +146,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
           { model with Mode = whatif |> WhatIf }, Cmd.none
 
       | _, WhatIf _ ->
-          { model with Mode = Live }, queryForState ()
+          { model with Mode = Live }, queryConference ()
 
       | _ ->
           model, Cmd.none

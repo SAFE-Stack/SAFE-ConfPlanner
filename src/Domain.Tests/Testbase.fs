@@ -6,9 +6,7 @@ open NUnit.Framework
 open System
 open Model
 open Behaviour
-open Commands
 open Events
-
 
 let Given (events : Event list) = events
 
@@ -22,9 +20,13 @@ let eventEquals expected actual =
 
 let ThenExpect expectedEvents actualEvents =
   match actualEvents with
-  | Some (actualEvents) -> CollectionAssert.AreEquivalent(expectedEvents, actualEvents)
-  | None -> None |> should equal expectedEvents
+  | Some (actualEvents) ->
+      // printfn "expected %A" (expectedEvents |> List.length)
+      // printfn "actualEvents %A" (actualEvents |> List.length)
+      CollectionAssert.AreEquivalent(expectedEvents, actualEvents)
 
+  | None ->
+      None |> should equal expectedEvents
 
 let vote (abstr: ConferenceAbstract) (organizer: Organizer) (value: Points) =
    Voting.Vote (abstr.Id,organizer.Id, value)

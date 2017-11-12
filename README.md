@@ -54,24 +54,11 @@ From the top of my head. If anyone wants to chip in, feel welcome.
 ### Infrastructure
 * extract the project into its own repository and make it a bit more production ready :D
 * implement at least one different event store implementation (e.g. SQLite or Azure something something)
-* make proper use of F# `Async` implementation, e.g. change
-  ```
-  type CommandHandler<'CommandPayload> =
-    Command<'CommandPayload> -> unit
-  ```
-
-  to
-
-  ```
-  type CommandHandler<'CommandPayload> =
-    Command<'CommandPayload> -> Async<unit>
-  ```
-
 * implement projections that can send notifications
 
 ### Server
 * implement a proper authentication for websockets
-* Fix this problem: https://github.com/rommsen/ConfPlanner/tree/Suave-Problems. Unfortunately I can not seem to find anyone who can help me properly.
+
 
 ### Client
 * use [Fulma](https://mangelmaxime.github.io/Fulma/) for styling
