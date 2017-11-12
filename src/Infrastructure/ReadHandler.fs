@@ -9,10 +9,10 @@ type Msg<'Event,'QueryParameter,'QueryResult> =
 type State<'State> = 'State
 
 let private createQueryHandler (handler : MailboxProcessor<Msg<'Event,'QueryParameter,'QueryResult>>) query =
-    handler.PostAndReply(fun reply -> Msg.Query <| (query,reply))
+    handler.PostAndReply(fun reply -> Query <| (query,reply))
 
 let private createProjection (handler : MailboxProcessor<Msg<'Event,'QueryParameter,'QueryResult>>) =
-  Msg.Events >> handler.Post
+  Events >> handler.Post
 
 let private readHandler (read : Readmodel<'State,'Event,'QueryParameter,'QueryResult>) : Projection<'Event> * QueryHandler<'QueryParameter,'QueryResult> =
     let state = read.Projection.InitialState
@@ -25,17 +25,17 @@ let private readHandler (read : Readmodel<'State,'Event,'QueryParameter,'QueryRe
             let! msg = inbox.Receive()
 
             match msg with
-            | Msg.Events (_,events) ->
+            | Events ((_,streamId),events) ->
                 printfn "ReadModel received new events: %A" events
                 let newReadModel =
-                  events
-                  |> List.fold read.Projection.UpdateState state
+                  (streamId,events)
+                  |> read.Projection.UpdateState state
 
                 printfn "New Readmodel: %A" newReadModel
 
                 return! loop newReadModel
 
-            | Msg.Query (query,reply) ->
+            | Query (query,reply) ->
                 reply.Reply <| read.QueryHandler query state
 
                 return! loop state

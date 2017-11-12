@@ -6,24 +6,50 @@ open Model
 open Projections
 
 type QueryParameter =
-  | State
+  | Conference of ConferenceId
   | CanNotBeHandled
 
 type QueryResult =
-  | State of Conference
+  | Conference of Conference
+  | ConferenceNotFound
 
-let projection : Projection<Conference, Event>=
+type ConferenceReadModel =
+  Map<StreamId,Conference>
+
+let private evolveState state (streamId : StreamId ,events) : ConferenceReadModel =
+  let conference =
+    state
+    |> Map.tryFind streamId
+    |> Option.defaultValue (emptyConference())
+
+  state
+  |> Map.add streamId (events |> List.fold apply conference)
+
+let projection : Projection<ConferenceReadModel, Event>=
   {
-    InitialState = emptyConference
-    UpdateState = apply
+    InitialState = Map.empty
+    UpdateState = evolveState
   }
 
-let queryHandler (query : Query<QueryParameter>) (state : Conference) : QueryHandled<QueryResult> =
+let queryHandler (query : Query<QueryParameter>) (readModel : ConferenceReadModel) : QueryHandled<QueryResult> =
   match query.Parameter with
-  | QueryParameter.State ->
-      state
-      |> QueryResult.State
-      |> Handled
+  | QueryParameter.Conference conferenceId ->
+      let conference =
+        readModel
+        |> Map.tryPick (fun _ conference ->
+                          if conference.Id = conferenceId then
+                            conference |> Some
+                          else None)
+
+      match conference with
+      | Some conference ->
+          conference
+          |> Conference
+          |> Handled
+
+      | None ->
+          ConferenceNotFound
+          |> Handled
 
   | _ -> NotHandled
 

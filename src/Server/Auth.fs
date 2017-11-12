@@ -1,8 +1,6 @@
 /// Login web part and functions for API web part request authorisation with JWT.
 module Server.Auth
 
-open Server.AuthTypes
-
 open Suave
 open Suave.RequestErrors
 

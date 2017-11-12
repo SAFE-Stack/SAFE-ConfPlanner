@@ -1,17 +1,17 @@
-<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Domain\Domain.fsproj" />
+  </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
     <Compile Include="Testbase.fs" />
     <Compile Include="FinishVotingPeriod_Test.fs" />
     <Compile Include="ProposeAbstract_Test.fs" />
     <Compile Include="Vote_Test.fs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Domain\Domain.fsproj" />
+    <Compile Include="ScheduleConference_Test.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0" />

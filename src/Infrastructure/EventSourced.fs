@@ -5,25 +5,15 @@ open CommandHandler
 open ReadHandler
 open QueryManager
 open EventStore
-
 let eventSourced (behaviour : Behaviour<'CommandPayload,'Event>) (readmodels : Readmodel<'State,'Event,'QueryParameter,'QueryResult> list) store : EventSourced<'CommandPayload,'Event,'QueryParameter,'State,'QueryResult> =
-  let getAllEvents,addEventsToStore =
+  let readEvents,appendEvents =
     eventStore store
-
-  let initCommandHandler,commandHandler,eventPublisher =
-    commandHandler behaviour
 
   let projections,queryHandlers =
     readmodels |> initializeReadSide
 
-  // subscribe projections to new events
-  do projections |> List.iter eventPublisher
-
-  // initialize CommandHandler with events before eventStore subscribes to new events
-  do getAllEvents() |> initCommandHandler
-
-  // subscribe eventStore to new events
-  do addEventsToStore |> eventPublisher
+  let commandHandler,eventPublisher =
+    commandHandler readEvents appendEvents behaviour projections
 
   {
     CommandHandler = commandHandler

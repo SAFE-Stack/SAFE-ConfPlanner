@@ -6,9 +6,9 @@ open System.IO
 
 type Msg<'Event> =
   | GetAllEvents of AsyncReplyChannel<EventResult<'Event>>
-  | Events of EventSet<'Event>
+  | Events of (EventSet<'Event>) * (AsyncReplyChannel<unit>)
 
-let eventStore store : (unit -> EventResult<'Event>) * Subscriber<EventSet<'Event>> =
+let eventStore store : ReadEvents<'Event> * AppendEvents<'Event> =
   let mailbox =
     MailboxProcessor.Start(fun inbox ->
       printfn "Start"
@@ -17,7 +17,7 @@ let eventStore store : (unit -> EventResult<'Event>) * Subscriber<EventSet<'Even
             let! msg = inbox.Receive()
 
             match msg with
-            | Events eventSet ->
+            | Events (eventSet,reply) ->
                 printfn "EventStore received new events: %A" eventSet
                 try
                   use streamWriter = new StreamWriter(store, true)
@@ -31,6 +31,7 @@ let eventStore store : (unit -> EventResult<'Event>) * Subscriber<EventSet<'Even
                 | :? System.Exception as ex ->
                     ex |> printfn "%A"
 
+                reply.Reply ()
                 return! loop()
 
             | GetAllEvents reply ->
@@ -55,13 +56,13 @@ let eventStore store : (unit -> EventResult<'Event>) * Subscriber<EventSet<'Even
 
     )
 
-  let getAllEvents() =
-    mailbox.PostAndReply(GetAllEvents)
+  let read() =
+    mailbox.PostAndAsyncReply(GetAllEvents)
 
-  let eventSubscriber =
-    Events >> mailbox.Post
+  let append events =
+    mailbox.PostAndAsyncReply(fun reply -> (events,reply) |> Events)
 
-  getAllEvents,eventSubscriber
+  read,append
 
 
 

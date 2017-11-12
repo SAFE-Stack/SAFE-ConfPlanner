@@ -2,10 +2,6 @@ module Conference.State
 
 open Elmish
 open Global
-open Fable.Core
-open Fable.Core.JsInterop
-open Fable.Import
-open Fable.Import.Browser
 
 open Server.ServerTypes
 open Infrastructure.Types
@@ -13,12 +9,22 @@ open Infrastructure.Types
 open Conference.Types
 open Conference.Ws
 open ConferenceApi
+open Model
 
-let updateStateWithEvents conference events  =
+let private updateStateWithEvents conference events  =
   events |> List.fold Projections.apply conference
 
-let queryForState () =
-  ConferenceApi.QueryParameter.State
+let private makeStreamId (Model.ConferenceId id) =
+  id |> string |> StreamId
+
+let private commandHeader id =
+  transactionId(), id |> makeStreamId
+
+let queryConference () =
+  "37b5252a-8887-43bb-87a0-62fbf8d21799"
+  |> System.Guid.Parse
+  |> ConferenceId
+  |> ConferenceApi.QueryParameter.Conference
   |> createQuery
   |> ClientMsg.Query
   |> wsCmd
@@ -39,23 +45,20 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
 
       | Handled result ->
           match result with
-          | QueryResult.State state ->
+          | QueryResult.Conference state ->
               { model with State = state |> Success }, Cmd.none
 
-  | Received (ServerMsg.Connected) ->
-      let query =
-        ConferenceApi.QueryParameter.State
-          |> createQuery
-          |> ClientMsg.Query
-          |> wsCmd
+          | QueryResult.ConferenceNotFound ->
+              model,Cmd.none
 
-      model, query
+  | Received (ServerMsg.Connected) ->
+      model, queryConference ()
 
   | Received (ServerMsg.Events eventSet) ->
       match (model.State, model.Mode) with
       | Success conference, Live ->
           let events =
-            eventSet |> snd
+            eventSet |> (fun (_,events) -> events)
 
           let newConference =
             events |> updateStateWithEvents conference
@@ -71,7 +74,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
   | FinishVotingperiod ->
       match (model.State, model.Mode) with
       | Success conference, Live ->
-          model, wsCmd <| ClientMsg.Command (transactionId(),Commands.FinishVotingPeriod)
+          model, wsCmd <| ClientMsg.Command (conference.Id |> commandHeader,Commands.FinishVotingPeriod)
 
       | Success conference, WhatIf whatif ->
           let events =
@@ -81,7 +84,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
             events |> updateStateWithEvents conference
 
           let commands =
-             (transactionId(),Commands.FinishVotingPeriod) :: whatif.Commands
+             (conference.Id |> commandHeader,Commands.FinishVotingPeriod) :: whatif.Commands
 
           { model with
               State = newConference |> Success
@@ -94,7 +97,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
   | ReopenVotingperiod ->
       match (model.State, model.Mode) with
       | Success conference, Live ->
-          model, wsCmd <| ClientMsg.Command (transactionId(),Commands.ReopenVotingPeriod)
+          model, wsCmd <| ClientMsg.Command (conference.Id |> commandHeader,Commands.ReopenVotingPeriod)
 
       | Success conference, WhatIf whatif ->
           let events =
@@ -104,7 +107,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
             events |> updateStateWithEvents conference
 
           let commands =
-             (transactionId(),Commands.ReopenVotingPeriod) :: whatif.Commands
+             (conference.Id |> commandHeader,Commands.ReopenVotingPeriod) :: whatif.Commands
 
           { model with
               State = newConference |> Success
@@ -128,7 +131,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
           { model with
               State = whatif.Conference |> Success
               Mode = Live
-          }, wsCmds @ queryForState ()
+          }, wsCmds @ queryConference ()
 
   | ToggleMode ->
       match (model.State, model.Mode) with
@@ -143,7 +146,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
           { model with Mode = whatif |> WhatIf }, Cmd.none
 
       | _, WhatIf _ ->
-          { model with Mode = Live }, queryForState ()
+          { model with Mode = Live }, queryConference ()
 
       | _ ->
           model, Cmd.none

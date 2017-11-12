@@ -9,13 +9,16 @@ type TransactionId =
 type QueryId =
   QueryId of System.Guid
 
+type StreamId =
+  StreamId of string
+
 type Behaviour<'CommandPayload,'Event> =
   'Event list -> 'CommandPayload -> 'Event list
 
 type Projection<'State,'Event> =
   {
     InitialState : 'State
-    UpdateState : 'State -> 'Event -> 'State
+    UpdateState : 'State -> StreamId * 'Event list -> 'State
   }
 
 type Query<'QueryParameter> =
@@ -43,11 +46,20 @@ type QueryHandlerWithState<'QueryParameter,'State,'QueryResult> =
 type QueryResponseChannel<'QueryResult> =
   QueryResponse<'QueryResult> -> unit
 
+type MessageHeader =
+  TransactionId * StreamId
+
 type EventSet<'Event> =
-  TransactionId * 'Event list
+  MessageHeader * 'Event list
 
 type EventResult<'Event> =
   Result<EventSet<'Event> list, string>
+
+type ReadEvents<'Event> =
+  unit -> EventResult<'Event> Async
+
+type AppendEvents<'Event> =
+  EventSet<'Event> -> Async<unit>
 
 type Projection<'Event> =
   EventSet<'Event> -> unit
@@ -59,7 +71,7 @@ type Readmodel<'State,'Event,'QueryParameter,'QueryResult> =
   }
 
 type Command<'CommandPayload> =
-  TransactionId * 'CommandPayload
+  MessageHeader * 'CommandPayload
 
 type CommandHandler<'CommandPayload> =
   Command<'CommandPayload> -> unit

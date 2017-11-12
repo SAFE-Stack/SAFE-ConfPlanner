@@ -4,16 +4,22 @@ open Infrastructure.EventStore
 open Events
 open Model
 
-let getAllEvents,(storeEvents : Subscriber<EventSet<Event>>) =
+let readEvents,appendEvents =
   eventStore @"..\Server\conference_eventstore.json"
 
 let transactionId () =
   TransactionId <| Guid.NewGuid()
 
-let makeEventSets events =
+let makeEventSets streamId events : EventSet<Event> list =
   events
-  |> List.map (fun event -> transactionId(), [event])
+  |> List.map (fun event -> (transactionId(), streamId), [event])
 
+let conference =
+  emptyConference()
+  |> (fun conf -> { conf with Id = ConferenceId <| System.Guid.Parse "37b5252a-8887-43bb-87a0-62fbf8d21799" })
+
+let makeStreamId (ConferenceId id) =
+  id |> string |> StreamId
 
 let heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }
 let fellien = { Firstname = "Janek";  Lastname = "Felien"; Id = OrganizerId <| Guid.NewGuid() }
@@ -47,6 +53,7 @@ let veto (abstr: ConferenceAbstract) (organizer: Organizer) =
 
 let events =
   [
+    ConferenceScheduled conference
     OrganizerRegistered heimeshoff
     OrganizerRegistered fellien
     OrganizerRegistered poepke
@@ -70,26 +77,15 @@ let events =
   ]
 
 
+let streamId =
+  conference.Id |> makeStreamId
+
 [<EntryPoint>]
 let main argv =
     events
-    |> makeEventSets
-    |> List.iter storeEvents
-
-    (*
-      dirty hack to wait for all storeEvents calls to finish
-
-      I need to change it to
-      events
-      |> makeEventSets
-      |> List.map (fun eventSet -> async { do! storeEvents eventSet})
-      |> Async.Parallel
-      |> Async.RunSynchronously
-      |> ignore
-
-      but for this I need to change the type Subscriber<'a> to 'a -> Async<unit>
-      and this needs to be implemented everywhere
-    *)
-    printfn "allEvents %A" <| getAllEvents()
+    |> makeEventSets streamId
+    |> List.map (fun eventSet -> async { do! appendEvents eventSet})
+    |> List.iter Async.RunSynchronously
+    |> ignore
 
     0
