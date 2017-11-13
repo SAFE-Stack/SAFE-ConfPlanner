@@ -23,6 +23,7 @@ let ThenExpect expectedEvents actualEvents =
   | Some (actualEvents) ->
       // printfn "expected %A" (expectedEvents |> List.length)
       // printfn "actualEvents %A" (actualEvents |> List.length)
+      // should equal expectedEvents actualEvents
       CollectionAssert.AreEquivalent(expectedEvents, actualEvents)
 
   | None ->

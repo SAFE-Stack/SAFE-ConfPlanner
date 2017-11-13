@@ -19,7 +19,7 @@ let serverPath = "./src/Server" |> FullName
 let supportPath = "./src/Support" |> FullName
 
 
-let dotnetcliVersion = "2.0.0"
+let dotnetcliVersion = "2.0.2"
 
 let mutable dotnetExePath = "dotnet"
 
