@@ -151,3 +151,6 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
       | _ ->
           model, Cmd.none
 
+  | SwitchToConference conferenceId ->
+      failwith "Not Implemented"
+

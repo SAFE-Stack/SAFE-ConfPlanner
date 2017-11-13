@@ -3,6 +3,7 @@ module Conference.Types
 open Global
 open Infrastructure.Types
 open Server.ServerTypes
+open Model
 
 type Msg =
   | Received of ServerMsg<Events.Event,ConferenceApi.QueryResult>
@@ -10,6 +11,7 @@ type Msg =
   | ToggleMode
   | ReopenVotingperiod
   | MakeItSo
+  | SwitchToConference of ConferenceId
 
 type WhatIf =
   {

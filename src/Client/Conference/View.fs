@@ -5,9 +5,15 @@ open Conference.Types
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
 
+
 open Global
 open Model
 open Events
+
+open Fulma.Layouts
+open Fulma.Components
+open Fulma.Elements
+open Fulma.Extra.FontAwesome
 
 type MessageType =
   | Info
@@ -183,9 +189,42 @@ let footer mode lastEvents dispatch =
         ]
     ]
 
+let viewHeader =
+  Section.section []
+    [
+      Container.container [ Container.isFluid ]
+        [
+          Panel.panel []
+            [
+              Panel.heading [ ] [ str "Conferences"]
+              Panel.block [ ]
+                [
+
+
+
+                  Dropdown.dropdown [ Dropdown.isHoverable ]
+                    [ div [ ]
+                        [ Button.button_a [ ]
+                            [ span [ ]
+                                [ str "Conferences" ]
+                              Icon.faIcon [ Icon.isSmall ] [ Fa.icon Fa.I.AngleDown ] ] ]
+                      Dropdown.menu []
+                        [ Dropdown.content [ ]
+                            [ Dropdown.item [ ] [ str "Item n°1" ]
+                              Dropdown.item [ ] [ str "Item n°2" ]
+                              Dropdown.item [ Dropdown.Item.isActive ] [ str "Item n°3" ]
+                              Dropdown.item [ ] [ str "Item n°4" ]
+                              Dropdown.divider [ ]
+                              Dropdown.item [ ] [ str "Item n°5" ] ] ] ]
+                ]
+            ]
+        ]
+    ]
+
 let viewPage conference lastEvents mode dispatch =
   div []
     [
+      viewHeader
       viewAbstracts conference mode dispatch
       footer mode lastEvents dispatch
     ]
@@ -198,5 +237,5 @@ let root (model : Model) dispatch =
      | _ ->
         div [ ClassName "columns is-vcentered" ]
           [
-            div [ ClassName "column"] [ "State Not Loaded" |> str ]
+            div [ ClassName "column"] [ "Conference Not Loaded" |> str ]
           ]
