@@ -6,6 +6,7 @@ nuget FSharp.NET.Sdk
 nuget Chessie
 nuget FAKE
 nuget FsUnit
+nuget Fulma
 nuget Newtonsoft.Json
 nuget NUnit.Console
 nuget Microsoft.Extensions.Logging.Console
