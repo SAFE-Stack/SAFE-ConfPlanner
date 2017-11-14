@@ -4,13 +4,11 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Domain\Domain.fsproj" />
+    <ProjectReference Include="..\Conference.Api\Conference.Api.fsproj" />
+    <ProjectReference Include="..\Infrastructure\Infrastructure.fsproj" />
+    <ProjectReference Include="..\Server\Server.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="../Infrastructure/Types.fs" />
-    <Compile Include="../Server/AuthTypes.fs" />
-    <Compile Include="../Server/ServerTypes.fs" />
-    <Compile Include="../Server/Dummy.fs" />
-    <Compile Include="../Server/ConferenceApi.fs" />
     <Compile Include="Global.fs" />
     <Compile Include="Style.fs" />
     <Compile Include="Utils.fs" />

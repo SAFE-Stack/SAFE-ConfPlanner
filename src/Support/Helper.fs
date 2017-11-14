@@ -2,7 +2,6 @@ module Support.Helper
 
 open System
 open Infrastructure.Types
-open Infrastructure.EventStore
 open Events
 open Model
 

@@ -64,6 +64,7 @@ let apply (conference : Conference) event : Conference =
 let private emptyConference : Conference =
   {
     Id = ConferenceId <| Guid.Empty
+    Title = ""
     CallForPapers = NotOpened
     VotingPeriod = InProgess
     Abstracts = List.empty

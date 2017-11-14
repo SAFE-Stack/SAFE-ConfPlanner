@@ -8,7 +8,7 @@ open Infrastructure.Types
 
 open Conference.Types
 open Conference.Ws
-open ConferenceApi
+open Conference.Api
 open Model
 
 let private updateStateWithEvents conference events  =
@@ -24,7 +24,7 @@ let queryConference () =
   "37b5252a-8887-43bb-87a0-62fbf8d21799"
   |> System.Guid.Parse
   |> ConferenceId
-  |> ConferenceApi.QueryParameter.Conference
+  |> API.QueryParameter.Conference
   |> createQuery
   |> ClientMsg.Query
   |> wsCmd
@@ -45,10 +45,10 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
 
       | Handled result ->
           match result with
-          | QueryResult.Conference state ->
+          | API.QueryResult.Conference state ->
               { model with State = state |> Success }, Cmd.none
 
-          | QueryResult.ConferenceNotFound ->
+          | API.QueryResult.ConferenceNotFound ->
               model,Cmd.none
 
   | Received (ServerMsg.Connected) ->

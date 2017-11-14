@@ -35,7 +35,7 @@ let updateState (state: State) (msg : Event) : State =
 let private evolveState state (_, events) =
   events |> List.fold updateState state
 
-let projection : Projection<State, Event>=
+let projection : ProjectionDefinition<State, Event>=
   {
     InitialState = initialState
     UpdateState = evolveState

@@ -5,15 +5,16 @@ open Fable.Core.JsInterop
 open Conference.Types
 open Server.ServerTypes
 open Infrastructure.Types
+open Conference.Api
 
-let mutable private sendPerWebsocket : ClientMsg<Commands.Command,ConferenceApi.QueryParameter,ConferenceApi.QueryResult> -> unit =
+let mutable private sendPerWebsocket : ClientMsg<Commands.Command,API.QueryParameter,API.QueryResult> -> unit =
   fun _ -> failwith "WebSocket not connected"
 
 let startWs dispatch =
   let onMsg : System.Func<MessageEvent, obj> =
     (fun (wsMsg : MessageEvent) ->
       let msg =
-        ofJson<ServerMsg<Events.Event,ConferenceApi.QueryResult>> <| unbox wsMsg.data
+        ofJson<ServerMsg<Events.Event,API.QueryResult>> <| unbox wsMsg.data
 
       Msg.Received msg |> dispatch
 

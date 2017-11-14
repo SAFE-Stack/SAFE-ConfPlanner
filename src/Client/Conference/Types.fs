@@ -4,9 +4,10 @@ open Global
 open Infrastructure.Types
 open Server.ServerTypes
 open Model
+open Conference.Api
 
 type Msg =
-  | Received of ServerMsg<Events.Event,ConferenceApi.QueryResult>
+  | Received of ServerMsg<Events.Event,API.QueryResult>
   | FinishVotingperiod
   | ToggleMode
   | ReopenVotingperiod

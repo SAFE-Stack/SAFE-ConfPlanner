@@ -1,4 +1,3 @@
-/// Functions for managing the Suave web server.
 module Server.WebServer
 
 open System.IO
@@ -11,29 +10,37 @@ open Suave.RequestErrors
 
 open Suave.WebSocket
 
-open Infrastructure.Types
 open Infrastructure.EventSourced
+open Conference.Api
 
 open Websocket
 
 let dummyWebsocket =
-  let read =
-    {
-      Readmodel.Projection = Dummy.projection
-      Readmodel.QueryHandler = Dummy.queryHandler
-    }
+  let projection,queryHandler =
+    toProjectionAndQueryHandler Dummy.projection Dummy.queryHandler
 
-  websocket <| eventSourced Dummy.behaviour [read] @".\dummy_eventstore.json"
+  websocket <|
+    eventSourced
+      Dummy.behaviour
+      [projection]
+      [queryHandler]
+      @".\dummy_eventstore.json"
 
 let conferenceWebsocket =
-  let read =
-    {
-      Readmodel.Projection = ConferenceApi.projection
-      Readmodel.QueryHandler = ConferenceApi.queryHandler
-    }
-  websocket <| eventSourced Behaviour.execute [read] @".\conference_eventstore.json"
+  let conferenceProjection,conferenceQueryHandler =
+    toProjectionAndQueryHandler Conference.projection Conference.queryHandler
 
-// Fire up our web server!
+  let conferencesProjection,conferencesQueryHandler =
+    toProjectionAndQueryHandler Conferences.projection Conferences.queryHandler
+
+  websocket <|
+    eventSourced
+      Behaviour.execute
+      [conferenceProjection ; conferencesProjection]
+      [conferenceQueryHandler ; conferencesQueryHandler]
+      @".\conference_eventstore.json"
+
+
 let start clientPath port =
     printfn "Client-HomePath: %A" clientPath
     if not (Directory.Exists clientPath) then
