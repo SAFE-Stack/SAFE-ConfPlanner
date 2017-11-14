@@ -1,12 +1,12 @@
-<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Domain\Domain.fsproj" />
-    <ProjectReference Include="..\Conference.Api\Conference.Api.fsproj" />
-    <ProjectReference Include="..\Infrastructure\Infrastructure.fsproj" />
-    <ProjectReference Include="..\Server\Server.fsproj" />
+    <ProjectReference Include="../Domain/Domain.fsproj" />
+    <ProjectReference Include="../Conference.Api/Conference.Api.fsproj" />
+    <ProjectReference Include="../Infrastructure/Infrastructure.fsproj" />
+    <ProjectReference Include="../Server/Server.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Global.fs" />
