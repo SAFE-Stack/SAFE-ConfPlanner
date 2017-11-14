@@ -5,12 +5,19 @@ open CommandHandler
 open ReadHandler
 open QueryManager
 open EventStore
-let eventSourced (behaviour : Behaviour<'CommandPayload,'Event>) (readmodels : Readmodel<'State,'Event,'QueryParameter,'QueryResult> list) store : EventSourced<'CommandPayload,'Event,'QueryParameter,'State,'QueryResult> =
+
+let toProjectionAndQueryHandler (projectionDefinition : ProjectionDefinition<'State,'Event>) (queryHandlerDefinition : QueryHandlerDefinition<'QueryParameter,'State,'QueryResult>) =
+  readHandler projectionDefinition queryHandlerDefinition
+
+let eventSourced
+      (behaviour : Behaviour<'CommandPayload,'Event>)
+      (projections : Projection<'Event> list)
+      (queryHandlers : QueryHandler<'QueryParameter,'QueryResult> list)
+      store
+      : EventSourced<'CommandPayload,'Event,'QueryParameter,'State,'QueryResult> =
+
   let readEvents,appendEvents =
     eventStore store
-
-  let projections,queryHandlers =
-    readmodels |> initializeReadSide
 
   let commandHandler,eventPublisher =
     commandHandler readEvents appendEvents behaviour projections

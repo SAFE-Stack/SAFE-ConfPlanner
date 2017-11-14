@@ -14,8 +14,11 @@ let private createQueryHandler (handler : MailboxProcessor<Msg<'Event,'QueryPara
 let private createProjection (handler : MailboxProcessor<Msg<'Event,'QueryParameter,'QueryResult>>) =
   Events >> handler.Post
 
-let private readHandler (read : Readmodel<'State,'Event,'QueryParameter,'QueryResult>) : Projection<'Event> * QueryHandler<'QueryParameter,'QueryResult> =
-    let state = read.Projection.InitialState
+let readHandler
+      (projectionDefinition : ProjectionDefinition<'State,'Event>)
+      (queryHandlerDefinition : QueryHandlerDefinition<'QueryParameter,'State,'QueryResult>)
+      : Projection<'Event> * QueryHandler<'QueryParameter,'QueryResult> =
+    let state = projectionDefinition.InitialState
 
     let mailbox =
       MailboxProcessor.Start(fun inbox ->
@@ -29,14 +32,14 @@ let private readHandler (read : Readmodel<'State,'Event,'QueryParameter,'QueryRe
                 printfn "ReadModel received new events: %A" events
                 let newReadModel =
                   (streamId,events)
-                  |> read.Projection.UpdateState state
+                  |> projectionDefinition.UpdateState state
 
                 printfn "New Readmodel: %A" newReadModel
 
                 return! loop newReadModel
 
             | Query (query,reply) ->
-                reply.Reply <| read.QueryHandler query state
+                reply.Reply <| queryHandlerDefinition query state
 
                 return! loop state
           }
@@ -51,9 +54,3 @@ let private readHandler (read : Readmodel<'State,'Event,'QueryParameter,'QueryRe
       mailbox |> createQueryHandler
 
     projection,queryHandler
-
-
-let initializeReadSide readmodels : Projection<'Event> list * QueryHandler<'QueryParameter,'QueryResult> list =
-  readmodels
-    |> List.map readHandler
-    |> List.unzip
