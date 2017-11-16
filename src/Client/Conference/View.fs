@@ -13,7 +13,6 @@ open Fulma.Layouts
 open Fulma.Components
 open Fulma.Elements
 open Fulma.Extra.FontAwesome
-open Fulma.Elements.Form
 
 type MessageType =
   | Info
@@ -92,7 +91,7 @@ let acceptedColumn =
 let rejectedColumn =
   abstractColumn "#ffdddd" (fun abs -> abs.Status = Rejected)
 
-let toggleModeButtons mode dispatch =
+let toggleModeButtons dispatch mode =
   let buttons =
     match mode with
     | Live ->
@@ -158,24 +157,38 @@ let messageWindowType events =
   | true -> MessageType.Error
   | false -> MessageType.Success
 
-let footer dispatch mode lastEvents =
+let footer dispatch conference lastEvents =
   let content =
-    match mode with
-    | WhatIf whatif ->
-        let commands =
-          whatif.Commands |> List.map (fun (_,commands) -> commands)
+    match conference with
+    | RemoteData.Success (conference,mode) ->
+        let window =
+          match mode with
+          | WhatIf whatif ->
+              let commands =
+                whatif.Commands |> List.map (fun (_,commands) -> commands)
 
-        div []
-          [
-            messageWindow "Potential Commands" commands MessageType.Info
-            messageWindow "Potential Events" whatif.Events <| messageWindowType whatif.Events
-          ]
+              [
+                messageWindow "Potential Commands" commands MessageType.Info
+                messageWindow "Potential Events" whatif.Events <| messageWindowType whatif.Events
+              ]
+              |> div []
 
-    | Live ->
-        div []
-          [
-            messageWindow "Last Events" lastEvents <| messageWindowType lastEvents
-          ]
+          | Live ->
+              [
+                messageWindow "Last Events" lastEvents <| messageWindowType lastEvents
+              ]
+              |> div []
+
+        [
+          mode |> toggleModeButtons dispatch
+          window
+        ]
+        |> div []
+
+
+    | _ ->
+      str "No conference loaded"
+
 
   footer [ ClassName "footer" ]
     [
@@ -183,7 +196,6 @@ let footer dispatch mode lastEvents =
         [
           div [ ClassName "content" ]
             [
-              toggleModeButtons mode dispatch
               content
             ]
         ]
@@ -241,7 +253,7 @@ let viewHeader dispatch conferences =
 
 let viewConference dispatch conference =
   match conference with
-  | RemoteData.Success conference ->
+  | RemoteData.Success (conference,_) ->
       viewAbstracts dispatch conference
 
   | _ ->
@@ -254,6 +266,6 @@ let root model dispatch =
   [
     viewHeader dispatch model.Conferences
     viewConference dispatch model.Conference
-    footer dispatch model.Mode model.LastEvents
+    footer dispatch model.Conference model.LastEvents
   ]
   |> div []

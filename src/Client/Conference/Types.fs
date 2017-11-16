@@ -28,8 +28,7 @@ type Mode =
 
 type Model =
   {
-    Conference : RemoteData<Model.Conference>
+    Conference : RemoteData<Model.Conference*Mode>
     Conferences : RemoteData<API.Conferences>
     LastEvents : Events.Event list
-    Mode : Mode
   }
