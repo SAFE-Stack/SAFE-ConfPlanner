@@ -2,12 +2,14 @@ module Conference.Api.API
 
 open Model
 
+type Conferences =
+  (ConferenceId * string) list
+
 type QueryParameter =
   | Conference of ConferenceId
   | Conferences
-  | CanNotBeHandled
 
 type QueryResult =
   | Conference of Conference
-  | Conferences of (ConferenceId * string) list
+  | Conferences of Conferences
   | ConferenceNotFound

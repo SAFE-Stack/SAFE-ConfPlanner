@@ -3,11 +3,9 @@ module Conference.Api.Conferences
 open API
 open Infrastructure.Types
 open Events
-open Model
 
 type ConferencesReadModel =
-  (ConferenceId * string) list
-
+  Conferences
 let private apply readModel event =
   match event with
     | ConferenceScheduled conference ->

@@ -20,18 +20,23 @@ let private makeStreamId (Model.ConferenceId id) =
 let private commandHeader id =
   transactionId(), id |> makeStreamId
 
-let queryConference () =
-  "37b5252a-8887-43bb-87a0-62fbf8d21799"
-  |> System.Guid.Parse
-  |> ConferenceId
+let queryConference conferenceId =
+  conferenceId
   |> API.QueryParameter.Conference
+  |> createQuery
+  |> ClientMsg.Query
+  |> wsCmd
+
+let queryConferences =
+  API.QueryParameter.Conferences
   |> createQuery
   |> ClientMsg.Query
   |> wsCmd
 
 let init() =
   {
-    State = NotAsked
+    Conference = NotAsked
+    Conferences = NotAsked
     Mode = Live
     LastEvents = []
   }, Cmd.ofSub startWs
@@ -45,17 +50,20 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
 
       | Handled result ->
           match result with
-          | API.QueryResult.Conference state ->
-              { model with State = state |> Success }, Cmd.none
+          | API.QueryResult.Conference conference ->
+              { model with Conference = conference |> Success }, Cmd.none
+
+          | API.QueryResult.Conferences conferences ->
+              { model with Conferences = conferences |> Success }, Cmd.none
 
           | API.QueryResult.ConferenceNotFound ->
               model,Cmd.none
 
   | Received (ServerMsg.Connected) ->
-      model, queryConference ()
+      model, queryConferences
 
   | Received (ServerMsg.Events eventSet) ->
-      match (model.State, model.Mode) with
+      match (model.Conference, model.Mode) with
       | Success conference, Live ->
           let events =
             eventSet |> (fun (_,events) -> events)
@@ -64,7 +72,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
             events |> updateStateWithEvents conference
 
           { model with
-              State = newConference |> Success
+              Conference = newConference |> Success
               LastEvents = events
           }, Cmd.none
 
@@ -72,7 +80,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
           model, Cmd.none
 
   | FinishVotingperiod ->
-      match (model.State, model.Mode) with
+      match (model.Conference, model.Mode) with
       | Success conference, Live ->
           model, wsCmd <| ClientMsg.Command (conference.Id |> commandHeader,Commands.FinishVotingPeriod)
 
@@ -87,7 +95,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
              (conference.Id |> commandHeader,Commands.FinishVotingPeriod) :: whatif.Commands
 
           { model with
-              State = newConference |> Success
+              Conference = newConference |> Success
               Mode = { whatif with Events = events ; Commands = commands } |> WhatIf
           }, Cmd.none
 
@@ -95,7 +103,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
            model, Cmd.none
 
   | ReopenVotingperiod ->
-      match (model.State, model.Mode) with
+      match (model.Conference, model.Mode) with
       | Success conference, Live ->
           model, wsCmd <| ClientMsg.Command (conference.Id |> commandHeader,Commands.ReopenVotingPeriod)
 
@@ -110,7 +118,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
              (conference.Id |> commandHeader,Commands.ReopenVotingPeriod) :: whatif.Commands
 
           { model with
-              State = newConference |> Success
+              Conference = newConference |> Success
               Mode = { whatif with Events = events ; Commands = commands } |> WhatIf
           }, Cmd.none
 
@@ -129,12 +137,12 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
             |> List.collect (ClientMsg.Command >> wsCmd)
 
           { model with
-              State = whatif.Conference |> Success
+              Conference = whatif.Conference |> Success
               Mode = Live
-          }, wsCmds @ queryConference ()
+          }, wsCmds // @ queryConference ()
 
   | ToggleMode ->
-      match (model.State, model.Mode) with
+      match (model.Conference, model.Mode) with
       | Success conference, Live ->
           let whatif =
             {
@@ -146,11 +154,11 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
           { model with Mode = whatif |> WhatIf }, Cmd.none
 
       | _, WhatIf _ ->
-          { model with Mode = Live }, queryConference ()
+          { model with Mode = Live }, Cmd.none // queryConference ()
 
       | _ ->
           model, Cmd.none
 
   | SwitchToConference conferenceId ->
-      failwith "Not Implemented"
+      model, conferenceId |> queryConference
 

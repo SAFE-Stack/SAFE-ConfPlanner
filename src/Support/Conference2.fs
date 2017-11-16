@@ -8,13 +8,13 @@ open Support.Helper
 
 let private conference =
   emptyConference()
+  |> (fun conf -> { conf with Title = "Be Sharps" })
 
 let private heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }
 let private sachse = { Firstname = "Roman";  Lastname = "Sachse"; Id = OrganizerId <| Guid.NewGuid() }
-
 let private helmig = { Firstname = "Nils";  Lastname = "Helmig"; Id = OrganizerId <| Guid.NewGuid() }
 
-let private talk1 = proposedTalk "Elmish with React Native" "Maxime" "Forkmann"
+let private talk1 = proposedTalk "Elmish with React Native" "Steffen" "Forkmann"
 let private talk2 = proposedTalk "Everything Fable" "Maxime" "Mangel"
 let private talk3 = proposedTalk "Azure and everything" "Isaac" "Abraham"
 

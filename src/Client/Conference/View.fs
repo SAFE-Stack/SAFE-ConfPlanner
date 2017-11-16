@@ -5,7 +5,6 @@ open Conference.Types
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
 
-
 open Global
 open Model
 open Events
@@ -14,6 +13,7 @@ open Fulma.Layouts
 open Fulma.Components
 open Fulma.Elements
 open Fulma.Extra.FontAwesome
+open Fulma.Elements.Form
 
 type MessageType =
   | Info
@@ -106,7 +106,7 @@ let toggleModeButtons mode dispatch =
 
   div [ ClassName "columns" ] buttons
 
-let viewAbstracts conference mode dispatch =
+let viewAbstracts dispatch conference =
   div [ ClassName "section"]
     [
       div [ ClassName "columns is-vcentered" ]
@@ -158,7 +158,7 @@ let messageWindowType events =
   | true -> MessageType.Error
   | false -> MessageType.Success
 
-let footer mode lastEvents dispatch =
+let footer dispatch mode lastEvents =
   let content =
     match mode with
     | WhatIf whatif ->
@@ -189,7 +189,41 @@ let footer mode lastEvents dispatch =
         ]
     ]
 
-let viewHeader =
+let viewConferenceDropdownItem dispatch (conferenceId, title) =
+  //Dropdown.item [ Dropdown.Item.isActive ] [ str "Item n°3" ]
+  Dropdown.item
+    [
+      Dropdown.Item.props [ OnClick (fun _ -> conferenceId |> SwitchToConference |> dispatch) ]
+    ]
+    [ str title ]
+
+let viewConferences dispatch conferences =
+  match conferences with
+  | RemoteData.Success conferences ->
+      [
+        div []
+          [
+            Button.button_a []
+              [
+                span [] [ str "Conferences" ]
+                Icon.faIcon [ Icon.isSmall ] [ Fa.icon Fa.I.AngleDown ]
+              ]
+          ]
+        Dropdown.menu []
+          [
+            Dropdown.content []
+              [
+                yield! conferences |> List.map (viewConferenceDropdownItem dispatch)
+              ]
+          ]
+      ]
+      |> Dropdown.dropdown [ Dropdown.isHoverable ]
+
+  | _ ->
+      [ div [ ClassName "column"] [ "Conferences not loaded" |> str ] ]
+      |> div [ ClassName "columns is-vcentered" ]
+
+let viewHeader dispatch conferences =
   Section.section []
     [
       Container.container [ Container.isFluid ]
@@ -199,43 +233,27 @@ let viewHeader =
               Panel.heading [ ] [ str "Conferences"]
               Panel.block [ ]
                 [
-
-
-
-                  Dropdown.dropdown [ Dropdown.isHoverable ]
-                    [ div [ ]
-                        [ Button.button_a [ ]
-                            [ span [ ]
-                                [ str "Conferences" ]
-                              Icon.faIcon [ Icon.isSmall ] [ Fa.icon Fa.I.AngleDown ] ] ]
-                      Dropdown.menu []
-                        [ Dropdown.content [ ]
-                            [ Dropdown.item [ ] [ str "Item n°1" ]
-                              Dropdown.item [ ] [ str "Item n°2" ]
-                              Dropdown.item [ Dropdown.Item.isActive ] [ str "Item n°3" ]
-                              Dropdown.item [ ] [ str "Item n°4" ]
-                              Dropdown.divider [ ]
-                              Dropdown.item [ ] [ str "Item n°5" ] ] ] ]
+                  conferences |> viewConferences dispatch
                 ]
             ]
         ]
     ]
 
-let viewPage conference lastEvents mode dispatch =
-  div []
-    [
-      viewHeader
-      viewAbstracts conference mode dispatch
-      footer mode lastEvents dispatch
-    ]
+let viewConference dispatch conference =
+  match conference with
+  | RemoteData.Success conference ->
+      viewAbstracts dispatch conference
 
-let root (model : Model) dispatch =
-  match model.State with
-     | RemoteData.Success conference ->
-         viewPage conference model.LastEvents model.Mode dispatch
+  | _ ->
+      [
+        div [ ClassName "column"] [ "Conference Not Loaded" |> str ]
+      ]
+      |> div [ ClassName "columns is-vcentered" ]
 
-     | _ ->
-        div [ ClassName "columns is-vcentered" ]
-          [
-            div [ ClassName "column"] [ "Conference Not Loaded" |> str ]
-          ]
+let root model dispatch =
+  [
+    viewHeader dispatch model.Conferences
+    viewConference dispatch model.Conference
+    footer dispatch model.Mode model.LastEvents
+  ]
+  |> div []

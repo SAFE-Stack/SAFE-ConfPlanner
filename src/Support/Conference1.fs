@@ -9,6 +9,7 @@ open Support.Helper
 let private conference =
   emptyConference()
   |> (fun conf -> { conf with Id = ConferenceId <| System.Guid.Parse "37b5252a-8887-43bb-87a0-62fbf8d21799" })
+  |> (fun conf -> { conf with Title = "Kandddinsky" })
 
 let private heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }
 let private fellien = { Firstname = "Janek";  Lastname = "Felien"; Id = OrganizerId <| Guid.NewGuid() }
