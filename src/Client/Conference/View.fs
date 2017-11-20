@@ -13,11 +13,15 @@ open Fulma.Layouts
 open Fulma.Components
 open Fulma.Elements
 open Fulma.Extra.FontAwesome
+open Suave.Utils.AsyncExtensions
 
 type MessageType =
   | Info
   | Success
   | Error
+
+let pleaseSelectAConference =
+  "Please select a conference"
 
 let renderMessageType messageType =
     match messageType with
@@ -202,14 +206,27 @@ let footer dispatch conference lastEvents =
     ]
 
 let viewConferenceDropdownItem dispatch (conferenceId, title) =
-  //Dropdown.item [ Dropdown.Item.isActive ] [ str "Item n°3" ]
   Dropdown.item
     [
       Dropdown.Item.props [ OnClick (fun _ -> conferenceId |> SwitchToConference |> dispatch) ]
     ]
     [ str title ]
 
-let viewConferences dispatch conferences =
+let private viewActiveConference conference =
+  match conference with
+  | RemoteData.NotAsked ->
+      pleaseSelectAConference
+
+  | RemoteData.Success (conference,_) ->
+      conference.Title
+
+  | RemoteData.Loading ->
+      "Loading..."
+
+  | RemoteData.Failure _ ->
+      "Error loading conference"
+
+let viewConferences dispatch conference conferences =
   match conferences with
   | RemoteData.Success conferences ->
       [
@@ -217,7 +234,7 @@ let viewConferences dispatch conferences =
           [
             Button.button_a []
               [
-                span [] [ str "Conferences" ]
+                span [] [ conference |> viewActiveConference |> str ]
                 Icon.faIcon [ Icon.isSmall ] [ Fa.icon Fa.I.AngleDown ]
               ]
           ]
@@ -235,7 +252,8 @@ let viewConferences dispatch conferences =
       [ div [ ClassName "column"] [ "Conferences not loaded" |> str ] ]
       |> div [ ClassName "columns is-vcentered" ]
 
-let viewHeader dispatch conferences =
+
+let viewHeader dispatch conference conferences =
   Section.section []
     [
       Container.container [ Container.isFluid ]
@@ -245,7 +263,7 @@ let viewHeader dispatch conferences =
               Panel.heading [ ] [ str "Conferences"]
               Panel.block [ ]
                 [
-                  conferences |> viewConferences dispatch
+                  conferences |> viewConferences dispatch conference
                 ]
             ]
         ]
@@ -264,7 +282,7 @@ let viewConference dispatch conference =
 
 let root model dispatch =
   [
-    viewHeader dispatch model.Conferences
+    viewHeader dispatch model.Conference model.Conferences
     viewConference dispatch model.Conference
     footer dispatch model.Conference model.LastEvents
   ]
