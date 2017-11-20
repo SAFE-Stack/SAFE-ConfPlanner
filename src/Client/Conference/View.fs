@@ -13,7 +13,6 @@ open Fulma.Layouts
 open Fulma.Components
 open Fulma.Elements
 open Fulma.Extra.FontAwesome
-open Suave.Utils.AsyncExtensions
 
 type MessageType =
   | Info

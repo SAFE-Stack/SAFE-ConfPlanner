@@ -6,9 +6,14 @@
     <ProjectReference Include="../Domain/Domain.fsproj" />
     <ProjectReference Include="../Conference.Api/Conference.Api.fsproj" />
     <ProjectReference Include="../Infrastructure/Infrastructure.fsproj" />
-    <ProjectReference Include="../Server/Server.fsproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="../Server/AuthTypes.fs" />
+    <Compile Include="../Server/ServerTypes.fs" />
+    <Compile Include="../Server/JsonWebToken.fs" />
+    <Compile Include="../Server/Auth.fs" />
+    <Compile Include="../Server/Dummy.fs" />
+    <Compile Include="../Server/Websockets.fs" />
     <Compile Include="Global.fs" />
     <Compile Include="Style.fs" />
     <Compile Include="Utils.fs" />
