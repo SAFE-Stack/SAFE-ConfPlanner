@@ -1,22 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Infrastructure\Infrastructure.fsproj" />
     <ProjectReference Include="..\Domain\Domain.fsproj" />
-    <ProjectReference Include="..\Conference.Api\Conference.Api.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AuthTypes.fs" />
-    <Compile Include="ServerTypes.fs" />
-    <Compile Include="JsonWebToken.fs" />
-    <Compile Include="Auth.fs" />
-    <Compile Include="Dummy.fs" />
-    <Compile Include="Websockets.fs" />
-    <Compile Include="WebServer.fs" />
-    <Compile Include="Program.fs" />
+    <Compile Include="API.fs" />
+    <Compile Include="Conference.fs" />
+    <Compile Include="Conferences.fs" />
   </ItemGroup>
   <ItemGroup>
     <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="1.0.0" />

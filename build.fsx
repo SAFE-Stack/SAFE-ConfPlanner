@@ -5,9 +5,6 @@
 #r "./packages/FAKE/tools/FakeLib.dll"
 
 open Fake
-open Fake.Git
-open Fake.AssemblyInfoFile
-open Fake.ReleaseNotesHelper
 open System
 open System.IO
 
@@ -130,7 +127,7 @@ let port = 8080
 
 Target "Run" (fun _ ->
     let suave = async { runDotnet serverPath "run" }
-    let fablewatch = async { runDotnet clientPath "fable yarn-run start" } // nicht  webpack-dev-server, sonst wird webpack config nicht gefunden
+    let fablewatch = async { runDotnet clientPath "fable yarn-start" } // nicht  webpack-dev-server, sonst wird webpack config nicht gefunden
     let openBrowser = async {
         System.Threading.Thread.Sleep(5000)
         Diagnostics.Process.Start("http://"+ ipAddress + sprintf ":%d" port) |> ignore }

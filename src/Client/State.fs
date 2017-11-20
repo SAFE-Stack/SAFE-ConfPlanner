@@ -45,7 +45,7 @@ let init result =
   let (model, cmd) =
     urlUpdate result
       {
-        CurrentPage = About
+        CurrentPage = ConfPlanner
         CurrentUser = user
         LoginModel = login
         CounterModel = counter

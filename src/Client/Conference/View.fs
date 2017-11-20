@@ -9,10 +9,18 @@ open Global
 open Model
 open Events
 
+open Fulma.Layouts
+open Fulma.Components
+open Fulma.Elements
+open Fulma.Extra.FontAwesome
+
 type MessageType =
   | Info
   | Success
   | Error
+
+let pleaseSelectAConference =
+  "Please select a conference"
 
 let renderMessageType messageType =
     match messageType with
@@ -86,7 +94,7 @@ let acceptedColumn =
 let rejectedColumn =
   abstractColumn "#ffdddd" (fun abs -> abs.Status = Rejected)
 
-let toggleModeButtons mode dispatch =
+let toggleModeButtons dispatch mode =
   let buttons =
     match mode with
     | Live ->
@@ -100,7 +108,7 @@ let toggleModeButtons mode dispatch =
 
   div [ ClassName "columns" ] buttons
 
-let viewAbstracts conference mode dispatch =
+let viewAbstracts dispatch conference =
   div [ ClassName "section"]
     [
       div [ ClassName "columns is-vcentered" ]
@@ -152,24 +160,38 @@ let messageWindowType events =
   | true -> MessageType.Error
   | false -> MessageType.Success
 
-let footer mode lastEvents dispatch =
+let footer dispatch conference lastEvents =
   let content =
-    match mode with
-    | WhatIf whatif ->
-        let commands =
-          whatif.Commands |> List.map (fun (_,commands) -> commands)
+    match conference with
+    | RemoteData.Success (conference,mode) ->
+        let window =
+          match mode with
+          | WhatIf whatif ->
+              let commands =
+                whatif.Commands |> List.map (fun (_,commands) -> commands)
 
-        div []
-          [
-            messageWindow "Potential Commands" commands MessageType.Info
-            messageWindow "Potential Events" whatif.Events <| messageWindowType whatif.Events
-          ]
+              [
+                messageWindow "Potential Commands" commands MessageType.Info
+                messageWindow "Potential Events" whatif.Events <| messageWindowType whatif.Events
+              ]
+              |> div []
 
-    | Live ->
-        div []
-          [
-            messageWindow "Last Events" lastEvents <| messageWindowType lastEvents
-          ]
+          | Live ->
+              [
+                messageWindow "Last Events" lastEvents <| messageWindowType lastEvents
+              ]
+              |> div []
+
+        [
+          mode |> toggleModeButtons dispatch
+          window
+        ]
+        |> div []
+
+
+    | _ ->
+      str "No conference loaded"
+
 
   footer [ ClassName "footer" ]
     [
@@ -177,26 +199,90 @@ let footer mode lastEvents dispatch =
         [
           div [ ClassName "content" ]
             [
-              toggleModeButtons mode dispatch
               content
             ]
         ]
     ]
 
-let viewPage conference lastEvents mode dispatch =
-  div []
+let viewConferenceDropdownItem dispatch (conferenceId, title) =
+  Dropdown.item
     [
-      viewAbstracts conference mode dispatch
-      footer mode lastEvents dispatch
+      Dropdown.Item.props [ OnClick (fun _ -> conferenceId |> SwitchToConference |> dispatch) ]
+    ]
+    [ str title ]
+
+let private viewActiveConference conference =
+  match conference with
+  | RemoteData.NotAsked ->
+      pleaseSelectAConference
+
+  | RemoteData.Success (conference,_) ->
+      conference.Title
+
+  | RemoteData.Loading ->
+      "Loading..."
+
+  | RemoteData.Failure _ ->
+      "Error loading conference"
+
+let viewConferences dispatch conference conferences =
+  match conferences with
+  | RemoteData.Success conferences ->
+      [
+        div []
+          [
+            Button.button_a []
+              [
+                span [] [ conference |> viewActiveConference |> str ]
+                Icon.faIcon [ Icon.isSmall ] [ Fa.icon Fa.I.AngleDown ]
+              ]
+          ]
+        Dropdown.menu []
+          [
+            Dropdown.content []
+              [
+                yield! conferences |> List.map (viewConferenceDropdownItem dispatch)
+              ]
+          ]
+      ]
+      |> Dropdown.dropdown [ Dropdown.isHoverable ]
+
+  | _ ->
+      [ div [ ClassName "column"] [ "Conferences not loaded" |> str ] ]
+      |> div [ ClassName "columns is-vcentered" ]
+
+
+let viewHeader dispatch conference conferences =
+  Section.section []
+    [
+      Container.container [ Container.isFluid ]
+        [
+          Panel.panel []
+            [
+              Panel.heading [ ] [ str "Conferences"]
+              Panel.block [ ]
+                [
+                  conferences |> viewConferences dispatch conference
+                ]
+            ]
+        ]
     ]
 
-let root (model : Model) dispatch =
-  match model.State with
-     | RemoteData.Success conference ->
-         viewPage conference model.LastEvents model.Mode dispatch
+let viewConference dispatch conference =
+  match conference with
+  | RemoteData.Success (conference,_) ->
+      viewAbstracts dispatch conference
 
-     | _ ->
-        div [ ClassName "columns is-vcentered" ]
-          [
-            div [ ClassName "column"] [ "State Not Loaded" |> str ]
-          ]
+  | _ ->
+      [
+        div [ ClassName "column"] [ "Conference Not Loaded" |> str ]
+      ]
+      |> div [ ClassName "columns is-vcentered" ]
+
+let root model dispatch =
+  [
+    viewHeader dispatch model.Conference model.Conferences
+    viewConference dispatch model.Conference
+    footer dispatch model.Conference model.LastEvents
+  ]
+  |> div []

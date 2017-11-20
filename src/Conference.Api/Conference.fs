@@ -1,17 +1,10 @@
-module ConferenceApi
+module Conference.Api.Conference
 
+open API
 open Infrastructure.Types
 open Events
 open Model
 open Projections
-
-type QueryParameter =
-  | Conference of ConferenceId
-  | CanNotBeHandled
-
-type QueryResult =
-  | Conference of Conference
-  | ConferenceNotFound
 
 type ConferenceReadModel =
   Map<StreamId,Conference>
@@ -25,7 +18,7 @@ let private evolveState state (streamId : StreamId ,events) : ConferenceReadMode
   state
   |> Map.add streamId (events |> List.fold apply conference)
 
-let projection : Projection<ConferenceReadModel, Event>=
+let projection : ProjectionDefinition<ConferenceReadModel, Event>=
   {
     InitialState = Map.empty
     UpdateState = evolveState

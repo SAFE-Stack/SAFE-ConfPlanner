@@ -72,6 +72,7 @@ type ConferenceId = ConferenceId of Guid
 
 type Conference = {
   Id : ConferenceId
+  Title : string
   CallForPapers : CallForPapers
   VotingPeriod : VotingPeriod
   Abstracts : ConferenceAbstract list
@@ -82,6 +83,7 @@ type Conference = {
 
 let emptyConference() = {
   Id = System.Guid.NewGuid() |> ConferenceId
+  Title = ""
   CallForPapers = NotOpened
   VotingPeriod = InProgess
   Abstracts = []

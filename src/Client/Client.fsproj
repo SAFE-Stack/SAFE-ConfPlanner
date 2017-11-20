@@ -1,16 +1,19 @@
-<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Domain\Domain.fsproj" />
+    <ProjectReference Include="../Domain/Domain.fsproj" />
+    <ProjectReference Include="../Conference.Api/Conference.Api.fsproj" />
+    <ProjectReference Include="../Infrastructure/Infrastructure.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="../Infrastructure/Types.fs" />
     <Compile Include="../Server/AuthTypes.fs" />
     <Compile Include="../Server/ServerTypes.fs" />
+    <Compile Include="../Server/JsonWebToken.fs" />
+    <Compile Include="../Server/Auth.fs" />
     <Compile Include="../Server/Dummy.fs" />
-    <Compile Include="../Server/ConferenceApi.fs" />
+    <Compile Include="../Server/Websockets.fs" />
     <Compile Include="Global.fs" />
     <Compile Include="Style.fs" />
     <Compile Include="Utils.fs" />

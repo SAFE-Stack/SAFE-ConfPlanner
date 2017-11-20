@@ -3,13 +3,16 @@ module Conference.Types
 open Global
 open Infrastructure.Types
 open Server.ServerTypes
+open Model
+open Conference.Api
 
 type Msg =
-  | Received of ServerMsg<Events.Event,ConferenceApi.QueryResult>
+  | Received of ServerMsg<Events.Event,API.QueryResult>
   | FinishVotingperiod
   | ToggleMode
   | ReopenVotingperiod
   | MakeItSo
+  | SwitchToConference of ConferenceId
 
 type WhatIf =
   {
@@ -25,7 +28,7 @@ type Mode =
 
 type Model =
   {
-    State : RemoteData<Model.Conference>
+    Conference : RemoteData<Model.Conference*Mode>
+    Conferences : RemoteData<API.Conferences>
     LastEvents : Events.Event list
-    Mode : Mode
   }

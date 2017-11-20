@@ -15,7 +15,7 @@ type StreamId =
 type Behaviour<'CommandPayload,'Event> =
   'Event list -> 'CommandPayload -> 'Event list
 
-type Projection<'State,'Event> =
+type ProjectionDefinition<'State,'Event> =
   {
     InitialState : 'State
     UpdateState : 'State -> StreamId * 'Event list -> 'State
@@ -40,7 +40,7 @@ type QueryResponse<'QueryResult> =
 type QueryHandler<'QueryParameter,'QueryResult> =
   Query<'QueryParameter> -> QueryHandled<'QueryResult>
 
-type QueryHandlerWithState<'QueryParameter,'State,'QueryResult> =
+type QueryHandlerDefinition<'QueryParameter,'State,'QueryResult> =
   Query<'QueryParameter> -> 'State -> QueryHandled<'QueryResult>
 
 type QueryResponseChannel<'QueryResult> =
@@ -63,12 +63,6 @@ type AppendEvents<'Event> =
 
 type Projection<'Event> =
   EventSet<'Event> -> unit
-
-type Readmodel<'State,'Event,'QueryParameter,'QueryResult> =
-  {
-    Projection : Projection<'State,'Event>
-    QueryHandler : QueryHandlerWithState<'QueryParameter,'State,'QueryResult>
-  }
 
 type Command<'CommandPayload> =
   MessageHeader * 'CommandPayload

@@ -12,6 +12,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Helper.fs" />
+    <Compile Include="Conference1.fs" />
+    <Compile Include="Conference2.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 </Project>
