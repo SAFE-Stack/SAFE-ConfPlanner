@@ -4,9 +4,9 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Infrastructure\Infrastructure.fsproj" />
-    <ProjectReference Include="..\Domain\Domain.fsproj" />
-    <ProjectReference Include="..\Conference.Api\Conference.Api.fsproj" />
+    <ProjectReference Include="../Infrastructure/Infrastructure.fsproj" />
+    <ProjectReference Include="../Domain/Domain.fsproj" />
+    <ProjectReference Include="../Conference.Api/Conference.Api.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AuthTypes.fs" />

@@ -4,12 +4,8 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Infrastructure\Infrastructure.fsproj">
-      <Name>Infrastructure.fsproj</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Domain\Domain.fsproj">
-      <Name>Domain.fsproj</Name>
-    </ProjectReference>
+    <ProjectReference Include="../Infrastructure/Infrastructure.fsproj" />
+    <ProjectReference Include="../Domain/Domain.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Helper.fs" />
