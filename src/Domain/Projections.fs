@@ -24,7 +24,7 @@ let apply (conference : Conference) event : Conference =
         { conference with CallForPapers = Open }
 
     | CallForPapersClosed ->
-        { conference with CallForPapers = Closed; VotingPeriod = InProgess }
+        { conference with CallForPapers = Closed; VotingPeriod = InProgress }
 
     | NumberOfSlotsDecided i ->
         { conference with AvailableSlotsForTalks = i }
@@ -43,11 +43,15 @@ let apply (conference : Conference) event : Conference =
 
     | VotingPeriodWasReopened ->
         { conference with
-            VotingPeriod = InProgess
+            VotingPeriod = InProgress
             Abstracts = conference.Abstracts |> List.map (fun abstr -> { abstr with Status = AbstractStatus.Proposed }) }
 
-    | VotingWasIssued voting ->
-        { conference with Votings = voting :: conference.Votings }
+    | VotingWasIssued (Voting.Voting (abstractId, organizerId, _) as voting) ->
+        let votings =
+          conference.Votings
+          |> List.filter (fun voting -> voting |> extractAbstractId <> abstractId || voting |> extractVoterId <> organizerId)
+
+        { conference with Votings = voting :: votings }
 
     | FinishingDenied _ ->
         conference
@@ -66,7 +70,7 @@ let private emptyConference : Conference =
     Id = ConferenceId <| Guid.Empty
     Title = ""
     CallForPapers = NotOpened
-    VotingPeriod = InProgess
+    VotingPeriod = InProgress
     Abstracts = List.empty
     Votings = List.empty
     Organizers = List.empty

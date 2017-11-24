@@ -29,11 +29,18 @@ let ThenExpect expectedEvents actualEvents =
   | None ->
       None |> should equal expectedEvents
 
-let vote (abstr: ConferenceAbstract) (organizer: Organizer) (value: Points) =
-   Voting.Vote (abstr.Id,organizer.Id, value)
+let voteTwo (abstr: ConferenceAbstract) (organizer: Organizer) =
+   Voting.Voting (abstr.Id,organizer.Id, Two)
+
+let voteOne (abstr: ConferenceAbstract) (organizer: Organizer) =
+   Voting.Voting (abstr.Id,organizer.Id, One)
+
+let voteZero (abstr: ConferenceAbstract) (organizer: Organizer) =
+   Voting.Voting (abstr.Id,organizer.Id, Zero)
 
 let veto (abstr: ConferenceAbstract) (organizer: Organizer) =
-   Voting.Veto (abstr.Id,organizer.Id)
+   Voting.Voting (abstr.Id,organizer.Id, Veto)
+
 
 let proposedTalk() =
    {

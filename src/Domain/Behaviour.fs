@@ -49,13 +49,13 @@ let score m (abstr : AbstractId) =
     | None -> m |> Map.add abstr 1
 
 let scoreAbstracts state =
-  let talks,handsOns =
+  let talks,_ =
     state.Abstracts
     |> List.partition (fun abstr -> abstr.Type = Talk)
 
   let votes,vetos =
     state.Votings
-    |> List.partition (function | Voting.Vote _ -> true | _ -> false)
+    |> List.partition (function | Voting.Voting (_,_,Veto) -> false | _ -> true)
 
   let abstractsWithVetos =
     vetos
@@ -68,10 +68,9 @@ let scoreAbstracts state =
 
   let sumPoints abstractId =
     votes
+      |> List.filter (fun voting -> voting |> extractAbstractId = abstractId)
       |> List.map extractPoints
-      |> List.filter (fun (id,_) -> id = abstractId)
-      |> List.map (fun (id,points) -> points)
-      |> List.sumBy (fun points -> match points with | Zero -> 0| One -> 1 | Two -> 2)
+      |> List.sumBy (function | Zero -> 0 | One -> 1 | Two -> 2 | Veto -> 0)
 
   let accepted =
     withoutVetos
@@ -91,7 +90,7 @@ let scoreAbstracts state =
 
 let finishVotingPeriod conference =
   match conference.CallForPapers,conference.VotingPeriod with
-  | Closed,InProgess ->
+  | Closed,InProgress ->
       let unfinishedVotings =
         conference.Abstracts
         |> Seq.map (fun abstr ->
@@ -132,19 +131,26 @@ let handleReopenVotingPeriod givenHistory =
   |> conferenceState
   |> reopenVotingPeriod
 
-let handleVote givenHistory voting =
-  let state = (conferenceState givenHistory)
-  match state.VotingPeriod with
-  | Finished -> [VotingDenied "Voting Period Already Finished"]
-  | InProgress ->
-    match voting with
-    | VoterIsNotAnOrganizer state.Organizers _ ->
-        [VotingDenied "Voter Is Not An Organizer"]
+let vote voting conference =
+  match conference.VotingPeriod with
+  | Finished ->
+      [VotingDenied "Voting Period Already Finished"]
 
-    | _ -> [VotingWasIssued voting]
+  | InProgress ->
+      match voting with
+      | VoterIsNotAnOrganizer conference.Organizers _ ->
+          [VotingDenied "Voter Is Not An Organizer"]
+
+      | _ -> [VotingWasIssued voting]
+
+
+let handleVote givenHistory voting =
+  givenHistory
+  |> conferenceState
+  |> vote voting
+
 
 let handleScheduleConference givenHistory conference =
-  printfn "conference %A" conference
   if givenHistory |> List.isEmpty then
     [ConferenceScheduled conference]
   else
