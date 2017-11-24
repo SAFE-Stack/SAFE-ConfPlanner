@@ -59,6 +59,20 @@ let extractPoints voting =
   | Vote (id,_,points) -> (id, points)
   | Veto (_) -> failwith "Veto does not have points"
 
+let extractVoteForAbstract organizerId abstractId votings =
+  let vote =
+    votings
+    |> List.filter (fun voting -> voting |> extractAbstractId = abstractId)
+    |> List.filter (fun voting -> voting |> extractVoterId = organizerId)
+
+  match vote with
+  | [vote] ->
+      vote |> Some
+
+  | _ ->
+      None
+
+
 type CallForPapers =
   | NotOpened
   | Open

@@ -10,6 +10,7 @@ open Conference.Types
 open Conference.Ws
 open Conference.Api
 open Model
+open Model
 
 let private updateStateWithEvents conference events  =
   events |> List.fold Projections.apply conference
@@ -43,6 +44,7 @@ let init() =
     Conference = NotAsked
     Conferences = NotAsked
     LastEvents = []
+    Organizer = OrganizerId <| System.Guid.Parse "ac05df03-6354-419b-96c1-126131536e00"
   }, Cmd.ofSub startWs
 
 let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
