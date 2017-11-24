@@ -30,61 +30,57 @@ let renderMessageType messageType =
   | Success -> "is-success"
   | Error -> "is-danger"
 
-let speaker (speakers : Speaker list) =
+let private renderSpeakers (speakers : Speaker list) =
   speakers
   |> List.map (fun s -> s.Firstname + " " + s.Lastname)
   |> String.concat ", "
 
+let viewVotingButton clickMsg isActive btnType label =
+  Button.button_a
+    [
+      yield Button.props [ OnClick clickMsg ]
+      if isActive then
+        yield btnType
+    ]
+    [ label |> str ]
 
 let viewVotingButtons dispatch user vote (talk : Model.ConferenceAbstract) =
+  let possibleVotings =
+    [
+      Voting.Voting (talk.Id, user, Two), Button.isPrimary, "2"
+      Voting.Voting (talk.Id, user, One),  Button.isPrimary, "1"
+      Voting.Voting (talk.Id, user, Zero),  Button.isPrimary, "0"
+      Voting.Voting (talk.Id, user, Veto), Button.isDanger, "Veto"
+    ]
+
+  let buttonMapper (voting,btnType,label) =
+    viewVotingButton
+      (fun _ -> voting |> Msg.Vote |> dispatch)
+      (vote = Some voting)
+      btnType
+      label
+    |> List.singleton
+    |> Control.control_div []
+
+
   Field.field_div
     [
       Field.hasAddons
     ]
     [
-      Control.control_div []
-        [
-          Button.button_a
-            [
-              if vote = Some (Vote (talk.Id, user, Two)) then
-                yield Button.isActive
-            ]
-            [ str "2" ]
-        ]
-      Control.control_div []
-        [
-          Button.button_a
-            [
-              if vote = Some (Vote (talk.Id, user, One)) then
-                yield Button.isActive
-            ]
-            [ str "1" ]
-        ]
-      Control.control_div []
-        [
-          Button.button_a
-            [
-              if vote = Some (Vote (talk.Id, user, Zero)) then
-                yield Button.isActive
-            ]
-            [ str "0" ]
-        ]
-
-      Control.control_div []
-        [
-          Button.button_a
-            [
-              if vote = Some (Veto (talk.Id, user)) then
-                yield Button.isActive
-            ]
-            [ str "Veto" ]
-        ]
+      yield! possibleVotings |> List.map buttonMapper
     ]
-
 
 let viewTalk dispatch user votings (talk : Model.ConferenceAbstract) =
   let vote =
     votings |> extractVoteForAbstract user talk.Id
+
+  let style : ICSSProp list =
+    [
+      Display Flex
+      FlexDirection "row"
+      JustifyContent "left"
+    ]
 
 
   Card.card [ Card.props [Style [ MarginTop 5; MarginBottom 5 ]] ]
@@ -102,7 +98,7 @@ let viewTalk dispatch user votings (talk : Model.ConferenceAbstract) =
                 [
                   Media.content []
                     [
-                      p [ ClassName "subtitle is-6" ] [ str <| speaker talk.Speakers ]
+                      p [ ClassName "subtitle is-6" ] [ str <| renderSpeakers talk.Speakers ]
                     ]
                 ]
               Content.content []
@@ -110,8 +106,10 @@ let viewTalk dispatch user votings (talk : Model.ConferenceAbstract) =
             ]
         ]
       Card.footer [ ]
-        [ Card.Footer.item [ ]
-            [ viewVotingButtons dispatch user vote talk ]
+        [ Card.Footer.item [ Card.props [Style style] ]
+            [
+              viewVotingButtons dispatch user vote talk
+            ]
         ]
     ]
 
@@ -188,7 +186,7 @@ let private viewVotingPanel dispatch user conference =
     Columns.columns []
       [
         match conference.VotingPeriod with
-        | InProgess ->
+        | InProgress ->
             yield simpleButton "Finish Votingperiod" FinishVotingperiod dispatch
 
         | Finished ->
@@ -224,7 +222,7 @@ let messageWindowType events =
 let footer dispatch conference lastEvents =
   let content =
     match conference with
-    | RemoteData.Success (conference,mode) ->
+    | RemoteData.Success (_,mode) ->
         let window =
           match mode with
           | WhatIf whatif ->

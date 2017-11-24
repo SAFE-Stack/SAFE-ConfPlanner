@@ -10,7 +10,6 @@ open Conference.Types
 open Conference.Ws
 open Conference.Api
 open Model
-open Model
 
 let private updateStateWithEvents conference events  =
   events |> List.fold Projections.apply conference
@@ -44,7 +43,7 @@ let init() =
     Conference = NotAsked
     Conferences = NotAsked
     LastEvents = []
-    Organizer = OrganizerId <| System.Guid.Parse "ac05df03-6354-419b-96c1-126131536e00"
+    Organizer = OrganizerId <| System.Guid.Parse "311b9fbd-98a2-401e-b9e9-bab15897dad4"
   }, Cmd.ofSub startWs
 
 let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
@@ -84,6 +83,34 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
 
       | _ ->
           model, Cmd.none
+
+  | Msg.Vote voting ->
+      match model.Conference with
+      | Success (conference, Live) ->
+           model, wsCmd <| ClientMsg.Command (conference.Id |> commandHeader, voting |> Commands.Vote)
+
+      | Success (conference, WhatIf whatif) ->
+          let events =
+            conference |> Behaviour.vote voting
+
+          let newConference =
+            events |> updateStateWithEvents conference
+
+          let commands =
+             (conference.Id |> commandHeader, voting |> Commands.Vote) :: whatif.Commands
+
+          let whatif =
+            WhatIf <|
+              {
+                whatif with
+                  Events = events
+                  Commands = commands
+              }
+
+          { model with Conference = (newConference,whatif) |> Success }, Cmd.none
+
+      | _ ->
+           model, Cmd.none
 
   | FinishVotingperiod ->
       match model.Conference with
@@ -167,7 +194,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
 
           { model with Conference = (conference, whatif |> WhatIf) |> Success }, Cmd.none
 
-      | Success (conference, WhatIf whatif) ->
+      | Success (conference, WhatIf _) ->
           { model with Conference = (conference,Live) |> Success },
           conference.Id |> queryConference
 
@@ -176,4 +203,5 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
 
   | SwitchToConference conferenceId ->
       model, conferenceId |> queryConference
+
 

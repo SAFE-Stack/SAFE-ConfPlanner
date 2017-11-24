@@ -8,7 +8,7 @@ open Conference.Api
 
 type Msg =
   | Received of ServerMsg<Events.Event,API.QueryResult>
-  | Vote
+  | Vote of Voting
   | FinishVotingperiod
   | ToggleMode
   | ReopenVotingperiod
