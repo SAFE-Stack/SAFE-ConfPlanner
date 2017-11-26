@@ -22,15 +22,23 @@ type WhatIf =
     Events : Events.Event list
   }
 
-
 type Mode =
   | Live
   | WhatIf of WhatIf
 
+type Editor =
+  | VotingPanel
+
+type View =
+  | NotAsked
+  | Loading
+  | Error of string
+  | Editor of Editor * Model.Conference * Mode
+
 type Model =
   {
-    Conference : RemoteData<Model.Conference*Mode>
-    Conferences : RemoteData<API.Conferences>
+    View : View
+    Conferences : RemoteData<Conferences.Conferences>
     LastEvents : Events.Event list
     Organizer : OrganizerId
   }

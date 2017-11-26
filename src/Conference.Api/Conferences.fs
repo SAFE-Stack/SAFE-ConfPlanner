@@ -3,6 +3,10 @@ module Conference.Api.Conferences
 open API
 open Infrastructure.Types
 open Events
+open Model
+
+type Conferences =
+  (ConferenceId * string) list
 
 type ConferencesReadModel =
   Conferences

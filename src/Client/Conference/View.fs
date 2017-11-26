@@ -219,10 +219,10 @@ let messageWindowType events =
   | true -> MessageType.Error
   | false -> MessageType.Success
 
-let footer dispatch conference lastEvents =
+let footer dispatch currentView lastEvents =
   let content =
-    match conference with
-    | RemoteData.Success (_,mode) ->
+    match currentView with
+    | Editor (_,_,mode) ->
         let window =
           match mode with
           | WhatIf whatif ->
@@ -262,21 +262,21 @@ let viewConferenceDropdownItem dispatch (conferenceId, title) =
     ]
     [ str title ]
 
-let private viewActiveConference conference =
-  match conference with
-  | RemoteData.NotAsked ->
-      pleaseSelectAConference
-
-  | RemoteData.Success (conference,_) ->
+let private viewActiveConference currentView =
+  match currentView with
+  | View.Editor (_, conference, _) ->
       conference.Title
 
-  | RemoteData.Loading ->
+  |  View.NotAsked ->
+      pleaseSelectAConference
+
+  | View.Loading ->
       "Loading..."
 
-  | RemoteData.Failure _ ->
+  | View.Error _ ->
       "Error loading conference"
 
-let viewConferences dispatch conference conferences =
+let viewConferenceList dispatch currentView conferences =
   match conferences with
   | RemoteData.Success conferences ->
       [
@@ -284,7 +284,7 @@ let viewConferences dispatch conference conferences =
           [
             Button.button_a []
               [
-                span [] [ conference |> viewActiveConference |> str ]
+                span [] [ currentView |> viewActiveConference |> str ]
                 Icon.faIcon [ Icon.isSmall ] [ Fa.icon Fa.I.AngleDown ]
               ]
           ]
@@ -303,22 +303,28 @@ let viewConferences dispatch conference conferences =
       |> div [ ClassName "columns" ]
 
 
-let viewHeader dispatch conference conferences =
+let viewHeader dispatch currentView conferences =
   [
     Panel.panel []
       [
         Panel.heading [ ] [ str "Conferences"]
         Panel.block [ ]
           [
-            conferences |> viewConferences dispatch conference
+            conferences |> viewConferenceList dispatch currentView
+          ]
+        Panel.tabs []
+          [
+            Panel.tab [ ] [ str "Conference" ]
+            Panel.tab [ Panel.Tab.isActive ] [ str "Votings" ]
+            Panel.tab [ ] [ str "Organizers" ]
           ]
       ]
   ]
   |> Container.container [ Container.isFluid ]
 
-let viewConference dispatch user conference =
-  match conference with
-  | RemoteData.Success (conference,_) ->
+let viewView dispatch user currentView =
+  match currentView with
+  | Editor (VotingPanel, conference, _) ->
       viewVotingPanel dispatch user conference
 
   | _ ->
@@ -332,8 +338,8 @@ let viewConference dispatch user conference =
 
 let root model dispatch =
   [
-    viewHeader dispatch model.Conference model.Conferences |> List.singleton |> Section.section []
-    viewConference dispatch model.Organizer model.Conference |> List.singleton |> Section.section []
-    footer dispatch model.Conference model.LastEvents |> List.singleton |> Footer.footer []
+    viewHeader dispatch model.View model.Conferences |> List.singleton |> Section.section []
+    viewView dispatch model.Organizer model.View |> List.singleton |> Section.section []
+    footer dispatch model.View model.LastEvents |> List.singleton |> Footer.footer []
   ]
   |> div []
