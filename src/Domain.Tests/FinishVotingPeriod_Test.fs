@@ -57,15 +57,15 @@ let ``Cannot finish a voting period when not all abstracts have votes from every
     TalkWasProposed talk2
     TalkWasProposed talk3
     CallForPapersClosed
-    
-    VotingWasIssued (vote talk1 heimeshoff Points.One)
-    VotingWasIssued (vote talk2 heimeshoff Points.One)
-    VotingWasIssued (vote talk3 heimeshoff Points.One)
-    VotingWasIssued (vote talk1 fellien Points.One)
-    VotingWasIssued (vote talk2 fellien Points.One)
-    VotingWasIssued (vote talk1 poepke Points.One)
-    VotingWasIssued (vote talk2 poepke Points.One)
-    VotingWasIssued (vote talk3 poepke Points.One)]
+
+    VotingWasIssued (voteOne talk1 heimeshoff)
+    VotingWasIssued (voteOne talk2 heimeshoff)
+    VotingWasIssued (voteOne talk3 heimeshoff)
+    VotingWasIssued (voteOne talk1 fellien)
+    VotingWasIssued (voteOne talk2 fellien)
+    VotingWasIssued (voteOne talk1 poepke)
+    VotingWasIssued (voteOne talk2 poepke)
+    VotingWasIssued (voteOne talk3 poepke)]
 
   |> When FinishVotingPeriod
   |> ThenExpect [
@@ -90,15 +90,15 @@ let ``Voting top x abstracts will be accepted, others will be rejected`` () =
     TalkWasProposed talk3
     CallForPapersClosed
 
-    VotingWasIssued (vote talk3 heimeshoff Points.Zero)
-    VotingWasIssued (vote talk3 fellien Points.Zero)
-    VotingWasIssued (vote talk3 poepke Points.Zero)
-    VotingWasIssued (vote talk2 heimeshoff Points.One)
-    VotingWasIssued (vote talk2 fellien Points.One)
-    VotingWasIssued (vote talk2 poepke Points.One)
-    VotingWasIssued (vote talk1 heimeshoff Points.Zero)
-    VotingWasIssued (vote talk1 fellien Points.One)
-    VotingWasIssued (vote talk1 poepke Points.One)]
+    VotingWasIssued (voteZero talk3 heimeshoff)
+    VotingWasIssued (voteZero talk3 fellien)
+    VotingWasIssued (voteZero talk3 poepke)
+    VotingWasIssued (voteOne talk2 heimeshoff)
+    VotingWasIssued (voteOne talk2 fellien)
+    VotingWasIssued (voteOne talk2 poepke)
+    VotingWasIssued (voteZero talk1 heimeshoff)
+    VotingWasIssued (voteOne talk1 fellien)
+    VotingWasIssued (voteOne talk1 poepke)]
 
   |> When FinishVotingPeriod
   |> ThenExpect [
@@ -125,15 +125,15 @@ let ``A veto rejects talks that would otherwise be accepted`` () =
     TalkWasProposed talk3
     CallForPapersClosed
 
-    VotingWasIssued (vote talk3 heimeshoff Points.Two)
+    VotingWasIssued (voteTwo talk3 heimeshoff)
     VotingWasIssued (veto talk3 fellien)
-    VotingWasIssued (vote talk3 poepke Points.Two)
-    VotingWasIssued (vote talk2 heimeshoff Points.One)
-    VotingWasIssued (vote talk2 fellien Points.One)
-    VotingWasIssued (vote talk2 poepke Points.One)
-    VotingWasIssued (vote talk1 heimeshoff Points.Zero)
-    VotingWasIssued (vote talk1 fellien Points.Zero)
-    VotingWasIssued (vote talk1 poepke Points.Zero)]
+    VotingWasIssued (voteTwo talk3 poepke)
+    VotingWasIssued (voteOne talk2 heimeshoff)
+    VotingWasIssued (voteOne talk2 fellien)
+    VotingWasIssued (voteOne talk2 poepke)
+    VotingWasIssued (voteZero talk1 heimeshoff)
+    VotingWasIssued (voteZero talk1 fellien)
+    VotingWasIssued (voteZero talk1 poepke)]
 
   |> When FinishVotingPeriod
   |> ThenExpect [

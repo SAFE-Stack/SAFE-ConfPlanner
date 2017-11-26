@@ -13,11 +13,11 @@ open Testbase
 let ``Can not vote when voting period is already finished`` () =
   let heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }
   let talk = proposedTalk()
-  let vote = vote talk heimeshoff Points.One
+  let vote = voteOne talk heimeshoff
 
-  Given [ 
-    OrganizerRegistered heimeshoff 
-    TalkWasProposed talk 
+  Given [
+    OrganizerRegistered heimeshoff
+    TalkWasProposed talk
     VotingPeriodWasFinished]
   |> When (Vote vote)
   |> ThenExpect [VotingDenied "Voting Period Already Finished"]
@@ -27,7 +27,7 @@ let ``Can not vote when voting period is already finished`` () =
 let ``Can not vote when voter is not organizer of conference`` () =
   let heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }
   let talk = proposedTalk()
-  let vote = vote talk heimeshoff Points.One
+  let vote = voteOne talk heimeshoff
 
   Given [
     TalkWasProposed talk]
@@ -39,10 +39,10 @@ let ``Can not vote when voter is not organizer of conference`` () =
 let ``Can vote when constraints are fulfilled`` () =
   let heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }
   let talk = proposedTalk()
-  let vote = vote talk heimeshoff Points.One
+  let vote = voteOne talk heimeshoff
 
-  Given [ 
-    OrganizerRegistered heimeshoff 
+  Given [
+    OrganizerRegistered heimeshoff
     TalkWasProposed talk]
   |> When (Vote vote)
   |> ThenExpect [VotingWasIssued vote]
@@ -52,11 +52,11 @@ let ``Can vote when constraints are fulfilled`` () =
 let ``Voter can change previous vote for an abstract`` () =
   let heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }
   let talk = proposedTalk()
-  let vote = vote talk heimeshoff Points.One
+  let vote = voteOne talk heimeshoff
 
-  Given [ 
-    OrganizerRegistered heimeshoff 
-    TalkWasProposed talk 
+  Given [
+    OrganizerRegistered heimeshoff
+    TalkWasProposed talk
     VotingWasIssued vote]
   |> When (Vote vote)
   |> ThenExpect [VotingWasIssued vote]
@@ -68,8 +68,8 @@ let ``Can issue a veto when constraints are fulfilled`` () =
   let talk = proposedTalk()
   let veto= veto talk heimeshoff
 
-  Given [ 
-    OrganizerRegistered heimeshoff 
+  Given [
+    OrganizerRegistered heimeshoff
     TalkWasProposed talk]
   |> When (Vote veto)
   |> ThenExpect [VotingWasIssued veto]

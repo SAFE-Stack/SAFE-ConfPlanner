@@ -8,6 +8,7 @@ open Conference.Api
 
 type Msg =
   | Received of ServerMsg<Events.Event,API.QueryResult>
+  | Vote of Voting
   | FinishVotingperiod
   | ToggleMode
   | ReopenVotingperiod
@@ -31,4 +32,5 @@ type Model =
     Conference : RemoteData<Model.Conference*Mode>
     Conferences : RemoteData<API.Conferences>
     LastEvents : Events.Event list
+    Organizer : OrganizerId
   }

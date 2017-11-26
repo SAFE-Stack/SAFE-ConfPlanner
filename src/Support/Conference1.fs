@@ -11,7 +11,7 @@ let private conference =
   |> (fun conf -> { conf with Id = ConferenceId <| System.Guid.Parse "37b5252a-8887-43bb-87a0-62fbf8d21799" })
   |> (fun conf -> { conf with Title = "Kandddinsky" })
 
-let private heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }
+let private heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.Parse "311b9fbd-98a2-401e-b9e9-bab15897dad4" }
 let private fellien = { Firstname = "Janek";  Lastname = "Felien"; Id = OrganizerId <| Guid.NewGuid() }
 let private poepke = { Firstname = "Conrad";  Lastname = "Poepke"; Id = OrganizerId <| Guid.NewGuid() }
 
@@ -33,15 +33,15 @@ let private events =
     TalkWasProposed talk3
     CallForPapersClosed
 
-    VotingWasIssued (vote talk3 heimeshoff Points.Two)
+    VotingWasIssued (voteTwo talk3 heimeshoff)
     VotingWasIssued (veto talk3 fellien)
-    VotingWasIssued (vote talk3 poepke Points.Two)
-    VotingWasIssued (vote talk2 heimeshoff Points.One)
-    VotingWasIssued (vote talk2 fellien Points.One)
-    VotingWasIssued (vote talk2 poepke Points.One)
-    VotingWasIssued (vote talk1 heimeshoff Points.Zero)
-    VotingWasIssued (vote talk1 fellien Points.Zero)
-    VotingWasIssued (vote talk1 poepke Points.Zero)
+    VotingWasIssued (voteTwo talk3 poepke)
+    VotingWasIssued (voteOne talk2 heimeshoff)
+    VotingWasIssued (voteOne talk2 fellien)
+    VotingWasIssued (voteOne talk2 poepke)
+    VotingWasIssued (voteZero talk1 heimeshoff)
+    VotingWasIssued (voteZero talk1 fellien)
+    VotingWasIssued (voteZero talk1 poepke)
   ]
 
 let eventSets () =

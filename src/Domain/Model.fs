@@ -30,7 +30,11 @@ type ConferenceAbstract = {
   Type : AbstractType
 }
 
-type Points = Zero | One | Two
+type Points =
+  | Zero
+  | One
+  | Two
+  | Veto
 
 type OrganizerId = OrganizerId of Guid
 
@@ -41,23 +45,29 @@ type Organizer = {
 }
 
 type Voting =
-  | Vote of AbstractId*OrganizerId*Points
-  | Veto of AbstractId*OrganizerId
+  Voting of AbstractId * OrganizerId * Points
 
-let extractVoterId voting =
-  match voting with
-  | Vote (_,id, _) -> id
-  | Veto (_,id) -> id
+let extractAbstractId (Voting (id,_,_)) =
+  id
 
-let extractAbstractId voting =
-  match voting with
-  | Vote (id,_,_) -> id
-  | Veto (id,_) -> id
+let extractVoterId  (Voting (_,id,_)) =
+  id
 
-let extractPoints voting =
-  match voting with
-  | Vote (id,_,points) -> (id, points)
-  | Veto (_) -> failwith "Veto does not have points"
+let extractPoints (Voting (_,_,points)) =
+  points
+
+let extractVoteForAbstract organizerId abstractId votings =
+  let vote =
+    votings
+    |> List.filter (fun voting -> voting |> extractAbstractId = abstractId && voting |> extractVoterId = organizerId)
+
+  match vote with
+  | [vote] ->
+      vote |> Some
+
+  | _ ->
+      None
+
 
 type CallForPapers =
   | NotOpened
@@ -65,7 +75,7 @@ type CallForPapers =
   | Closed
 
 type VotingPeriod =
-  | InProgess
+  | InProgress
   | Finished
 
 type ConferenceId = ConferenceId of Guid
@@ -85,7 +95,7 @@ let emptyConference() = {
   Id = System.Guid.NewGuid() |> ConferenceId
   Title = ""
   CallForPapers = NotOpened
-  VotingPeriod = InProgess
+  VotingPeriod = InProgress
   Abstracts = []
   Votings = []
   Organizers = []

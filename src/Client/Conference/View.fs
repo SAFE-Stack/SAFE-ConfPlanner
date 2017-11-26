@@ -13,6 +13,8 @@ open Fulma.Layouts
 open Fulma.Components
 open Fulma.Elements
 open Fulma.Extra.FontAwesome
+open Fulma.Elements.Form
+
 
 type MessageType =
   | Info
@@ -23,41 +25,98 @@ let pleaseSelectAConference =
   "Please select a conference"
 
 let renderMessageType messageType =
-    match messageType with
-    | Info -> "is-info"
-    | Success -> "is-success"
-    | Error -> "is-danger"
+  match messageType with
+  | Info -> "is-info"
+  | Success -> "is-success"
+  | Error -> "is-danger"
 
-let speaker (speakers : Speaker list) =
+let private renderSpeakers (speakers : Speaker list) =
   speakers
   |> List.map (fun s -> s.Firstname + " " + s.Lastname)
   |> String.concat ", "
 
-let talk (t:Model.ConferenceAbstract) =
-  div [ ClassName "card" ]
+let viewVotingButton clickMsg isActive btnType label =
+  Button.button_a
     [
-      div [ ClassName "card-content" ]
-        [
-          div [ ClassName "media" ]
-            [
-              div [ ClassName "media-content" ]
-                [
-                  p [ ClassName "title is-4" ] [ str <| t.Text]
-                  p [ ClassName "subtitle is-6" ] [ str <| speaker t.Speakers ]
-                ]
-            ]
+      yield Button.props [ OnClick clickMsg ]
+      if isActive then
+        yield btnType
+    ]
+    [ label |> str ]
 
-          div [ ClassName "content" ]
+let viewVotingButtons dispatch user vote (talk : Model.ConferenceAbstract) =
+  let possibleVotings =
+    [
+      Voting.Voting (talk.Id, user, Two), Button.isPrimary, "2"
+      Voting.Voting (talk.Id, user, One),  Button.isPrimary, "1"
+      Voting.Voting (talk.Id, user, Zero),  Button.isPrimary, "0"
+      Voting.Voting (talk.Id, user, Veto), Button.isDanger, "Veto"
+    ]
+
+  let buttonMapper (voting,btnType,label) =
+    viewVotingButton
+      (fun _ -> voting |> Msg.Vote |> dispatch)
+      (vote = Some voting)
+      btnType
+      label
+    |> List.singleton
+    |> Control.control_div []
+
+
+  Field.field_div
+    [
+      Field.hasAddons
+    ]
+    [
+      yield! possibleVotings |> List.map buttonMapper
+    ]
+
+let viewTalk dispatch user votings (talk : Model.ConferenceAbstract) =
+  let vote =
+    votings |> extractVoteForAbstract user talk.Id
+
+  let style : ICSSProp list =
+    [
+      Display Flex
+      FlexDirection "row"
+      JustifyContent "left"
+    ]
+
+
+  Card.card [ Card.props [Style [ MarginTop 5; MarginBottom 5 ]] ]
+    [
+      Card.header []
+        [
+          Card.Header.title [] [ str <| talk.Text ]
+          // Card.Header.icon [] [ i [ ClassName "fa fa-angle-down" ] [ ] ]
+        ]
+      Card.content []
+        [
+          Content.content []
             [
-              str "Lorem ipsum dolor sit amet, consectetur adipiscing elit.Phasellus nec iaculis mauris."
+              Media.media []
+                [
+                  Media.content []
+                    [
+                      p [ ClassName "subtitle is-6" ] [ str <| renderSpeakers talk.Speakers ]
+                    ]
+                ]
+              Content.content []
+                [str "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec iaculis mauris."]
+            ]
+        ]
+      Card.footer [ ]
+        [ Card.Footer.item [ Card.props [Style style] ]
+            [
+              viewVotingButtons dispatch user vote talk
             ]
         ]
     ]
 
 let simpleButton txt action dispatch =
-  div
-    [ ClassName "column" ]
-    [ a
+  Column.column []
+    [
+       a
         [
           ClassName "button"
           OnClick (fun _ -> action |> dispatch)
@@ -66,33 +125,30 @@ let simpleButton txt action dispatch =
     ]
 
 
-let abstractColumn color filter conference  =
+let abstractColumn dispatch color filter user conference  =
   let abstracts =
     conference.Abstracts
     |> List.filter filter
-    |> List.map talk
+    |> List.map (viewTalk dispatch user conference.Votings)
 
-  div
+  let style : ICSSProp list =
     [
-      ClassName "column"
-      Style
-        [
-          BackgroundColor color
-          Display Flex
-          FlexDirection "column"
-          MinHeight 650
-        ]
+      BackgroundColor color
+      Display Flex
+      FlexDirection "column"
     ]
-    abstracts
 
-let proposedColumn =
-  abstractColumn "#dddddd" (fun abs -> abs.Status = Proposed)
+  abstracts
+  |> Column.column [ Column.props [ Style style ] ]
 
-let acceptedColumn =
-  abstractColumn "#ddffdd" (fun abs -> abs.Status = Accepted)
+let proposedColumn dispatch user conference =
+  conference |> abstractColumn dispatch "#dddddd" (fun abs -> abs.Status = Proposed) user
 
-let rejectedColumn =
-  abstractColumn "#ffdddd" (fun abs -> abs.Status = Rejected)
+let acceptedColumn dispatch user conference =
+  conference |> abstractColumn dispatch "#ddffdd" (fun abs -> abs.Status = Accepted) user
+
+let rejectedColumn dispatch user conference =
+  conference |> abstractColumn dispatch "#ffdddd" (fun abs -> abs.Status = Rejected) user
 
 let toggleModeButtons dispatch mode =
   let buttons =
@@ -106,35 +162,38 @@ let toggleModeButtons dispatch mode =
           simpleButton "Make It So" MakeItSo dispatch
         ]
 
-  div [ ClassName "columns" ] buttons
+  buttons |> Columns.columns []
 
-let viewAbstracts dispatch conference =
-  div [ ClassName "section"]
-    [
-      div [ ClassName "columns is-vcentered" ]
-        [
-          div [ ClassName "column"; Style [ TextAlign "center" ]] [ "Proposed" |> str ]
-          div [ ClassName "column"; Style [ TextAlign "center" ]] [ "Accepted" |> str ]
-          div [ ClassName "column"; Style [ TextAlign "center" ]] [ "Rejected" |> str ]
-        ]
+let private viewVotingPanelHeader header =
+  [ header |> str ]
+  |> Heading.h1 [ Heading.is3 ]
+  |> List.singleton
+  |> Column.column []
 
-      div [ ClassName "columns is-vcentered" ]
-        [
-          proposedColumn conference
-          acceptedColumn conference
-          rejectedColumn conference
-        ]
+let private viewVotingPanel dispatch user conference =
+  [
+    [ "Proposed"; "Accepted" ; "Rejected"]
+    |> List.map viewVotingPanelHeader
+    |> Columns.columns []
 
-      div [ ClassName "columns is-vcentered" ]
-        [
-          match conference.VotingPeriod with
-          | InProgess ->
-              yield simpleButton "Finish Votingperiod" FinishVotingperiod dispatch
+    Columns.columns []
+      [
+        conference |> proposedColumn dispatch user
+        conference |> acceptedColumn dispatch user
+        conference |> rejectedColumn dispatch user
+      ]
 
-          | Finished ->
-              yield simpleButton "Reopen Votingperiod" ReopenVotingperiod dispatch
-        ]
-    ]
+    Columns.columns []
+      [
+        match conference.VotingPeriod with
+        | InProgress ->
+            yield simpleButton "Finish Votingperiod" FinishVotingperiod dispatch
+
+        | Finished ->
+            yield simpleButton "Reopen Votingperiod" ReopenVotingperiod dispatch
+      ]
+  ]
+  |> div []
 
 let messageWindow name content messageType =
   let mapper =
@@ -163,7 +222,7 @@ let messageWindowType events =
 let footer dispatch conference lastEvents =
   let content =
     match conference with
-    | RemoteData.Success (conference,mode) ->
+    | RemoteData.Success (_,mode) ->
         let window =
           match mode with
           | WhatIf whatif ->
@@ -192,17 +251,9 @@ let footer dispatch conference lastEvents =
     | _ ->
       str "No conference loaded"
 
-
-  footer [ ClassName "footer" ]
-    [
-      div [ ClassName "container" ]
-        [
-          div [ ClassName "content" ]
-            [
-              content
-            ]
-        ]
-    ]
+  content
+  |> List.singleton
+  |> Container.container [ Container.isFluid ]
 
 let viewConferenceDropdownItem dispatch (conferenceId, title) =
   Dropdown.item
@@ -249,40 +300,40 @@ let viewConferences dispatch conference conferences =
 
   | _ ->
       [ div [ ClassName "column"] [ "Conferences not loaded" |> str ] ]
-      |> div [ ClassName "columns is-vcentered" ]
+      |> div [ ClassName "columns" ]
 
 
 let viewHeader dispatch conference conferences =
-  Section.section []
-    [
-      Container.container [ Container.isFluid ]
-        [
-          Panel.panel []
-            [
-              Panel.heading [ ] [ str "Conferences"]
-              Panel.block [ ]
-                [
-                  conferences |> viewConferences dispatch conference
-                ]
-            ]
-        ]
-    ]
+  [
+    Panel.panel []
+      [
+        Panel.heading [ ] [ str "Conferences"]
+        Panel.block [ ]
+          [
+            conferences |> viewConferences dispatch conference
+          ]
+      ]
+  ]
+  |> Container.container [ Container.isFluid ]
 
-let viewConference dispatch conference =
+let viewConference dispatch user conference =
   match conference with
   | RemoteData.Success (conference,_) ->
-      viewAbstracts dispatch conference
+      viewVotingPanel dispatch user conference
 
   | _ ->
       [
         div [ ClassName "column"] [ "Conference Not Loaded" |> str ]
       ]
-      |> div [ ClassName "columns is-vcentered" ]
+      |> div [ ClassName "columns" ]
+
+  |> List.singleton
+  |> Container.container [ Container.isFluid ]
 
 let root model dispatch =
   [
-    viewHeader dispatch model.Conference model.Conferences
-    viewConference dispatch model.Conference
-    footer dispatch model.Conference model.LastEvents
+    viewHeader dispatch model.Conference model.Conferences |> List.singleton |> Section.section []
+    viewConference dispatch model.Organizer model.Conference |> List.singleton |> Section.section []
+    footer dispatch model.Conference model.LastEvents |> List.singleton |> Footer.footer []
   ]
   |> div []
