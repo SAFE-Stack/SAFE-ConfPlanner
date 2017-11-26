@@ -16,7 +16,7 @@ let ``Can not vote when voting period is already finished`` () =
   let vote = voteOne talk heimeshoff
 
   Given [
-    OrganizerRegistered heimeshoff
+    OrganizerAddedToConference heimeshoff
     TalkWasProposed talk
     VotingPeriodWasFinished]
   |> When (Vote vote)
@@ -42,7 +42,7 @@ let ``Can vote when constraints are fulfilled`` () =
   let vote = voteOne talk heimeshoff
 
   Given [
-    OrganizerRegistered heimeshoff
+    OrganizerAddedToConference heimeshoff
     TalkWasProposed talk]
   |> When (Vote vote)
   |> ThenExpect [VotingWasIssued vote]
@@ -55,7 +55,7 @@ let ``Voter can change previous vote for an abstract`` () =
   let vote = voteOne talk heimeshoff
 
   Given [
-    OrganizerRegistered heimeshoff
+    OrganizerAddedToConference heimeshoff
     TalkWasProposed talk
     VotingWasIssued vote]
   |> When (Vote vote)
@@ -69,7 +69,7 @@ let ``Can issue a veto when constraints are fulfilled`` () =
   let veto= veto talk heimeshoff
 
   Given [
-    OrganizerRegistered heimeshoff
+    OrganizerAddedToConference heimeshoff
     TalkWasProposed talk]
   |> When (Vote veto)
   |> ThenExpect [VotingWasIssued veto]

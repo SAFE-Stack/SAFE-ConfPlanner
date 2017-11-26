@@ -33,11 +33,14 @@ let conferenceWebsocket =
   let conferencesProjection,conferencesQueryHandler =
     toProjectionAndQueryHandler Conferences.projection Conferences.queryHandler
 
+  let organizersProjection,organizersQueryHandler =
+    toProjectionAndQueryHandler Organizers.projection Organizers.queryHandler
+
   websocket <|
     eventSourced
       Behaviour.execute
-      [conferenceProjection ; conferencesProjection]
-      [conferenceQueryHandler ; conferencesQueryHandler]
+      [conferenceProjection ; conferencesProjection ; organizersProjection]
+      [conferenceQueryHandler ; conferencesQueryHandler ; organizersQueryHandler]
       @".\conference_eventstore.json"
 
 

@@ -21,9 +21,9 @@ let private talk3 = proposedTalk "Azure and everything" "Isaac" "Abraham"
 let private events =
   [
     ConferenceScheduled conference
-    OrganizerRegistered heimeshoff
-    OrganizerRegistered sachse
-    OrganizerRegistered helmig
+    OrganizerAddedToConference heimeshoff
+    OrganizerAddedToConference sachse
+    OrganizerAddedToConference helmig
     NumberOfSlotsDecided 2
 
     CallForPapersOpened

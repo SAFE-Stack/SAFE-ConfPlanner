@@ -5,7 +5,8 @@ open Model
 type Event =
   | ConferenceScheduled of Conference
   | ConferenceAlreadyScheduled
-  | OrganizerRegistered of Organizer
+  | OrganizerAddedToConference of Organizer
+  | OrganizerAlreadyAddedToConference
   | TalkWasProposed of ConferenceAbstract
   | CallForPapersOpened
   | CallForPapersClosed
@@ -24,7 +25,8 @@ let isError event =
   match event with
   | ConferenceScheduled _ -> false
   | ConferenceAlreadyScheduled -> true
-  | OrganizerRegistered _ -> false
+  | OrganizerAddedToConference _ -> false
+  | OrganizerAlreadyAddedToConference -> true
   | TalkWasProposed _ -> false
   | CallForPapersOpened -> false
   | CallForPapersClosed -> false

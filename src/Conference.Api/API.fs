@@ -7,9 +7,11 @@ type Conferences =
 
 type QueryParameter =
   | Conference of ConferenceId
+  | Organizers
   | Conferences
 
 type QueryResult =
   | Conference of Conference
   | Conferences of Conferences
+  | Organizers of Organizers
   | ConferenceNotFound

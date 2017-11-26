@@ -14,7 +14,7 @@ let apply (conference : Conference) event : Conference =
     | ConferenceScheduled conference ->
         conference
 
-    | OrganizerRegistered o ->
+    | OrganizerAddedToConference o ->
         { conference with Organizers = o :: conference.Organizers }
 
     | TalkWasProposed t ->

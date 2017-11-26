@@ -11,7 +11,11 @@
     <Compile Include="FinishVotingPeriod_Test.fs" />
     <Compile Include="ProposeAbstract_Test.fs" />
     <Compile Include="Vote_Test.fs" />
+    <Compile Include="AddOrganizerToConference_Test.fs" />
     <Compile Include="ScheduleConference_Test.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="2.0.0" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

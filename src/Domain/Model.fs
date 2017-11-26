@@ -44,6 +44,16 @@ type Organizer = {
   Lastname : string
 }
 
+type Organizers =
+  Organizer list
+
+let organizer firstname lastname guid =
+  {
+    Id = OrganizerId <| Guid.Parse guid
+    Firstname = firstname
+    Lastname = lastname
+  }
+
 type Voting =
   Voting of AbstractId * OrganizerId * Points
 
