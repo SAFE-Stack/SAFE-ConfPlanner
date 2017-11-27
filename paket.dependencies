@@ -6,6 +6,7 @@ nuget Chessie
 nuget FAKE
 nuget FsUnit
 nuget Fulma
+nuget Fulma.Extensions
 nuget Microsoft.NET.Test.Sdk
 nuget Newtonsoft.Json
 nuget NUnit.Console

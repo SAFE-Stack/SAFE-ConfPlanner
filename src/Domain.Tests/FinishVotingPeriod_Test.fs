@@ -48,9 +48,9 @@ let ``Cannot finish a voting period when not all abstracts have votes from every
   let talk3 = proposedTalk()
 
   Given [
-    OrganizerRegistered heimeshoff
-    OrganizerRegistered fellien
-    OrganizerRegistered poepke
+    OrganizerAddedToConference heimeshoff
+    OrganizerAddedToConference fellien
+    OrganizerAddedToConference poepke
 
     CallForPapersOpened
     TalkWasProposed talk1
@@ -79,9 +79,9 @@ let ``Voting top x abstracts will be accepted, others will be rejected`` () =
   let talk3 = proposedTalk()
 
   Given [
-    OrganizerRegistered heimeshoff
-    OrganizerRegistered fellien
-    OrganizerRegistered poepke
+    OrganizerAddedToConference heimeshoff
+    OrganizerAddedToConference fellien
+    OrganizerAddedToConference poepke
     NumberOfSlotsDecided 2
 
     CallForPapersOpened
@@ -114,9 +114,9 @@ let ``A veto rejects talks that would otherwise be accepted`` () =
   let talk3 = proposedTalk()
 
   Given [
-    OrganizerRegistered heimeshoff
-    OrganizerRegistered fellien
-    OrganizerRegistered poepke
+    OrganizerAddedToConference heimeshoff
+    OrganizerAddedToConference fellien
+    OrganizerAddedToConference poepke
     NumberOfSlotsDecided 2
 
     CallForPapersOpened

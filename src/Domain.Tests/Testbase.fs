@@ -51,3 +51,6 @@ let proposedTalk() =
       Status = Proposed
       Type = Talk
    }
+
+let heimeshoff =
+  organizer "Marco" "Heimeshoff" (Guid.NewGuid() |> string)

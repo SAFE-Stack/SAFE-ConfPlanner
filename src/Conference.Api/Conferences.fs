@@ -3,6 +3,10 @@ module Conference.Api.Conferences
 open API
 open Infrastructure.Types
 open Events
+open Model
+
+type Conferences =
+  (ConferenceId * string) list
 
 type ConferencesReadModel =
   Conferences
@@ -14,7 +18,7 @@ let private apply readModel event =
     | _ ->
         readModel
 
-let private evolve readModel (streamId : StreamId ,events) =
+let private evolve readModel (_ ,events) =
   events |> List.fold apply readModel
 
 let projection : ProjectionDefinition<ConferencesReadModel, Event>=

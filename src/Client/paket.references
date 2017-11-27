@@ -6,3 +6,4 @@ Fable.Elmish.Debugger
 dotnet-fable
 Fable.Elmish.HMR
 Fulma
+Fulma.Extensions

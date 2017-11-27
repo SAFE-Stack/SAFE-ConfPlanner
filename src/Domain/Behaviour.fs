@@ -5,6 +5,15 @@ open Commands
 open Events
 open Projections
 
+let (|OrganizerAlreadyInConference|_|) organizers organizer =
+  match organizers |> List.contains organizer with
+  | true -> Some organizer
+  | false -> None
+
+let (|OrganizerNotInConference|_|) organizers organizer =
+  match organizers |> List.contains organizer with
+  | false -> Some organizer
+  | true -> None
 
 let (|AlreadyVotedForAbstract|_|) votingResults voting =
   match List.contains voting votingResults with
@@ -149,23 +158,60 @@ let handleVote givenHistory voting =
   |> conferenceState
   |> vote voting
 
-
 let handleScheduleConference givenHistory conference =
   if givenHistory |> List.isEmpty then
     [ConferenceScheduled conference]
   else
     [ConferenceAlreadyScheduled]
 
-let execute (given_history : Event list) (command : Command) : Event list =
+let addOrganizerToConference organizer conference =
+  match organizer with
+  | OrganizerAlreadyInConference conference.Organizers _ ->
+      [OrganizerAlreadyAddedToConference organizer]
+
+  | _ -> [OrganizerAddedToConference organizer]
+
+let private handleAddOrganizerToConference givenHistory organizer =
+  givenHistory
+  |> conferenceState
+  |> addOrganizerToConference organizer
+
+let removeOrganizerFromConference organizer conference =
+  match organizer with
+  | OrganizerNotInConference conference.Organizers _ ->
+      [OrganizerWasNotAddedToConference organizer]
+
+  | _ -> [OrganizerRemovedFromConference organizer]
+
+let private handleRemoveOrganizerFromConference givenHistory organizer =
+  givenHistory
+  |> conferenceState
+  |> removeOrganizerFromConference organizer
+
+let execute (givenHistory : Event list) (command : Command) : Event list =
   match command with
   | ScheduleConference conference ->
       printfn "ScheduleConference %A" conference
-      conference |> handleScheduleConference given_history
+      conference |> handleScheduleConference givenHistory
 
-  | ProposeAbstract proposed -> handleProposeAbstract given_history proposed
-  | FinishVotingPeriod -> handleFinishVotingPeriod given_history
-  | ReopenVotingPeriod -> handleReopenVotingPeriod given_history
-  | Vote voting -> handleVote given_history voting
+  | AddOrganizerToConference organizer ->
+      handleAddOrganizerToConference givenHistory organizer
+
+  | RemoveOrganizerFromConference organizer ->
+      handleRemoveOrganizerFromConference givenHistory organizer
+
+  | ProposeAbstract proposed ->
+      handleProposeAbstract givenHistory proposed
+
+  | FinishVotingPeriod ->
+      handleFinishVotingPeriod givenHistory
+
+  | ReopenVotingPeriod ->
+      handleReopenVotingPeriod givenHistory
+
+  | Vote voting ->
+      handleVote givenHistory voting
+
   | RevokeVoting(_) -> failwith "Not Implemented"
   | AcceptAbstract(_) -> failwith "Not Implemented"
   | RejectAbstract(_) -> failwith "Not Implemented"
