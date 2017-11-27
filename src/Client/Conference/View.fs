@@ -14,7 +14,7 @@ open Fulma.Components
 open Fulma.Elements
 open Fulma.Extra.FontAwesome
 open Fulma.Elements.Form
-
+open Fulma.Extensions
 
 type MessageType =
   | Info
@@ -195,6 +195,66 @@ let private viewVotingPanel dispatch user conference =
   ]
   |> div []
 
+let private viewOrganizer dispatch conference (organizer : Organizer) =
+  let isAddedToConference =
+    conference.Organizers
+    |> List.exists (fun o -> organizer.Id = o.Id)
+
+  let changeMsg =
+    if isAddedToConference then
+      RemoveOrganizerFromConference
+    else
+      AddOrganizerToConference
+
+  let switch =
+       Switch.switch
+        [
+          Switch.isChecked isAddedToConference
+          Switch.isRounded
+          Switch.isPrimary
+          Switch.onChange (fun _ -> organizer |> changeMsg |> dispatch)
+        ]
+        []
+  [
+    Column.column [] [ str <| organizer.Firstname + " " + organizer.Lastname ]
+    Column.column [] [ switch ]
+  ]
+  |> Columns.columns []
+
+let private viewOrganizersTable dispatch conference organizers =
+    div
+      [
+
+      ]
+      [
+        yield Columns.columns []
+          [
+            Column.column [] [ Heading.h1 [ Heading.is4 ]  [ str "Name" ] ]
+            Column.column [] [ Heading.h1 [ Heading.is4 ]  [ str "Added" ] ]
+          ]
+
+        yield! organizers |> List.map (viewOrganizer dispatch conference)
+      ]
+
+let private viewOrganizersPanel dispatch conference organizers =
+  match organizers with
+  | RemoteData.Success organizers ->
+      Columns.columns []
+        [
+          Column.column
+            [
+              Column.Width.isHalf
+              Column.Offset.isOneThird
+            ]
+            [
+              viewOrganizersTable dispatch conference organizers
+            ]
+        ]
+
+  | _ ->
+      div [] [ "no organizers" |> str ]
+
+
 let messageWindow name content messageType =
   let mapper =
      sprintf "%A" >> str >> List.singleton >> li []
@@ -303,7 +363,24 @@ let viewConferenceList dispatch currentView conferences =
       |> div [ ClassName "columns" ]
 
 
+let private viewPanelTab currentView selectEditorMsg editor label =
+  match currentView with
+  | Editor (currentEditor, _, _) ->
+      Panel.tab
+        [
+          if currentEditor = editor then
+            yield Panel.Tab.isActive
+
+          yield Panel.Tab.props [ OnClick (fun _ -> editor |> selectEditorMsg) ]
+        ]
+        [ str label ]
+
+  | _ -> str ""
+
+
 let viewHeader dispatch currentView conferences =
+  let selectEditorMsg =
+    SwitchToEditor >> dispatch
   [
     Panel.panel []
       [
@@ -314,18 +391,20 @@ let viewHeader dispatch currentView conferences =
           ]
         Panel.tabs []
           [
-            Panel.tab [ ] [ str "Conference" ]
-            Panel.tab [ Panel.Tab.isActive ] [ str "Votings" ]
-            Panel.tab [ ] [ str "Organizers" ]
+            viewPanelTab currentView selectEditorMsg VotingPanel "Votings"
+            viewPanelTab currentView selectEditorMsg Organizers "Organizers"
           ]
       ]
   ]
   |> Container.container [ Container.isFluid ]
 
-let viewView dispatch user currentView =
+let viewCurrentView dispatch user currentView organizers =
   match currentView with
   | Editor (VotingPanel, conference, _) ->
       viewVotingPanel dispatch user conference
+
+  | Editor (Organizers, conference, _) ->
+      viewOrganizersPanel dispatch conference organizers
 
   | _ ->
       [
@@ -339,7 +418,7 @@ let viewView dispatch user currentView =
 let root model dispatch =
   [
     viewHeader dispatch model.View model.Conferences |> List.singleton |> Section.section []
-    viewView dispatch model.Organizer model.View |> List.singleton |> Section.section []
+    viewCurrentView dispatch model.Organizer model.View model.Organizers |> List.singleton |> Section.section []
     footer dispatch model.View model.LastEvents |> List.singleton |> Footer.footer []
   ]
   |> div []

@@ -113,6 +113,10 @@ NUGET
     Fulma (1.0.0-beta-005)
       Fable.Core (>= 1.2.4) - restriction: >= netstandard1.6
       Fable.React (>= 1.2.1) - restriction: >= netstandard1.6
+    Fulma.Extensions (0.1.0-beta-009)
+      Fable.Core (>= 1.2.4) - restriction: >= netstandard1.6
+      Fable.React (>= 1.2.1) - restriction: >= netstandard1.6
+      Fulma (>= 1.0.0-beta-005) - restriction: >= netstandard1.6
     jose-jwt (2.4)
       Newtonsoft.Json (>= 9.0.1) - restriction: && (< net40) (>= netstandard1.4)
       System.IO.Compression (>= 4.3) - restriction: && (< net40) (>= netstandard1.4)

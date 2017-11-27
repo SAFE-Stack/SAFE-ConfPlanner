@@ -24,7 +24,7 @@ let organizers =
 
 let projection : ProjectionDefinition<OrganizersReadModel, Event>=
   {
-    InitialState = []
+    InitialState = organizers
     UpdateState = fun readmodel _ -> readmodel
   }
 

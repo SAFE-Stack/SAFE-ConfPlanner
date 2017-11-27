@@ -10,7 +10,6 @@ type Conferences =
 
 type ConferencesReadModel =
   Conferences
-
 let private apply readModel event =
   match event with
     | ConferenceScheduled conference ->

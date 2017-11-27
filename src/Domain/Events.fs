@@ -6,7 +6,9 @@ type Event =
   | ConferenceScheduled of Conference
   | ConferenceAlreadyScheduled
   | OrganizerAddedToConference of Organizer
-  | OrganizerAlreadyAddedToConference
+  | OrganizerAlreadyAddedToConference of Organizer
+  | OrganizerRemovedFromConference of Organizer
+  | OrganizerWasNotAddedToConference of Organizer
   | TalkWasProposed of ConferenceAbstract
   | CallForPapersOpened
   | CallForPapersClosed
@@ -26,7 +28,9 @@ let isError event =
   | ConferenceScheduled _ -> false
   | ConferenceAlreadyScheduled -> true
   | OrganizerAddedToConference _ -> false
-  | OrganizerAlreadyAddedToConference -> true
+  | OrganizerAlreadyAddedToConference _ -> true
+  | OrganizerRemovedFromConference _ -> true
+  | OrganizerWasNotAddedToConference _ -> false
   | TalkWasProposed _ -> false
   | CallForPapersOpened -> false
   | CallForPapersClosed -> false

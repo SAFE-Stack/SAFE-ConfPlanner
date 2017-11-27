@@ -12,6 +12,7 @@
     <Compile Include="ProposeAbstract_Test.fs" />
     <Compile Include="Vote_Test.fs" />
     <Compile Include="AddOrganizerToConference_Test.fs" />
+    <Compile Include="RemoveOrganizerFromConference_Test.fs" />
     <Compile Include="ScheduleConference_Test.fs" />
   </ItemGroup>
   <ItemGroup>

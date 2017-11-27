@@ -5,6 +5,11 @@ open Infrastructure.Types
 open Server.ServerTypes
 open Model
 open Conference.Api
+open Model
+
+type Editor =
+  | VotingPanel
+  | Organizers
 
 type Msg =
   | Received of ServerMsg<Events.Event,API.QueryResult>
@@ -12,8 +17,11 @@ type Msg =
   | FinishVotingperiod
   | ToggleMode
   | ReopenVotingperiod
+  | AddOrganizerToConference of Organizer
+  | RemoveOrganizerFromConference of Organizer
   | MakeItSo
   | SwitchToConference of ConferenceId
+  | SwitchToEditor of Editor
 
 type WhatIf =
   {
@@ -26,9 +34,6 @@ type Mode =
   | Live
   | WhatIf of WhatIf
 
-type Editor =
-  | VotingPanel
-
 type View =
   | NotAsked
   | Loading
@@ -39,6 +44,7 @@ type Model =
   {
     View : View
     Conferences : RemoteData<Conferences.Conferences>
+    Organizers : RemoteData<Model.Organizers>
     LastEvents : Events.Event list
     Organizer : OrganizerId
   }

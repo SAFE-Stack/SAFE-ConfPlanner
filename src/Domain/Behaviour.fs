@@ -10,6 +10,11 @@ let (|OrganizerAlreadyInConference|_|) organizers organizer =
   | true -> Some organizer
   | false -> None
 
+let (|OrganizerNotInConference|_|) organizers organizer =
+  match organizers |> List.contains organizer with
+  | false -> Some organizer
+  | true -> None
+
 let (|AlreadyVotedForAbstract|_|) votingResults voting =
   match List.contains voting votingResults with
   | true -> Some voting
@@ -162,17 +167,26 @@ let handleScheduleConference givenHistory conference =
 let addOrganizerToConference organizer conference =
   match organizer with
   | OrganizerAlreadyInConference conference.Organizers _ ->
-      [OrganizerAlreadyAddedToConference]
+      [OrganizerAlreadyAddedToConference organizer]
 
   | _ -> [OrganizerAddedToConference organizer]
-
-
 
 let private handleAddOrganizerToConference givenHistory organizer =
   givenHistory
   |> conferenceState
   |> addOrganizerToConference organizer
 
+let removeOrganizerFromConference organizer conference =
+  match organizer with
+  | OrganizerNotInConference conference.Organizers _ ->
+      [OrganizerWasNotAddedToConference organizer]
+
+  | _ -> [OrganizerRemovedFromConference organizer]
+
+let private handleRemoveOrganizerFromConference givenHistory organizer =
+  givenHistory
+  |> conferenceState
+  |> removeOrganizerFromConference organizer
 
 let execute (givenHistory : Event list) (command : Command) : Event list =
   match command with
@@ -182,6 +196,9 @@ let execute (givenHistory : Event list) (command : Command) : Event list =
 
   | AddOrganizerToConference organizer ->
       handleAddOrganizerToConference givenHistory organizer
+
+  | RemoveOrganizerFromConference organizer ->
+      handleRemoveOrganizerFromConference givenHistory organizer
 
   | ProposeAbstract proposed ->
       handleProposeAbstract givenHistory proposed
