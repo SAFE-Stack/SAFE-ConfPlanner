@@ -87,7 +87,7 @@ Target "Restore" (fun _ ->
 )
 
 Target "BuildTests" (fun _ ->
-    runDotnet currentDirectory "build"
+    runDotnet testsPath "build"
 )
 
 
@@ -147,6 +147,7 @@ Target "All" DoNothing
   ==> "Restore"
   ==> "InstallClient"
   ==> "BuildClient"
+  ==> "RunTests"
   ==> "All"
 
 "BuildClient"
