@@ -15,6 +15,7 @@ open Fulma.Elements
 open Fulma.Extra.FontAwesome
 open Fulma.Elements.Form
 open Fulma.Extensions
+open Fulma.BulmaClasses.Bulma
 
 type MessageType =
   | Info
@@ -150,20 +151,6 @@ let acceptedColumn dispatch user conference =
 let rejectedColumn dispatch user conference =
   conference |> abstractColumn dispatch "#ffdddd" (fun abs -> abs.Status = Rejected) user
 
-let toggleModeButtons dispatch mode =
-  let buttons =
-    match mode with
-    | Live ->
-        [ simpleButton "Switch to WhatIf-Mode" ToggleMode dispatch ]
-
-    | WhatIf _ ->
-        [
-          simpleButton "Switch to Live-Mode" ToggleMode dispatch
-          simpleButton "Make It So" MakeItSo dispatch
-        ]
-
-  buttons |> Columns.columns []
-
 let private viewVotingPanelHeader header =
   [ header |> str ]
   |> Heading.h1 [ Heading.is3 ]
@@ -172,6 +159,16 @@ let private viewVotingPanelHeader header =
 
 let private viewVotingPanel dispatch user conference =
   [
+    Columns.columns []
+      [
+        match conference.VotingPeriod with
+        | InProgress ->
+            yield simpleButton "Finish Votingperiod" FinishVotingperiod dispatch
+
+        | Finished ->
+            yield simpleButton "Reopen Votingperiod" ReopenVotingperiod dispatch
+      ]
+
     [ "Proposed"; "Accepted" ; "Rejected"]
     |> List.map viewVotingPanelHeader
     |> Columns.columns []
@@ -181,16 +178,6 @@ let private viewVotingPanel dispatch user conference =
         conference |> proposedColumn dispatch user
         conference |> acceptedColumn dispatch user
         conference |> rejectedColumn dispatch user
-      ]
-
-    Columns.columns []
-      [
-        match conference.VotingPeriod with
-        | InProgress ->
-            yield simpleButton "Finish Votingperiod" FinishVotingperiod dispatch
-
-        | Finished ->
-            yield simpleButton "Reopen Votingperiod" ReopenVotingperiod dispatch
       ]
   ]
   |> div []
@@ -221,20 +208,17 @@ let private viewOrganizer dispatch conference (organizer : Organizer) =
   ]
   |> Columns.columns []
 
-let private viewOrganizersTable dispatch conference organizers =
-    div
-      [
+let private viewOrganizers dispatch conference organizers =
+  div []
+    [
+      yield Columns.columns []
+        [
+          Column.column [] [ Heading.h1 [ Heading.is4 ]  [ str "Name" ] ]
+          Column.column [] [ Heading.h1 [ Heading.is4 ]  [ str "Added" ] ]
+        ]
 
-      ]
-      [
-        yield Columns.columns []
-          [
-            Column.column [] [ Heading.h1 [ Heading.is4 ]  [ str "Name" ] ]
-            Column.column [] [ Heading.h1 [ Heading.is4 ]  [ str "Added" ] ]
-          ]
-
-        yield! organizers |> List.map (viewOrganizer dispatch conference)
-      ]
+      yield! organizers |> List.map (viewOrganizer dispatch conference)
+    ]
 
 let private viewOrganizersPanel dispatch conference organizers =
   match organizers with
@@ -247,7 +231,7 @@ let private viewOrganizersPanel dispatch conference organizers =
               Column.Offset.isOneThird
             ]
             [
-              viewOrganizersTable dispatch conference organizers
+              viewOrganizers dispatch conference organizers
             ]
         ]
 
@@ -302,7 +286,6 @@ let footer dispatch currentView lastEvents =
               |> div []
 
         [
-          mode |> toggleModeButtons dispatch
           window
         ]
         |> div []
@@ -363,38 +346,107 @@ let viewConferenceList dispatch currentView conferences =
       |> div [ ClassName "columns" ]
 
 
-let private viewPanelTab currentView selectEditorMsg editor label =
+let private viewTab currentView selectEditorMsg editor label =
   match currentView with
   | Editor (currentEditor, _, _) ->
-      Panel.tab
+      Tabs.tab
         [
           if currentEditor = editor then
-            yield Panel.Tab.isActive
+            yield Tabs.Tab.isActive
 
-          yield Panel.Tab.props [ OnClick (fun _ -> editor |> selectEditorMsg) ]
+          yield Tabs.Tab.props [ OnClick (fun _ -> editor |> selectEditorMsg) ]
         ]
-        [ str label ]
+        [ a [ ] [str label] ]
 
   | _ -> str ""
 
+let private viewWhatIfSwitch dispatch isChecked =
+  Switch.switch
+    [
+      Switch.isChecked isChecked
+      Switch.isRounded
+      Switch.isPrimary
+      Switch.onChange (fun _ -> ToggleMode |> dispatch)
+    ]
+    [ str "Whatif" ]
+
+let viewMakeItSo dispatch =
+  Button.button_a
+    [
+      Button.isPrimary
+      Button.props [ OnClick (fun _ -> MakeItSo |> dispatch) ]
+    ]
+    [
+
+      Icon.faIcon [ Icon.isSmall ] [ Fa.icon Fa.I.CheckSquare ]
+      span [] [ "Make It So" |> str ]
+    ]
+
+let private viewModeControls dispatch currentView =
+  match currentView with
+  | Editor (_,_,WhatIf _) ->
+      [
+        viewMakeItSo dispatch
+        viewWhatIfSwitch dispatch true
+      ]
+
+  | Editor (_,_,Live) ->
+      [
+        viewWhatIfSwitch dispatch false
+      ]
+
+  | _ ->
+      []
 
 let viewHeader dispatch currentView conferences =
   let selectEditorMsg =
     SwitchToEditor >> dispatch
-  [
-    Panel.panel []
+
+  let modeButtons =
+    viewModeControls dispatch currentView
+
+  let level =
+    Level.level [ ]
+        [
+          Level.left [ ]
+            [
+
+              Level.item []
+                [
+                  conferences |> viewConferenceList dispatch currentView
+                ]
+              Level.item [ ]
+                [
+                  Button.button_a
+                    [
+                      Button.isPrimary
+                    ]
+                    [
+                      Icon.faIcon [ Icon.isSmall ] [ Fa.icon Fa.I.PlusSquare ]
+                      span [] [ "New Conference" |> str ]
+                    ]
+               ]
+            ]
+          Level.right []
+            [
+               yield! modeButtons |> List.map (List.singleton >> Level.item [])
+            ]
+        ]
+
+  let tabs =
+    Tabs.tabs
       [
-        Panel.heading [ ] [ str "Conferences"]
-        Panel.block [ ]
-          [
-            conferences |> viewConferenceList dispatch currentView
-          ]
-        Panel.tabs []
-          [
-            viewPanelTab currentView selectEditorMsg VotingPanel "Votings"
-            viewPanelTab currentView selectEditorMsg Organizers "Organizers"
-          ]
+        Tabs.isFullwidth
+        Tabs.isBoxed
       ]
+      [
+        viewTab currentView selectEditorMsg VotingPanel "Votings"
+        viewTab currentView selectEditorMsg Organizers "Organizers"
+      ]
+
+  [
+    level
+    tabs
   ]
   |> Container.container [ Container.isFluid ]
 
