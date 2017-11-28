@@ -5,6 +5,8 @@ Given you use F# and Fable, you can actually build simple eventually connected s
 
 This project uses the [Safe-Stack](https://safe-stack.github.io/). Especially the build script leans heavily on the [Safe-Bookstore Example](https://github.com/SAFE-Stack/SAFE-BookStore).
 
+[![Build Status](https://travis-ci.org/rommsen/ConfPlanner.svg?branch=master)](https://travis-ci.org/rommsen/ConfPlanner)
+
 ## Content
 This project consists of 6 dotnetcore subprojects
 * `Domain` - Message-based CQRS implementation of the Domain of a ConferencePlanner.
