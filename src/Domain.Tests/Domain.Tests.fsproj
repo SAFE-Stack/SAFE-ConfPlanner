@@ -11,6 +11,7 @@
     <Compile Include="FinishVotingPeriod_Test.fs" />
     <Compile Include="ProposeAbstract_Test.fs" />
     <Compile Include="Vote_Test.fs" />
+    <Compile Include="RevokeVoting_Test.fs" />
     <Compile Include="AddOrganizerToConference_Test.fs" />
     <Compile Include="RemoveOrganizerFromConference_Test.fs" />
     <Compile Include="ScheduleConference_Test.fs" />

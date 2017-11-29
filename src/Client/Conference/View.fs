@@ -15,7 +15,6 @@ open Fulma.Elements
 open Fulma.Extra.FontAwesome
 open Fulma.Elements.Form
 open Fulma.Extensions
-open Fulma.BulmaClasses.Bulma
 
 type MessageType =
   | Info
@@ -36,7 +35,13 @@ let private renderSpeakers (speakers : Speaker list) =
   |> List.map (fun s -> s.Firstname + " " + s.Lastname)
   |> String.concat ", "
 
-let viewVotingButton clickMsg isActive btnType label =
+let viewVotingButton voteMsg revokeVotingMsg isActive btnType label =
+  let clickMsg =
+    if isActive then
+      revokeVotingMsg
+    else
+      voteMsg
+
   Button.button_a
     [
       yield Button.props [ OnClick clickMsg ]
@@ -57,6 +62,7 @@ let viewVotingButtons dispatch user vote (talk : Model.ConferenceAbstract) =
   let buttonMapper (voting,btnType,label) =
     viewVotingButton
       (fun _ -> voting |> Msg.Vote |> dispatch)
+      (fun _ -> voting |> Msg.RevokeVoting |> dispatch)
       (vote = Some voting)
       btnType
       label
@@ -263,7 +269,7 @@ let messageWindowType events =
   | true -> MessageType.Error
   | false -> MessageType.Success
 
-let footer dispatch currentView lastEvents =
+let footer currentView lastEvents =
   let content =
     match currentView with
     | Editor (_,_,mode) ->
@@ -471,6 +477,6 @@ let root model dispatch =
   [
     viewHeader dispatch model.View model.Conferences |> List.singleton |> Section.section []
     viewCurrentView dispatch model.Organizer model.View model.Organizers |> List.singleton |> Section.section []
-    footer dispatch model.View model.LastEvents |> List.singleton |> Footer.footer []
+    footer model.View model.LastEvents |> List.singleton |> Footer.footer []
   ]
   |> div []

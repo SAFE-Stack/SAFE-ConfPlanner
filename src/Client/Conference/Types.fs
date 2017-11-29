@@ -5,15 +5,16 @@ open Infrastructure.Types
 open Server.ServerTypes
 open Model
 open Conference.Api
-open Model
 
 type Editor =
   | VotingPanel
   | Organizers
+  | ConferenceData
 
 type Msg =
   | Received of ServerMsg<Events.Event,API.QueryResult>
   | Vote of Voting
+  | RevokeVoting of Voting
   | FinishVotingperiod
   | ToggleMode
   | ReopenVotingperiod

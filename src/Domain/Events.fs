@@ -14,6 +14,8 @@ type Event =
   | CallForPapersClosed
   | NumberOfSlotsDecided of int
   | VotingWasIssued of Voting
+  | VotingWasRevoked of Voting
+  | RevocationOfVotingWasDenied of Voting * error : string
   | VotingPeriodWasFinished
   | VotingPeriodWasReopened
   | AbstractWasProposed of ConferenceAbstract
@@ -36,11 +38,13 @@ let isError event =
   | CallForPapersClosed -> false
   | NumberOfSlotsDecided _ -> false
   | VotingWasIssued _ -> false
+  | VotingWasRevoked _ -> false
+  | RevocationOfVotingWasDenied _ -> true
+  | VotingDenied _ -> true
   | VotingPeriodWasFinished -> false
   | VotingPeriodWasReopened -> false
   | AbstractWasProposed _ -> false
   | AbstractWasAccepted _ -> false
   | AbstractWasRejected _ -> false
   | FinishingDenied _ -> true
-  | VotingDenied _ -> true
   | ProposingDenied _ -> true
