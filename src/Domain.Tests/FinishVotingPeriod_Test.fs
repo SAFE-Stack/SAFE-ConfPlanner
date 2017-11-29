@@ -9,8 +9,7 @@ open Events
 open Testbase
 
 // Scenario
-let heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }
-let fellien = { Firstname = "Janek";  Lastname = "Felien"; Id = OrganizerId <| Guid.NewGuid() }
+let fellien = { Firstname = "Janek";  Lastname = "Fellien"; Id = OrganizerId <| Guid.NewGuid() }
 let poepke = { Firstname = "Conrad";  Lastname = "Poepke"; Id = OrganizerId <| Guid.NewGuid() }
 
 

@@ -4,6 +4,7 @@ open Model
 open Commands
 open Events
 open Projections
+open Model
 
 let (|OrganizerAlreadyInConference|_|) organizers organizer =
   match organizers |> List.contains organizer with
@@ -208,7 +209,13 @@ let removeOrganizerFromConference organizer conference =
   | OrganizerNotInConference conference.Organizers _ ->
       [OrganizerWasNotAddedToConference organizer]
 
-  | _ -> [OrganizerRemovedFromConference organizer]
+  | _ ->
+    let revocations =
+      conference.Votings
+      |> votesOfOrganizer organizer.Id
+      |> List.map VotingWasRevoked
+
+    [OrganizerRemovedFromConference organizer] @ revocations
 
 let private handleRemoveOrganizerFromConference givenHistory organizer =
   givenHistory

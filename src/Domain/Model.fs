@@ -78,6 +78,10 @@ let extractVoteForAbstract organizerId abstractId votings =
   | _ ->
       None
 
+let votesOfOrganizer organizerId votings =
+  votings
+  |> List.filter (fun voting -> voting |> extractVoterId = organizerId)
+
 
 type CallForPapers =
   | NotOpened

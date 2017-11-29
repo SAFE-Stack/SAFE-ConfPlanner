@@ -22,13 +22,7 @@ let apply (conference : Conference) event : Conference =
           conference.Organizers
           |> List.filter (fun o -> o.Id <> organizer.Id)
 
-        let newVotings =
-          conference.Votings
-          |> List.filter (fun (Voting (_, id, _)) -> id <> organizer.Id)
-
-        { conference with
-            Organizers = newOrganizers
-            Votings = newVotings }
+        { conference with Organizers = newOrganizers }
 
     | TalkWasProposed t ->
         { conference with Abstracts = t :: conference.Abstracts }

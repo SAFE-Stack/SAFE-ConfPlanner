@@ -11,7 +11,6 @@ open Testbase
 
 [<Test>]
 let ``Can not vote when voting period is already finished`` () =
-  let heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }
   let talk = proposedTalk()
   let vote = voteOne talk heimeshoff
 
@@ -25,7 +24,6 @@ let ``Can not vote when voting period is already finished`` () =
 
 [<Test>]
 let ``Can not vote when voter is not organizer of conference`` () =
-  let heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }
   let talk = proposedTalk()
   let vote = voteOne talk heimeshoff
 
@@ -37,7 +35,6 @@ let ``Can not vote when voter is not organizer of conference`` () =
 
 [<Test>]
 let ``Can vote when constraints are fulfilled`` () =
-  let heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }
   let talk = proposedTalk()
   let vote = voteOne talk heimeshoff
 
