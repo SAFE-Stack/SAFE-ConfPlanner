@@ -4,6 +4,7 @@ open Model
 open Commands
 open Events
 open Projections
+open Model
 
 let (|OrganizerAlreadyInConference|_|) organizers organizer =
   match organizers |> List.contains organizer with
@@ -25,7 +26,7 @@ let (|DidNotVoteForAbstract|_|) votingResults voting =
   | true -> Some voting
   | false -> None
 
-let (|VoterIsNotAnOrganizer|_|) (organizers: Organizer list) (voting : Voting) =
+let (|VoterIsNotAnOrganizer|_|) (organizers: Organizers) (voting : Voting) =
   let isNotOrganizer voting =
     organizers
     |> List.map (fun x -> x.Id)
@@ -35,6 +36,15 @@ let (|VoterIsNotAnOrganizer|_|) (organizers: Organizer list) (voting : Voting) =
   match isNotOrganizer voting with
   | true -> Some voting
   | false -> None
+
+let (|VotingisNotIssued|_|) (votings: Voting list) (voting : Voting) =
+  let isIssued voting =
+    votings |> List.contains voting
+
+  match isIssued voting with
+  | true -> None
+  | false -> Some voting
+
 
 let numberOfVotesExceeded votingResults getVote (voting : Voting) max =
   let number =
@@ -158,6 +168,24 @@ let handleVote givenHistory voting =
   |> conferenceState
   |> vote voting
 
+let revokeVoting voting conference =
+  match conference.VotingPeriod with
+  | Finished ->
+      [ RevocationOfVotingWasDenied (voting,"Voting Period Already Finished") ]
+
+  | InProgress ->
+      match voting with
+      | VotingisNotIssued conference.Votings _ ->
+          [ RevocationOfVotingWasDenied (voting,"Voting Not Issued") ]
+
+      | _ -> [ VotingWasRevoked voting ]
+
+
+let handleRevokeVoting givenHistory voting =
+  givenHistory
+  |> conferenceState
+  |> revokeVoting voting
+
 let handleScheduleConference givenHistory conference =
   if givenHistory |> List.isEmpty then
     [ConferenceScheduled conference]
@@ -181,7 +209,13 @@ let removeOrganizerFromConference organizer conference =
   | OrganizerNotInConference conference.Organizers _ ->
       [OrganizerWasNotAddedToConference organizer]
 
-  | _ -> [OrganizerRemovedFromConference organizer]
+  | _ ->
+    let revocations =
+      conference.Votings
+      |> votesOfOrganizer organizer.Id
+      |> List.map VotingWasRevoked
+
+    [OrganizerRemovedFromConference organizer] @ revocations
 
 let private handleRemoveOrganizerFromConference givenHistory organizer =
   givenHistory
@@ -191,7 +225,6 @@ let private handleRemoveOrganizerFromConference givenHistory organizer =
 let execute (givenHistory : Event list) (command : Command) : Event list =
   match command with
   | ScheduleConference conference ->
-      printfn "ScheduleConference %A" conference
       conference |> handleScheduleConference givenHistory
 
   | AddOrganizerToConference organizer ->
@@ -212,6 +245,8 @@ let execute (givenHistory : Event list) (command : Command) : Event list =
   | Vote voting ->
       handleVote givenHistory voting
 
-  | RevokeVoting(_) -> failwith "Not Implemented"
+  | RevokeVoting voting  ->
+      handleRevokeVoting givenHistory voting
+
   | AcceptAbstract(_) -> failwith "Not Implemented"
   | RejectAbstract(_) -> failwith "Not Implemented"

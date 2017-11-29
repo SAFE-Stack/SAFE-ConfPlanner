@@ -3,7 +3,6 @@ module Projections
 open System
 open Model
 open Events
-open Model
 
 let updateAbstractStatus abstractId status (abstr: ConferenceAbstract) =
     match abstr.Id = abstractId with
@@ -23,13 +22,7 @@ let apply (conference : Conference) event : Conference =
           conference.Organizers
           |> List.filter (fun o -> o.Id <> organizer.Id)
 
-        let newVotings =
-          conference.Votings
-          |> List.filter (fun (Voting (_, id, _)) -> id <> organizer.Id)
-
-        { conference with
-            Organizers = newOrganizers
-            Votings = newVotings }
+        { conference with Organizers = newOrganizers }
 
     | TalkWasProposed t ->
         { conference with Abstracts = t :: conference.Abstracts }
@@ -67,10 +60,20 @@ let apply (conference : Conference) event : Conference =
 
         { conference with Votings = voting :: votings }
 
+    | VotingWasRevoked (Voting.Voting (abstractId, organizerId, _)) ->
+        let votings =
+          conference.Votings
+          |> List.filter (fun voting -> voting |> extractAbstractId <> abstractId || voting |> extractVoterId <> organizerId)
+
+        { conference with Votings = votings }
+
     | FinishingDenied _ ->
         conference
 
     | VotingDenied _ ->
+        conference
+
+    | RevocationOfVotingWasDenied _ ->
         conference
 
     | ProposingDenied _ ->

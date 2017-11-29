@@ -94,7 +94,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
       | _ ->
           model, Cmd.none
 
-  | Msg.Vote voting ->
+  | Vote voting ->
       match model.View with
       | Editor (_, conference, Live) ->
            model, wsCmd <| ClientMsg.Command (conference.Id |> commandHeader, voting |> Commands.Vote)
@@ -108,6 +108,34 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
 
           let commands =
              (conference.Id |> commandHeader, voting |> Commands.Vote) :: whatif.Commands
+
+          let whatif =
+            WhatIf <|
+              {
+                whatif with
+                  Events = events
+                  Commands = commands
+              }
+
+          { model with View = (editor,newConference,whatif) |> Editor }, Cmd.none
+
+      | _ ->
+           model, Cmd.none
+
+  | RevokeVoting voting ->
+      match model.View with
+      | Editor (_, conference, Live) ->
+           model, wsCmd <| ClientMsg.Command (conference.Id |> commandHeader, voting |> Commands.RevokeVoting)
+
+      | Editor (editor, conference, WhatIf whatif) ->
+          let events =
+            conference |> Behaviour.revokeVoting voting
+
+          let newConference =
+            events |> updateStateWithEvents conference
+
+          let commands =
+             (conference.Id |> commandHeader, voting |> Commands.RevokeVoting) :: whatif.Commands
 
           let whatif =
             WhatIf <|
