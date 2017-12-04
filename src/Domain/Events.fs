@@ -12,6 +12,7 @@ type Event =
   | TalkWasProposed of ConferenceAbstract
   | CallForPapersOpened
   | CallForPapersClosed
+  | TitleChanged of string
   | NumberOfSlotsDecided of int
   | VotingWasIssued of Voting
   | VotingWasRevoked of Voting
@@ -36,6 +37,7 @@ let isError event =
   | TalkWasProposed _ -> false
   | CallForPapersOpened -> false
   | CallForPapersClosed -> false
+  | TitleChanged _ -> false
   | NumberOfSlotsDecided _ -> false
   | VotingWasIssued _ -> false
   | VotingWasRevoked _ -> false

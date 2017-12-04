@@ -8,6 +8,8 @@
   <ItemGroup>
     <None Include="app.config" />
     <Compile Include="Testbase.fs" />
+    <Compile Include="ChangeTitle_Test.fs" />
+    <Compile Include="DecideNumberOfSlots_Test.fs" />
     <Compile Include="FinishVotingPeriod_Test.fs" />
     <Compile Include="ProposeAbstract_Test.fs" />
     <Compile Include="Vote_Test.fs" />
