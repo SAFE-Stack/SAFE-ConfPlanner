@@ -6,10 +6,11 @@ open Server.ServerTypes
 open Model
 open Conference.Api
 
-type Editor =
+type AvailableEditor =
   | VotingPanel
   | Organizers
-  | ConferenceData
+  | ConferenceInformation
+
 
 type Msg =
   | Received of ServerMsg<Events.Event,API.QueryResult>
@@ -22,7 +23,10 @@ type Msg =
   | RemoveOrganizerFromConference of Organizer
   | MakeItSo
   | SwitchToConference of ConferenceId
-  | SwitchToEditor of Editor
+  | SwitchToEditor of AvailableEditor
+  | ResetConferenceInformation
+  | UpdateConferenceInformation
+  | ConferenceInformationMsg of ConferenceInformation.Types.Msg
 
 type WhatIf =
   {
@@ -35,17 +39,33 @@ type Mode =
   | Live
   | WhatIf of WhatIf
 
-type View =
+type Editor =
+  | VotingPanel
+  | Organizers
+  | ConferenceInformation of ConferenceInformation.Types.Model
+
+type CurrentView =
   | NotAsked
   | Loading
   | Error of string
-  | Editor of Editor * Model.Conference * Mode
+  | Edit of Editor * Model.Conference * Mode
 
 type Model =
   {
-    View : View
+    View : CurrentView
     Conferences : RemoteData<Conferences.Conferences>
     Organizers : RemoteData<Model.Organizers>
     LastEvents : Events.Event list
     Organizer : OrganizerId
   }
+
+let matchEditorWithAvailableEditor editor =
+  match editor with
+  | Editor.VotingPanel ->
+      AvailableEditor.VotingPanel
+
+  | Editor.Organizers ->
+      AvailableEditor.Organizers
+
+  | Editor.ConferenceInformation _ ->
+      AvailableEditor.ConferenceInformation
