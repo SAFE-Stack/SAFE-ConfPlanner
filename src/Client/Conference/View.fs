@@ -484,7 +484,7 @@ let private viewConferenceInformationPanel dispatch submodel =
           [
             Button.button_a
               [
-                // Button.onClick (fun _ -> dispatch Click)
+                yield Button.onClick (fun _ -> dispatch UpdateConferenceInformation)
                 yield Button.isPrimary
                 if submodel |> ConferenceInformation.Types.isValid |> not then
                   yield Button.isDisabled

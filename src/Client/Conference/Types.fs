@@ -18,6 +18,8 @@ type WhatIfMsg =
   | ReopenVotingperiod
   | AddOrganizerToConference of Organizer
   | RemoveOrganizerFromConference of Organizer
+  | ChangeTitle of string
+  | DecideNumberOfSlots of int
 
 type Msg =
   | Received of ServerMsg<Events.Event,API.QueryResult>

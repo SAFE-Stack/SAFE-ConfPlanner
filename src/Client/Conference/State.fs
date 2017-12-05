@@ -25,20 +25,20 @@ let private eventSetIsForCurrentConference ((_,streamId),_) conference =
 let private commandHeader id =
   transactionId(), id |> makeStreamId
 
-let queryConference conferenceId =
+let private queryConference conferenceId =
   conferenceId
   |> API.QueryParameter.Conference
   |> createQuery
   |> ClientMsg.Query
   |> wsCmd
 
-let queryConferences =
+let private queryConferences =
   API.QueryParameter.Conferences
   |> createQuery
   |> ClientMsg.Query
   |> wsCmd
 
-let queryOrganizers =
+let private queryOrganizers =
   API.QueryParameter.Organizers
   |> createQuery
   |> ClientMsg.Query
@@ -53,8 +53,16 @@ let init() =
     Organizer = OrganizerId <| System.Guid.Parse "311b9fbd-98a2-401e-b9e9-bab15897dad4"
   }, Cmd.ofSub startWs
 
+let private withView view model =
+  { model with View = view }
 
-let private withHandledWhatIf editor conference whatif behaviour command model =
+let private withLastEvents events model =
+  { model with LastEvents = events }
+
+let private withoutCommands model =
+  model, Cmd.none
+
+let private updateWhatIfView editor conference whatif behaviour command =
   let events =
       conference |> behaviour
 
@@ -72,93 +80,111 @@ let private withHandledWhatIf editor conference whatif behaviour command model =
           Commands = commands
       }
 
-  { model with View = (editor, newConference, whatif) |> Edit }
+  (editor, newConference, whatif) |> Edit
 
-let updateWhatIf msg model editor conference whatif =
-  let withHandledWhatIf =
-    withHandledWhatIf
+let private updateWhatIf msg editor conference whatif =
+  let updateWhatIfView =
+    updateWhatIfView
       editor
       conference
       whatif
 
   match msg with
   | Vote voting ->
-      model
-      |> withHandledWhatIf
-          (voting |> Behaviour.vote)
-          (voting |> Commands.Vote)
+      updateWhatIfView
+        (voting |> Behaviour.vote)
+        (voting |> Commands.Vote)
 
   | RevokeVoting voting ->
-      model
-      |> withHandledWhatIf
-          (voting |> Behaviour.vote)
-          (voting |> Commands.Vote)
-
-    | FinishVotingperiod ->
-        model
-      |> withHandledWhatIf
-          Behaviour.finishVotingPeriod
-          Commands.FinishVotingPeriod
-
-  | ReopenVotingperiod ->
-      model
-      |> withHandledWhatIf
-          Behaviour.reopenVotingPeriod
-          Commands.ReopenVotingPeriod
-
-  | AddOrganizerToConference organizer ->
-      model
-      |> withHandledWhatIf
-          (organizer |> Behaviour.addOrganizerToConference)
-          (organizer |> Commands.AddOrganizerToConference)
-
-  | RemoveOrganizerFromConference organizer ->
-      model
-      |> withHandledWhatIf
-          (organizer |> Behaviour.removeOrganizerFromConference)
-          (organizer |> Commands.RemoveOrganizerFromConference)
-
-
-let updateLive msg editor conference =
-  match msg with
-  | Vote voting ->
-      wsCmd <| ClientMsg.Command (conference.Id |> commandHeader, voting |> Commands.Vote)
-
-  | RevokeVoting voting ->
-      wsCmd <| ClientMsg.Command (conference.Id |> commandHeader, voting |> Commands.RevokeVoting)
+      updateWhatIfView
+        (voting |> Behaviour.vote)
+        (voting |> Commands.Vote)
 
   | FinishVotingperiod ->
-      wsCmd <| ClientMsg.Command (conference.Id |> commandHeader,Commands.FinishVotingPeriod)
+      updateWhatIfView
+        Behaviour.finishVotingPeriod
+        Commands.FinishVotingPeriod
 
   | ReopenVotingperiod ->
-      wsCmd <| ClientMsg.Command (conference.Id |> commandHeader,Commands.ReopenVotingPeriod)
+      updateWhatIfView
+        Behaviour.reopenVotingPeriod
+        Commands.ReopenVotingPeriod
 
   | AddOrganizerToConference organizer ->
-      wsCmd <| ClientMsg.Command (conference.Id |> commandHeader, organizer |> Commands.AddOrganizerToConference)
+      updateWhatIfView
+        (organizer |> Behaviour.addOrganizerToConference)
+        (organizer |> Commands.AddOrganizerToConference)
 
   | RemoveOrganizerFromConference organizer ->
-      wsCmd <| ClientMsg.Command (conference.Id |> commandHeader, organizer |> Commands.RemoveOrganizerFromConference)
+      updateWhatIfView
+        (organizer |> Behaviour.removeOrganizerFromConference)
+        (organizer |> Commands.RemoveOrganizerFromConference)
+
+  | ChangeTitle title ->
+      updateWhatIfView
+        (title |> Behaviour.changeTitle)
+        (title |> Commands.ChangeTitle)
+
+
+  | DecideNumberOfSlots number ->
+      updateWhatIfView
+        (number |> Behaviour.decideNumberOfSlots)
+        (number |> Commands.DecideNumberOfSlots)
+
+
+let private liveUpdateCommand msg =
+  match msg with
+  | Vote voting ->
+      voting |> Commands.Vote
+
+  | RevokeVoting voting ->
+      voting |> Commands.RevokeVoting
+
+  | FinishVotingperiod ->
+     Commands.FinishVotingPeriod
+
+  | ReopenVotingperiod ->
+     Commands.ReopenVotingPeriod
+
+  | AddOrganizerToConference organizer ->
+      organizer |> Commands.AddOrganizerToConference
+
+  | RemoveOrganizerFromConference organizer ->
+      organizer |> Commands.RemoveOrganizerFromConference
+
+  | ChangeTitle title ->
+      title |> Commands.ChangeTitle
+
+  | DecideNumberOfSlots number ->
+      number |> Commands.DecideNumberOfSlots
+
+let withLiveUpdateCmd conference whatifMsg model =
+   model, wsCmd <| ClientMsg.Command (conference.Id |> commandHeader, liveUpdateCommand whatifMsg)
 
 let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
   match msg with
   | Received (ServerMsg.QueryResponse response) ->
       match response.Result with
       | NotHandled ->
-          model, Cmd.none
+          model |> withoutCommands
 
       | Handled result ->
           match result with
           | API.QueryResult.Conference conference ->
-              { model with View = (VotingPanel,conference,Live) |> Edit }, Cmd.none
+              model
+              |> withView ((VotingPanel,conference,Live) |> Edit)
+              |> withoutCommands
 
           | API.QueryResult.Conferences conferences ->
-              { model with Conferences = conferences |> Success }, Cmd.none
+              { model with Conferences = conferences |> Success }
+              |> withoutCommands
 
           | API.QueryResult.Organizers organizers ->
-              { model with Organizers = organizers |> Success }, Cmd.none
+              { model with Organizers = organizers |> Success }
+              |> withoutCommands
 
           | API.QueryResult.ConferenceNotFound ->
-              model,Cmd.none
+              model |> withoutCommands
 
   | Received (ServerMsg.Connected) ->
       model, List.concat [ queryConferences ; queryOrganizers ]
@@ -172,24 +198,27 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
           let newConference =
             events |> updateStateWithEvents conference
 
-          { model with
-              View = (editor,newConference,Live) |> Edit
-              LastEvents = events
-          }, Cmd.none
+          model
+          |> withView ((editor,newConference,Live) |> Edit)
+          |> withLastEvents events
+          |> withoutCommands
 
       | _ ->
-          model, Cmd.none
+          model |> withoutCommands
 
   | WhatIfMsg whatifMsg ->
       match model.View with
-      | Edit (editor, conference, Live) ->
-          model, updateLive whatifMsg editor conference
+      | Edit (_, conference, Live) ->
+          model
+          |> withLiveUpdateCmd conference whatifMsg
 
       | Edit (editor, conference, WhatIf whatif) ->
-          updateWhatIf whatifMsg model editor conference whatif, Cmd.none
+          model
+          |> withView (updateWhatIf whatifMsg editor conference whatif)
+          |> withoutCommands
 
       | _ ->
-           model, Cmd.none
+           model |> withoutCommands
 
   | MakeItSo ->
       match model.View with
@@ -199,11 +228,12 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
             |> List.rev
             |> List.collect (ClientMsg.Command >> wsCmd)
 
+
           { model with View = (editor,whatif.Conference,Live) |> Edit },
           wsCmds @ (conference.Id |> queryConference)
 
       | _ ->
-          model, Cmd.none
+          model |> withoutCommands
 
   | ToggleMode ->
       match model.View with
@@ -215,14 +245,16 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
               Events = []
             }
 
-          { model with View = (editor, conference, whatif |> WhatIf) |> Edit }, Cmd.none
+          model
+          |> withView ((editor, conference, whatif |> WhatIf) |> Edit)
+          |> withoutCommands
 
       | Edit (editor, conference, WhatIf _) ->
           { model with View = (editor, conference, Live) |> Edit },
           conference.Id |> queryConference
 
       | _ ->
-          model, Cmd.none
+          model |> withoutCommands
 
   | SwitchToConference conferenceId ->
       model, conferenceId |> queryConference
@@ -242,11 +274,12 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
             | AvailableEditor.Organizers ->
                 Editor.Organizers
 
-          { model with View = (editor, conference, mode) |> Edit },
-          Cmd.none
+          model
+          |> withView ((editor, conference, mode) |> Edit)
+          |> withoutCommands
 
       | _ ->
-          model, Cmd.none
+          model |> withoutCommands
 
   | ResetConferenceInformation ->
       match model.View with
@@ -255,26 +288,44 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
             ConferenceInformation.State.init conference.Title (conference.AvailableSlotsForTalks |> string)
             |> Editor.ConferenceInformation
 
-          { model with View = (editor, conference, mode) |> Edit },
-          Cmd.none
+          model
+          |> withView ((editor, conference, mode) |> Edit)
+          |> withoutCommands
 
       | _ ->
-          model, Cmd.none
+          model |> withoutCommands
 
-  // | UpdateConferenceInformation ->
-  //     match model.View with
-  //     | Edit (ConferenceInformation submodel, conference, whatif) when submodel |> ConferenceInformation.Types.isValid ->
-  //         let title =
-  //           submodel |> ConferenceInformation.Types.title
+  | UpdateConferenceInformation ->
+      match model.View with
+      | Edit (ConferenceInformation submodel, conference, _) when submodel |> ConferenceInformation.Types.isValid ->
+          let title =
+            submodel |> ConferenceInformation.Types.title
 
-  //         let availableSlotsForTalks =
-  //           submodel |> ConferenceInformation.Types.availableSlotsForTalks
+          let titleCmd =
+            if title <> conference.Title then
+              title
+              |> ChangeTitle
+              |> WhatIfMsg
+              |> Cmd.ofMsg
+            else
+              Cmd.none
 
-  //         model, wsCmd <| ClientMsg.Command (conference.Id |> commandHeader, organizer |> Commands.RemoveOrganizerFromConference)
+          let availableSlotsForTalks =
+            submodel |> ConferenceInformation.Types.availableSlotsForTalks
 
+          let availableSlotsForTalksCmd =
+            if availableSlotsForTalks <> conference.AvailableSlotsForTalks then
+              availableSlotsForTalks
+              |> DecideNumberOfSlots
+              |> WhatIfMsg
+              |> Cmd.ofMsg
+            else
+              Cmd.none
 
-  //     | _ ->
-  //          model, Cmd.none
+          model, Cmd.batch [ titleCmd ; availableSlotsForTalksCmd ]
+
+      | _ ->
+          model |> withoutCommands
 
   | ConferenceInformationMsg msg ->
       match model.View with
@@ -282,10 +333,11 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
           let newSubmodel =
             submodel |> ConferenceInformation.State.update msg
 
-          { model with View = (ConferenceInformation newSubmodel, conference, mode) |> Edit },
-          Cmd.none
+          model
+          |> withView ((ConferenceInformation newSubmodel, conference, mode) |> Edit)
+          |> withoutCommands
 
       | _ ->
-          model, Cmd.none
+          model |> withoutCommands
 
 

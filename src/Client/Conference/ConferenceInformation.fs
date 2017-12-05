@@ -98,7 +98,7 @@ module View =
                 inputType
                 Input.typeIsText
                 Input.placeholder label
-                Input.defaultValue field
+                Input.value field
                 Input.props [ OnChange (fun event -> !!event.target?value |>changeMsg) ]
               ]
             Icon.faIcon
