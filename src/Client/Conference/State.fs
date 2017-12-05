@@ -53,6 +53,92 @@ let init() =
     Organizer = OrganizerId <| System.Guid.Parse "311b9fbd-98a2-401e-b9e9-bab15897dad4"
   }, Cmd.ofSub startWs
 
+
+let private withHandledWhatIf editor conference whatif behaviour command model =
+  let events =
+      conference |> behaviour
+
+  let newConference =
+    events |> updateStateWithEvents conference
+
+  let commands =
+     (conference.Id |> commandHeader, command) :: whatif.Commands
+
+  let whatif =
+    WhatIf <|
+      {
+        whatif with
+          Events = events
+          Commands = commands
+      }
+
+  { model with View = (editor, newConference, whatif) |> Edit }
+
+let updateWhatIf msg model editor conference whatif =
+  let withHandledWhatIf =
+    withHandledWhatIf
+      editor
+      conference
+      whatif
+
+  match msg with
+  | Vote voting ->
+      model
+      |> withHandledWhatIf
+          (voting |> Behaviour.vote)
+          (voting |> Commands.Vote)
+
+  | RevokeVoting voting ->
+      model
+      |> withHandledWhatIf
+          (voting |> Behaviour.vote)
+          (voting |> Commands.Vote)
+
+    | FinishVotingperiod ->
+        model
+      |> withHandledWhatIf
+          Behaviour.finishVotingPeriod
+          Commands.FinishVotingPeriod
+
+  | ReopenVotingperiod ->
+      model
+      |> withHandledWhatIf
+          Behaviour.reopenVotingPeriod
+          Commands.ReopenVotingPeriod
+
+  | AddOrganizerToConference organizer ->
+      model
+      |> withHandledWhatIf
+          (organizer |> Behaviour.addOrganizerToConference)
+          (organizer |> Commands.AddOrganizerToConference)
+
+  | RemoveOrganizerFromConference organizer ->
+      model
+      |> withHandledWhatIf
+          (organizer |> Behaviour.removeOrganizerFromConference)
+          (organizer |> Commands.RemoveOrganizerFromConference)
+
+
+let updateLive msg editor conference =
+  match msg with
+  | Vote voting ->
+      wsCmd <| ClientMsg.Command (conference.Id |> commandHeader, voting |> Commands.Vote)
+
+  | RevokeVoting voting ->
+      wsCmd <| ClientMsg.Command (conference.Id |> commandHeader, voting |> Commands.RevokeVoting)
+
+  | FinishVotingperiod ->
+      wsCmd <| ClientMsg.Command (conference.Id |> commandHeader,Commands.FinishVotingPeriod)
+
+  | ReopenVotingperiod ->
+      wsCmd <| ClientMsg.Command (conference.Id |> commandHeader,Commands.ReopenVotingPeriod)
+
+  | AddOrganizerToConference organizer ->
+      wsCmd <| ClientMsg.Command (conference.Id |> commandHeader, organizer |> Commands.AddOrganizerToConference)
+
+  | RemoveOrganizerFromConference organizer ->
+      wsCmd <| ClientMsg.Command (conference.Id |> commandHeader, organizer |> Commands.RemoveOrganizerFromConference)
+
 let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
   match msg with
   | Received (ServerMsg.QueryResponse response) ->
@@ -94,170 +180,13 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
       | _ ->
           model, Cmd.none
 
-  | Vote voting ->
+  | WhatIfMsg whatifMsg ->
       match model.View with
-      | Edit (_, conference, Live) ->
-           model, wsCmd <| ClientMsg.Command (conference.Id |> commandHeader, voting |> Commands.Vote)
+      | Edit (editor, conference, Live) ->
+          model, updateLive whatifMsg editor conference
 
       | Edit (editor, conference, WhatIf whatif) ->
-          let events =
-            conference |> Behaviour.vote voting
-
-          let newConference =
-            events |> updateStateWithEvents conference
-
-          let commands =
-             (conference.Id |> commandHeader, voting |> Commands.Vote) :: whatif.Commands
-
-          let whatif =
-            WhatIf <|
-              {
-                whatif with
-                  Events = events
-                  Commands = commands
-              }
-
-          { model with View = (editor,newConference,whatif) |> Edit }, Cmd.none
-
-      | _ ->
-           model, Cmd.none
-
-  | RevokeVoting voting ->
-      match model.View with
-      | Edit (_, conference, Live) ->
-           model, wsCmd <| ClientMsg.Command (conference.Id |> commandHeader, voting |> Commands.RevokeVoting)
-
-      | Edit (editor, conference, WhatIf whatif) ->
-          let events =
-            conference |> Behaviour.revokeVoting voting
-
-          let newConference =
-            events |> updateStateWithEvents conference
-
-          let commands =
-             (conference.Id |> commandHeader, voting |> Commands.RevokeVoting) :: whatif.Commands
-
-          let whatif =
-            WhatIf <|
-              {
-                whatif with
-                  Events = events
-                  Commands = commands
-              }
-
-          { model with View = (editor,newConference,whatif) |> Edit }, Cmd.none
-
-      | _ ->
-           model, Cmd.none
-
-  | FinishVotingperiod ->
-      match model.View with
-      | Edit (_, conference, Live) ->
-          model, wsCmd <| ClientMsg.Command (conference.Id |> commandHeader,Commands.FinishVotingPeriod)
-
-      | Edit (editor, conference, WhatIf whatif) ->
-          let events =
-            conference |> Behaviour.finishVotingPeriod
-
-          let newConference =
-            events |> updateStateWithEvents conference
-
-          let commands =
-             (conference.Id |> commandHeader,Commands.FinishVotingPeriod) :: whatif.Commands
-
-          let whatif =
-            WhatIf <|
-              {
-                whatif with
-                  Events = events
-                  Commands = commands
-              }
-
-          { model with View = (editor,newConference,whatif) |> Edit }, Cmd.none
-
-      | _ ->
-           model, Cmd.none
-
-  | ReopenVotingperiod ->
-      match model.View with
-      | Edit (_, conference, Live) ->
-          model, wsCmd <| ClientMsg.Command (conference.Id |> commandHeader,Commands.ReopenVotingPeriod)
-
-      | Edit (editor, conference, WhatIf whatif) ->
-          let events =
-            conference |> Behaviour.reopenVotingPeriod
-
-          let newConference =
-            events |> updateStateWithEvents conference
-
-          let commands =
-             (conference.Id |> commandHeader,Commands.ReopenVotingPeriod) :: whatif.Commands
-
-          let whatif =
-            WhatIf <|
-              {
-                whatif with
-                  Events = events
-                  Commands = commands
-              }
-
-          { model with View = (editor,newConference,whatif) |> Edit }, Cmd.none
-
-      | _ ->
-           model, Cmd.none
-
-  | AddOrganizerToConference organizer ->
-      match model.View with
-      | Edit (_, conference, Live) ->
-          model, wsCmd <| ClientMsg.Command (conference.Id |> commandHeader, organizer |> Commands.AddOrganizerToConference)
-
-      | Edit (editor, conference, WhatIf whatif) ->
-          let events =
-            conference |> Behaviour.addOrganizerToConference organizer
-
-          let newConference =
-            events |> updateStateWithEvents conference
-
-          let commands =
-             (conference.Id |> commandHeader, organizer |> Commands.AddOrganizerToConference) :: whatif.Commands
-
-          let whatif =
-            WhatIf <|
-              {
-                whatif with
-                  Events = events
-                  Commands = commands
-              }
-
-          { model with View = (editor,newConference,whatif) |> Edit }, Cmd.none
-
-      | _ ->
-           model, Cmd.none
-
-  | RemoveOrganizerFromConference organizer ->
-      match model.View with
-      | Edit (_, conference, Live) ->
-          model, wsCmd <| ClientMsg.Command (conference.Id |> commandHeader, organizer |> Commands.RemoveOrganizerFromConference)
-
-      | Edit (editor, conference, WhatIf whatif) ->
-          let events =
-            conference |> Behaviour.removeOrganizerFromConference organizer
-
-          let newConference =
-            events |> updateStateWithEvents conference
-
-          let commands =
-             (conference.Id |> commandHeader, organizer |> Commands.RemoveOrganizerFromConference) :: whatif.Commands
-
-          let whatif =
-            WhatIf <|
-              {
-                whatif with
-                  Events = events
-                  Commands = commands
-              }
-
-          { model with View = (editor,newConference,whatif) |> Edit }, Cmd.none
+          updateWhatIf whatifMsg model editor conference whatif, Cmd.none
 
       | _ ->
            model, Cmd.none
@@ -286,10 +215,10 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
               Events = []
             }
 
-          { model with View = (editor,conference, whatif |> WhatIf) |> Edit }, Cmd.none
+          { model with View = (editor, conference, whatif |> WhatIf) |> Edit }, Cmd.none
 
       | Edit (editor, conference, WhatIf _) ->
-          { model with View = (editor, conference,Live) |> Edit },
+          { model with View = (editor, conference, Live) |> Edit },
           conference.Id |> queryConference
 
       | _ ->

@@ -11,16 +11,18 @@ type AvailableEditor =
   | Organizers
   | ConferenceInformation
 
-
-type Msg =
-  | Received of ServerMsg<Events.Event,API.QueryResult>
+type WhatIfMsg =
   | Vote of Voting
   | RevokeVoting of Voting
   | FinishVotingperiod
-  | ToggleMode
   | ReopenVotingperiod
   | AddOrganizerToConference of Organizer
   | RemoveOrganizerFromConference of Organizer
+
+type Msg =
+  | Received of ServerMsg<Events.Event,API.QueryResult>
+  | WhatIfMsg of WhatIfMsg
+  | ToggleMode
   | MakeItSo
   | SwitchToConference of ConferenceId
   | SwitchToEditor of AvailableEditor

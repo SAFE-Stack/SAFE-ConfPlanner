@@ -61,8 +61,8 @@ let viewVotingButtons dispatch user vote (talk : Model.ConferenceAbstract) =
 
   let buttonMapper (voting,btnType,label) =
     viewVotingButton
-      (fun _ -> voting |> Msg.Vote |> dispatch)
-      (fun _ -> voting |> Msg.RevokeVoting |> dispatch)
+      (fun _ -> voting |> WhatIfMsg.Vote |> WhatIfMsg |> dispatch)
+      (fun _ -> voting |> WhatIfMsg.RevokeVoting |> WhatIfMsg |> dispatch)
       (vote = Some voting)
       btnType
       label
@@ -120,7 +120,7 @@ let viewTalk dispatch user votings (talk : Model.ConferenceAbstract) =
         ]
     ]
 
-let simpleButton txt action dispatch =
+let simpleButton txt dispatch action =
   Column.column []
     [
        a
@@ -169,10 +169,9 @@ let private viewVotingPanel dispatch user conference =
       [
         match conference.VotingPeriod with
         | InProgress ->
-            yield simpleButton "Finish Votingperiod" FinishVotingperiod dispatch
-
+            yield simpleButton "Finish Votingperiod" (WhatIfMsg>>dispatch) FinishVotingperiod
         | Finished ->
-            yield simpleButton "Reopen Votingperiod" ReopenVotingperiod dispatch
+            yield simpleButton "Reopen Votingperiod" (WhatIfMsg>>dispatch) ReopenVotingperiod
       ]
 
     [ "Proposed"; "Accepted" ; "Rejected"]
@@ -205,7 +204,7 @@ let private viewOrganizer dispatch conference (organizer : Organizer) =
           Switch.isChecked isAddedToConference
           Switch.isRounded
           Switch.isPrimary
-          Switch.onChange (fun _ -> organizer |> changeMsg |> dispatch)
+          Switch.onChange (fun _ -> organizer |> changeMsg |> WhatIfMsg |> dispatch)
         ]
         []
   [
