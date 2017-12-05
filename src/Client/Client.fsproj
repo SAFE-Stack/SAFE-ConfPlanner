@@ -21,6 +21,7 @@
     <Compile Include="Counter/Types.fs" />
     <Compile Include="Counter/State.fs" />
     <Compile Include="Counter/View.fs" />
+    <Compile Include="Conference/ConferenceInformation.fs" />
     <Compile Include="Conference/Types.fs" />
     <Compile Include="Conference/Ws.fs" />
     <Compile Include="Conference/State.fs" />

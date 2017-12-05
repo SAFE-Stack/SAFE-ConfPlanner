@@ -4,7 +4,6 @@ open Model
 open Commands
 open Events
 open Projections
-open Model
 
 let (|OrganizerAlreadyInConference|_|) organizers organizer =
   match organizers |> List.contains organizer with
@@ -180,6 +179,21 @@ let revokeVoting voting conference =
 
       | _ -> [ VotingWasRevoked voting ]
 
+let changeTitle title _ =
+  [ TitleChanged title ]
+
+let handleChangeTitle givenHistory title =
+  givenHistory
+  |> conferenceState
+  |> changeTitle title
+
+let decideNumberOfSlots number _ =
+  [ NumberOfSlotsDecided number ]
+
+let handleDecideNumberOfSlots givenHistory number =
+  givenHistory
+  |> conferenceState
+  |> decideNumberOfSlots number
 
 let handleRevokeVoting givenHistory voting =
   givenHistory
@@ -227,6 +241,12 @@ let execute (givenHistory : Event list) (command : Command) : Event list =
   | ScheduleConference conference ->
       conference |> handleScheduleConference givenHistory
 
+  | ChangeTitle title ->
+      handleChangeTitle givenHistory title
+
+  | DecideNumberOfSlots number ->
+      handleDecideNumberOfSlots givenHistory number
+
   | AddOrganizerToConference organizer ->
       handleAddOrganizerToConference givenHistory organizer
 
@@ -250,3 +270,4 @@ let execute (givenHistory : Event list) (command : Command) : Event list =
 
   | AcceptAbstract(_) -> failwith "Not Implemented"
   | RejectAbstract(_) -> failwith "Not Implemented"
+

@@ -61,8 +61,8 @@ let viewVotingButtons dispatch user vote (talk : Model.ConferenceAbstract) =
 
   let buttonMapper (voting,btnType,label) =
     viewVotingButton
-      (fun _ -> voting |> Msg.Vote |> dispatch)
-      (fun _ -> voting |> Msg.RevokeVoting |> dispatch)
+      (fun _ -> voting |> WhatIfMsg.Vote |> WhatIfMsg |> dispatch)
+      (fun _ -> voting |> WhatIfMsg.RevokeVoting |> WhatIfMsg |> dispatch)
       (vote = Some voting)
       btnType
       label
@@ -120,7 +120,7 @@ let viewTalk dispatch user votings (talk : Model.ConferenceAbstract) =
         ]
     ]
 
-let simpleButton txt action dispatch =
+let simpleButton txt dispatch action =
   Column.column []
     [
        a
@@ -169,10 +169,9 @@ let private viewVotingPanel dispatch user conference =
       [
         match conference.VotingPeriod with
         | InProgress ->
-            yield simpleButton "Finish Votingperiod" FinishVotingperiod dispatch
-
+            yield simpleButton "Finish Votingperiod" (WhatIfMsg>>dispatch) FinishVotingperiod
         | Finished ->
-            yield simpleButton "Reopen Votingperiod" ReopenVotingperiod dispatch
+            yield simpleButton "Reopen Votingperiod" (WhatIfMsg>>dispatch) ReopenVotingperiod
       ]
 
     [ "Proposed"; "Accepted" ; "Rejected"]
@@ -205,7 +204,7 @@ let private viewOrganizer dispatch conference (organizer : Organizer) =
           Switch.isChecked isAddedToConference
           Switch.isRounded
           Switch.isPrimary
-          Switch.onChange (fun _ -> organizer |> changeMsg |> dispatch)
+          Switch.onChange (fun _ -> organizer |> changeMsg |> WhatIfMsg |> dispatch)
         ]
         []
   [
@@ -272,7 +271,7 @@ let messageWindowType events =
 let footer currentView lastEvents =
   let content =
     match currentView with
-    | Editor (_,_,mode) ->
+    | Edit (_,_,mode) ->
         let window =
           match mode with
           | WhatIf whatif ->
@@ -313,16 +312,16 @@ let viewConferenceDropdownItem dispatch (conferenceId, title) =
 
 let private viewActiveConference currentView =
   match currentView with
-  | View.Editor (_, conference, _) ->
+  | CurrentView.Edit (_, conference, _) ->
       conference.Title
 
-  |  View.NotAsked ->
+  |  CurrentView.NotAsked ->
       pleaseSelectAConference
 
-  | View.Loading ->
+  | CurrentView.Loading ->
       "Loading..."
 
-  | View.Error _ ->
+  | CurrentView.Error _ ->
       "Error loading conference"
 
 let viewConferenceList dispatch currentView conferences =
@@ -352,15 +351,18 @@ let viewConferenceList dispatch currentView conferences =
       |> div [ ClassName "columns" ]
 
 
-let private viewTab currentView selectEditorMsg editor label =
+let private viewTab currentView selectEditorMsg targetEditor label =
   match currentView with
-  | Editor (currentEditor, _, _) ->
+  | Edit (currentEditor, _, _) ->
+      let currentTarget =
+        currentEditor |> matchEditorWithAvailableEditor
+
       Tabs.tab
         [
-          if currentEditor = editor then
+          if currentTarget = targetEditor then
             yield Tabs.Tab.isActive
 
-          yield Tabs.Tab.props [ OnClick (fun _ -> editor |> selectEditorMsg) ]
+          yield Tabs.Tab.props [ OnClick (fun _ -> targetEditor |> selectEditorMsg) ]
         ]
         [ a [ ] [str label] ]
 
@@ -390,13 +392,13 @@ let viewMakeItSo dispatch =
 
 let private viewModeControls dispatch currentView =
   match currentView with
-  | Editor (_,_,WhatIf _) ->
+  | Edit (_,_,WhatIf _) ->
       [
         viewMakeItSo dispatch
         viewWhatIfSwitch dispatch true
       ]
 
-  | Editor (_,_,Live) ->
+  | Edit (_,_,Live) ->
       [
         viewWhatIfSwitch dispatch false
       ]
@@ -446,8 +448,9 @@ let viewHeader dispatch currentView conferences =
         Tabs.isBoxed
       ]
       [
-        viewTab currentView selectEditorMsg VotingPanel "Votings"
-        viewTab currentView selectEditorMsg Organizers "Organizers"
+        viewTab currentView selectEditorMsg AvailableEditor.ConferenceInformation "Information"
+        viewTab currentView selectEditorMsg AvailableEditor.VotingPanel "Votings"
+        viewTab currentView selectEditorMsg AvailableEditor.Organizers "Organizers"
       ]
 
   [
@@ -456,13 +459,61 @@ let viewHeader dispatch currentView conferences =
   ]
   |> Container.container [ Container.isFluid ]
 
+
+let private viewConferenceInformationPanel dispatch submodel =
+  [
+    Columns.columns []
+      [
+        Column.column
+          [
+            Column.Width.isHalf
+            Column.Offset.isOneThird
+          ]
+          [
+            ConferenceInformation.View.view (ConferenceInformationMsg>>dispatch) submodel
+          ]
+      ]
+
+    Columns.columns []
+      [
+        Column.column
+          [
+            Column.Width.isHalf
+            Column.Offset.isOneThird
+          ]
+          [
+            Button.button_a
+              [
+                yield Button.onClick (fun _ -> dispatch UpdateConferenceInformation)
+                yield Button.isPrimary
+                if submodel |> ConferenceInformation.Types.isValid |> not then
+                  yield Button.isDisabled
+
+              ]
+              [ str "Save" ]
+
+            Button.button_a
+              [
+                Button.onClick (fun _ -> ResetConferenceInformation |> dispatch)
+                Button.isWarning
+              ]
+              [ str "Reset" ]
+          ]
+      ]
+  ]
+  |> div []
+
+
 let viewCurrentView dispatch user currentView organizers =
   match currentView with
-  | Editor (VotingPanel, conference, _) ->
+  | Edit (VotingPanel, conference, _) ->
       viewVotingPanel dispatch user conference
 
-  | Editor (Organizers, conference, _) ->
+  | Edit (Organizers, conference, _) ->
       viewOrganizersPanel dispatch conference organizers
+
+  | Edit (ConferenceInformation submodel, _, _) ->
+      viewConferenceInformationPanel dispatch submodel
 
   | _ ->
       [

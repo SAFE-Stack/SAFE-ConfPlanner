@@ -33,8 +33,11 @@ let apply (conference : Conference) event : Conference =
     | CallForPapersClosed ->
         { conference with CallForPapers = Closed; VotingPeriod = InProgress }
 
-    | NumberOfSlotsDecided i ->
-        { conference with AvailableSlotsForTalks = i }
+    | TitleChanged title ->
+        { conference with Title = title }
+
+    | NumberOfSlotsDecided number ->
+        { conference with AvailableSlotsForTalks = number }
 
     | AbstractWasProposed proposed ->
         { conference with Abstracts = proposed :: conference.Abstracts }
