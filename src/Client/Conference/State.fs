@@ -351,7 +351,12 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
           let command =
             conference |> Commands.ScheduleConference
 
+          let editor =
+            ConferenceInformation.State.init conference.Title (conference.AvailableSlotsForTalks |> string)
+            |> Editor.ConferenceInformation
+
           model
+          |> withView ((editor, conference, Live) |> Edit)
           |> withWsCmd command conference
 
       | _ ->
