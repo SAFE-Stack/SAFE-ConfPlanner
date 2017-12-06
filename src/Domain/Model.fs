@@ -115,3 +115,9 @@ let emptyConference() = {
   Organizers = []
   AvailableSlotsForTalks = 2
 }
+
+let withTitle title conference =
+  { conference with Title = title }
+
+let withAvailableSlotsForTalks availableSlotsForTalks conference =
+  { conference with AvailableSlotsForTalks = availableSlotsForTalks }

@@ -67,7 +67,6 @@ module Types =
 
 module View =
   open Types
-
   let private typeAndIconAndError error =
     match error with
     | Some error ->

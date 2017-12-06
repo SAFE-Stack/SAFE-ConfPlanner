@@ -54,8 +54,8 @@ let viewVotingButtons dispatch user vote (talk : Model.ConferenceAbstract) =
   let possibleVotings =
     [
       Voting.Voting (talk.Id, user, Two), Button.isPrimary, "2"
-      Voting.Voting (talk.Id, user, One),  Button.isPrimary, "1"
-      Voting.Voting (talk.Id, user, Zero),  Button.isPrimary, "0"
+      Voting.Voting (talk.Id, user, One), Button.isPrimary, "1"
+      Voting.Voting (talk.Id, user, Zero), Button.isPrimary, "0"
       Voting.Voting (talk.Id, user, Veto), Button.isDanger, "Veto"
     ]
 
@@ -68,7 +68,6 @@ let viewVotingButtons dispatch user vote (talk : Model.ConferenceAbstract) =
       label
     |> List.singleton
     |> Control.control_div []
-
 
   Field.field_div
     [
@@ -318,6 +317,9 @@ let private viewActiveConference currentView =
   |  CurrentView.NotAsked ->
       pleaseSelectAConference
 
+  | CurrentView.ScheduleNewConference _ ->
+      "New Conference"
+
   | CurrentView.Loading ->
       "Loading..."
 
@@ -428,6 +430,7 @@ let viewHeader dispatch currentView conferences =
                   Button.button_a
                     [
                       Button.isPrimary
+                      Button.onClick (fun _ -> SwitchToNewConference |> dispatch)
                     ]
                     [
                       Icon.faIcon [ Icon.isSmall ] [ Fa.icon Fa.I.PlusSquare ]
@@ -460,7 +463,7 @@ let viewHeader dispatch currentView conferences =
   |> Container.container [ Container.isFluid ]
 
 
-let private viewConferenceInformationPanel dispatch submodel =
+let private viewConferenceInformation dispatch submodel confirmMsg resetMsg confirmLabel =
   [
     Columns.columns []
       [
@@ -484,17 +487,17 @@ let private viewConferenceInformationPanel dispatch submodel =
           [
             Button.button_a
               [
-                yield Button.onClick (fun _ -> dispatch UpdateConferenceInformation)
+                yield Button.onClick (fun _ -> confirmMsg |> dispatch )
                 yield Button.isPrimary
                 if submodel |> ConferenceInformation.Types.isValid |> not then
                   yield Button.isDisabled
 
               ]
-              [ str "Save" ]
+              [ str confirmLabel ]
 
             Button.button_a
               [
-                Button.onClick (fun _ -> ResetConferenceInformation |> dispatch)
+                Button.onClick (fun _ -> resetMsg |> dispatch)
                 Button.isWarning
               ]
               [ str "Reset" ]
@@ -503,6 +506,21 @@ let private viewConferenceInformationPanel dispatch submodel =
   ]
   |> div []
 
+let private viewNewConferencePanel dispatch submodel =
+  viewConferenceInformation
+    dispatch
+    submodel
+    Msg.ScheduleNewConference
+    ResetConferenceInformation
+    "Create"
+
+let viewConferenceInformationPanel dispatch submodel =
+  viewConferenceInformation
+    dispatch
+    submodel
+    UpdateConferenceInformation
+    ResetConferenceInformation
+    "Save"
 
 let viewCurrentView dispatch user currentView organizers =
   match currentView with
@@ -514,6 +532,9 @@ let viewCurrentView dispatch user currentView organizers =
 
   | Edit (ConferenceInformation submodel, _, _) ->
       viewConferenceInformationPanel dispatch submodel
+
+  | ScheduleNewConference submodel  ->
+      viewNewConferencePanel dispatch submodel
 
   | _ ->
       [
