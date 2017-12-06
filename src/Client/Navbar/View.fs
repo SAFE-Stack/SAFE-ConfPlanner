@@ -2,52 +2,76 @@ module Navbar.View
 
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
-
+open Fulma.Components
+open Fulma.Elements
+open Fulma.Layouts
+open Fulma.Extra.FontAwesome
+open Fulma.Elements.Form
 open Global
 
-let navButton classy href faClass txt =
-    p
-        [ ClassName "control" ]
-        [ a
-            [ ClassName (sprintf "button %s" classy)
-              Href href ]
-            [ span
-                [ ClassName "icon" ]
-                [ i
-                    [ ClassName (sprintf "fa %s" faClass) ]
-                    [ ] ]
-              span
-                [ ]
-                [ str txt ] ] ]
-
-let navButtons logout =
-    span
-        [ ClassName "nav-item" ]
-        [ div
-            [ ClassName "field is-grouped" ]
+let navbarEnd =
+  Navbar.end_div []
+    [
+      Navbar.item_div []
+        [
+          Field.field_div [ Field.isGrouped ]
             [
-              navButton "github" "https://github.com/rommsen/ConfPlanner" "fa-github" "Fork me"
+              Control.control_p [ ]
+                [
+                  Button.button_a
+                    [
+                      Button.props [ Href "https://github.com/rommsen/ConfPlanner" ]
+                    ]
+                    [
+                      Icon.faIcon [ ] [ Fa.icon Fa.I.Github ]
+                      span [ ] [ str "Source" ]
+                    ]
+                ]
             ]
-          // span [ OnClick logout ] [ str "Logout"]
         ]
+    ]
 
-let root user logout =
-  // let info =
-  //   match user with
-  //   | Some user ->
-  //       str (sprintf "Hi %s!" user.UserName)
 
-  //   | None ->
-  //       str "Not Logged In"
+let menuItem label page currentPage =
+  Navbar.item_a
+    [
+      if page = currentPage then
+        yield Navbar.Item.isActive
 
-  nav
-      [ ClassName "nav" ]
-      [ div
-          [ ClassName "nav-left" ]
-          [ h1
-              [ ClassName "nav-item is-brand title is-4" ]
-              // [ str "Elmish / " ; info ] ]
-              [ str "Domain Driven UI" ] ]
-        div
-          [ ClassName "nav-right" ]
-          [ navButtons logout ] ]
+      yield Navbar.Item.props [ Href <| toHash page ]
+    ]
+    [
+      str label
+    ]
+
+let navbarStart currentPage =
+  Navbar.start_div []
+    [
+      menuItem "Conference" Page.ConfPlanner currentPage
+      menuItem "Dummy" Page.Websockets currentPage
+      menuItem "About" Page.About currentPage
+    ]
+
+let view currentPage =
+  div [ ClassName "navbar-bg" ]
+    [
+      Container.container [ Container.isFluid ]
+        [
+          Navbar.navbar [ Navbar.isPrimary ]
+            [
+              Navbar.brand_div [ ]
+                [
+                  Navbar.item_a [ Navbar.Item.props [ Href "#" ] ]
+                    [
+                      Heading.p [ Heading.is4 ]
+                        [ str "ConfPlanner" ]
+                    ]
+                ]
+              Navbar.menu []
+                [
+                  navbarStart currentPage
+                  navbarEnd
+                ]
+            ]
+        ]
+    ]
