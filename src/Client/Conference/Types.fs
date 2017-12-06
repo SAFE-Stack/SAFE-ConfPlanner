@@ -27,8 +27,10 @@ type Msg =
   | ToggleMode
   | MakeItSo
   | SwitchToConference of ConferenceId
+  | SwitchToNewConference
   | SwitchToEditor of AvailableEditor
   | ResetConferenceInformation
+  | ScheduleNewConference
   | UpdateConferenceInformation
   | ConferenceInformationMsg of ConferenceInformation.Types.Msg
 
@@ -52,6 +54,7 @@ type CurrentView =
   | NotAsked
   | Loading
   | Error of string
+  | ScheduleNewConference of ConferenceInformation.Types.Model
   | Edit of Editor * Model.Conference * Mode
 
 type Model =

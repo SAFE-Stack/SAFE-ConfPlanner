@@ -131,7 +131,6 @@ let private updateWhatIf msg editor conference whatif =
         (number |> Behaviour.decideNumberOfSlots)
         (number |> Commands.DecideNumberOfSlots)
 
-
 let private liveUpdateCommand msg =
   match msg with
   | Vote voting ->
@@ -157,6 +156,9 @@ let private liveUpdateCommand msg =
 
   | DecideNumberOfSlots number ->
       number |> Commands.DecideNumberOfSlots
+
+let private withWsCmd command conference model =
+  model, wsCmd <| ClientMsg.Command (conference.Id |> commandHeader, command)
 
 let withLiveUpdateCmd conference whatifMsg model =
    model, wsCmd <| ClientMsg.Command (conference.Id |> commandHeader, liveUpdateCommand whatifMsg)
@@ -187,7 +189,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
               model |> withoutCommands
 
   | Received (ServerMsg.Connected) ->
-      model, List.concat [ queryConferences ; queryOrganizers ]
+      model, Cmd.batch [ queryConferences ; queryOrganizers ]
 
   | Received (ServerMsg.Events eventSet) ->
       match model.View with
@@ -281,6 +283,11 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
       | _ ->
           model |> withoutCommands
 
+  | SwitchToNewConference ->
+      model
+      |> withView (ConferenceInformation.State.init "" "" |> CurrentView.ScheduleNewConference)
+      |> withoutCommands
+
   | ResetConferenceInformation ->
       match model.View with
       | Edit (ConferenceInformation _, conference, mode) ->
@@ -327,6 +334,34 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
       | _ ->
           model |> withoutCommands
 
+  | Msg.ScheduleNewConference ->
+      match model.View with
+      | ScheduleNewConference submodel when submodel |> ConferenceInformation.Types.isValid ->
+          let title =
+            submodel |> ConferenceInformation.Types.title
+
+          let availableSlotsForTalks =
+            submodel |> ConferenceInformation.Types.availableSlotsForTalks
+
+          let conference =
+            emptyConference()
+            |> withTitle title
+            |> withAvailableSlotsForTalks availableSlotsForTalks
+
+          let command =
+            conference |> Commands.ScheduleConference
+
+          let editor =
+            ConferenceInformation.State.init conference.Title (conference.AvailableSlotsForTalks |> string)
+            |> Editor.ConferenceInformation
+
+          model
+          |> withView ((editor, conference, Live) |> Edit)
+          |> withWsCmd command conference
+
+      | _ ->
+          model |> withoutCommands
+
   | ConferenceInformationMsg msg ->
       match model.View with
       | Edit (ConferenceInformation submodel, conference, mode) ->
@@ -335,6 +370,16 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
 
           model
           |> withView ((ConferenceInformation newSubmodel, conference, mode) |> Edit)
+          |> withoutCommands
+
+      | ScheduleNewConference submodel ->
+          let view =
+            submodel
+            |> ConferenceInformation.State.update msg
+            |> ScheduleNewConference
+
+          model
+          |> withView view
           |> withoutCommands
 
       | _ ->
