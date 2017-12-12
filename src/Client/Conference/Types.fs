@@ -5,6 +5,7 @@ open Infrastructure.Types
 open Server.ServerTypes
 open Model
 open Conference.Api
+open Events
 
 type AvailableEditor =
   | VotingPanel
@@ -33,6 +34,7 @@ type Msg =
   | ScheduleNewConference
   | UpdateConferenceInformation
   | ConferenceInformationMsg of ConferenceInformation.Types.Msg
+  | RemoveNotification of Event
 
 type WhatIf =
   {
@@ -57,6 +59,14 @@ type CurrentView =
   | ScheduleNewConference of ConferenceInformation.Types.Model
   | Edit of Editor * Model.Conference * Mode
 
+type Notification =
+  Notification of text : string * Event
+
+type NotificationType =
+  | Info
+  | Success
+  | Error
+
 type Model =
   {
     View : CurrentView
@@ -64,6 +74,8 @@ type Model =
     Organizers : RemoteData<Model.Organizers>
     LastEvents : Events.Event list
     Organizer : OrganizerId
+    OpenTransactions : TransactionId list
+    OpenNotifications : Event list
   }
 
 let matchEditorWithAvailableEditor editor =

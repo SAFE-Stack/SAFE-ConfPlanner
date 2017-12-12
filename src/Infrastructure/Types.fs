@@ -83,3 +83,7 @@ type EventSourced<'CommandPayload,'Event,'QueryParameter,'State,'QueryResult> =
      EventPublisher : EventPublisher<'Event>
   }
 
+
+let inline messageAsTransactionId ((transactionId,_),_) =
+  transactionId
+

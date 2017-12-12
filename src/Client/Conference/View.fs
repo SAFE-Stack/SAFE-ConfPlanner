@@ -7,7 +7,6 @@ open Fable.Helpers.React.Props
 
 open Global
 open Model
-open Events
 
 open Fulma.Layouts
 open Fulma.Components
@@ -16,26 +15,45 @@ open Fulma.Extra.FontAwesome
 open Fulma.Elements.Form
 open Fulma.Extensions
 
-type MessageType =
-  | Info
-  | Success
-  | Error
-
-let pleaseSelectAConference =
+let private pleaseSelectAConference =
   "Please select a conference"
 
-let renderMessageType messageType =
+let private renderMessageType messageType =
   match messageType with
-  | Info -> "is-info"
-  | Success -> "is-success"
-  | Error -> "is-danger"
+  | NotificationType.Info -> "is-info"
+  | NotificationType.Success -> "is-success"
+  | NotificationType.Error -> "is-danger"
+
+let private messageWindow name content messageType =
+  let mapper =
+     sprintf "%A" >> str >> List.singleton >> li []
+
+  article [ ClassName <| "message " + renderMessageType messageType ]
+    [
+      div  [ ClassName "message-header" ]
+        [
+          name |> str
+        ]
+      div [ ClassName "message-body" ]
+        [
+          ul []
+            [
+              yield! content |> List.map mapper
+            ]
+        ]
+    ]
+
+let private messageWindowType events =
+  match events |> List.exists (function | Events.Error _ -> true | _ -> false) with
+  | true -> NotificationType.Error
+  | false -> NotificationType.Success
 
 let private renderSpeakers (speakers : Speaker list) =
   speakers
   |> List.map (fun s -> s.Firstname + " " + s.Lastname)
   |> String.concat ", "
 
-let viewVotingButton voteMsg revokeVotingMsg isActive btnType label =
+let private viewVotingButton voteMsg revokeVotingMsg isActive btnType label =
   let clickMsg =
     if isActive then
       revokeVotingMsg
@@ -50,7 +68,7 @@ let viewVotingButton voteMsg revokeVotingMsg isActive btnType label =
     ]
     [ label |> str ]
 
-let viewVotingButtons dispatch user vote (talk : Model.ConferenceAbstract) =
+let private viewVotingButtons dispatch user vote (talk : Model.ConferenceAbstract) =
   let possibleVotings =
     [
       Voting.Voting (talk.Id, user, Two), Button.isPrimary, "2"
@@ -77,11 +95,17 @@ let viewVotingButtons dispatch user vote (talk : Model.ConferenceAbstract) =
       yield! possibleVotings |> List.map buttonMapper
     ]
 
-let viewTalk dispatch user votings (talk : Model.ConferenceAbstract) =
+let private viewTalk dispatch user votings (talk : Model.ConferenceAbstract) =
   let vote =
     votings |> extractVoteForAbstract user talk.Id
 
-  let style : ICSSProp list =
+  let cardStyle : ICSSProp list =
+    [
+      MarginTop 5
+      MarginBottom 5
+    ]
+
+  let footerStyle : ICSSProp list =
     [
       Display Flex
       FlexDirection "row"
@@ -89,7 +113,7 @@ let viewTalk dispatch user votings (talk : Model.ConferenceAbstract) =
     ]
 
 
-  Card.card [ Card.props [Style [ MarginTop 5; MarginBottom 5 ]] ]
+  Card.card [ Card.props [ Style cardStyle ] ]
     [
       Card.header []
         [
@@ -111,27 +135,26 @@ let viewTalk dispatch user votings (talk : Model.ConferenceAbstract) =
                 [str "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec iaculis mauris."]
             ]
         ]
-      Card.footer [ ]
-        [ Card.Footer.item [ Card.props [Style style] ]
+      Card.footer []
+        [
+          Card.Footer.item [ Card.props [ Style footerStyle ] ]
             [
               viewVotingButtons dispatch user vote talk
             ]
         ]
     ]
 
-let simpleButton txt dispatch action =
+let private simpleButton txt dispatch action =
   Column.column []
     [
-       a
+      Button.button_a
+        [ Button.onClick (fun _ -> action |> dispatch) ]
         [
-          ClassName "button"
-          OnClick (fun _ -> action |> dispatch)
+          span [] [ str txt ]
         ]
-        [ str txt ]
     ]
 
-
-let abstractColumn dispatch color filter user conference  =
+let private abstractColumn dispatch color filter user conference  =
   let abstracts =
     conference.Abstracts
     |> List.filter filter
@@ -147,13 +170,13 @@ let abstractColumn dispatch color filter user conference  =
   abstracts
   |> Column.column [ Column.props [ Style style ] ]
 
-let proposedColumn dispatch user conference =
+let private proposedColumn dispatch user conference =
   conference |> abstractColumn dispatch "#dddddd" (fun abs -> abs.Status = Proposed) user
 
-let acceptedColumn dispatch user conference =
+let private acceptedColumn dispatch user conference =
   conference |> abstractColumn dispatch "#ddffdd" (fun abs -> abs.Status = Accepted) user
 
-let rejectedColumn dispatch user conference =
+let private rejectedColumn dispatch user conference =
   conference |> abstractColumn dispatch "#ffdddd" (fun abs -> abs.Status = Rejected) user
 
 let private viewVotingPanelHeader header =
@@ -242,31 +265,6 @@ let private viewOrganizersPanel dispatch conference organizers =
   | _ ->
       div [] [ "no organizers" |> str ]
 
-
-let messageWindow name content messageType =
-  let mapper =
-     sprintf "%A" >> str >> List.singleton >> li []
-
-  article [ ClassName <| "message " + renderMessageType messageType ]
-    [
-      div  [ ClassName "message-header" ]
-        [
-          name |> str
-        ]
-      div [ ClassName "message-body" ]
-        [
-          ul []
-            [
-              yield! content |> List.map mapper
-            ]
-        ]
-    ]
-
-let messageWindowType events =
-  match events |> List.exists isError with
-  | true -> MessageType.Error
-  | false -> MessageType.Success
-
 let footer currentView lastEvents =
   let content =
     match currentView with
@@ -278,7 +276,7 @@ let footer currentView lastEvents =
                 whatif.Commands |> List.map (fun (_,commands) -> commands)
 
               [
-                messageWindow "Potential Commands" commands MessageType.Info
+                messageWindow "Potential Commands" commands NotificationType.Info
                 messageWindow "Potential Events" whatif.Events <| messageWindowType whatif.Events
               ]
               |> div []
@@ -326,7 +324,7 @@ let private viewActiveConference currentView =
   | CurrentView.Error _ ->
       "Error loading conference"
 
-let viewConferenceList dispatch currentView conferences =
+let private viewConferenceList dispatch currentView conferences =
   match conferences with
   | RemoteData.Success conferences ->
       [
@@ -370,6 +368,18 @@ let private viewTab currentView selectEditorMsg targetEditor label =
 
   | _ -> str ""
 
+let private viewTabs currentView selectEditorMsg =
+  Tabs.tabs
+    [
+      Tabs.isFullwidth
+      Tabs.isBoxed
+    ]
+    [
+      viewTab currentView selectEditorMsg AvailableEditor.ConferenceInformation "Information"
+      viewTab currentView selectEditorMsg AvailableEditor.VotingPanel "Votings"
+      viewTab currentView selectEditorMsg AvailableEditor.Organizers "Organizers"
+    ]
+
 let private viewWhatIfSwitch dispatch isChecked =
   Switch.switch
     [
@@ -380,7 +390,7 @@ let private viewWhatIfSwitch dispatch isChecked =
     ]
     [ str "Whatif" ]
 
-let viewMakeItSo dispatch =
+let private viewMakeItSo dispatch =
   Button.button_a
     [
       Button.isPrimary
@@ -408,62 +418,105 @@ let private viewModeControls dispatch currentView =
   | _ ->
       []
 
-let viewHeader dispatch currentView conferences =
-  let selectEditorMsg =
-    SwitchToEditor >> dispatch
+let private notificationType notification =
+  match notification with
+  | Events.Error _ ->
+      Notification.isDanger
 
+  | _ ->
+      Notification.isSuccess
+
+
+let private viewNotification dispatch notification =
+  let closeMsg _ =
+    notification |> RemoveNotification |> dispatch
+
+  Notification.notification
+    [ notification |> notificationType ]
+    [
+      Notification.delete
+        [
+          Notification.Delete.props [ OnClick closeMsg ]
+        ] []
+      notification |> Events.toString |> str
+    ]
+
+let private viewNotifications dispatch notifications =
+  notifications |> List.map (viewNotification dispatch)
+
+let private viewHeaderLine dispatch currentView conferences =
   let modeButtons =
     viewModeControls dispatch currentView
 
-  let level =
-    Level.level [ ]
-        [
-          Level.left [ ]
-            [
+  let conferenceSelect =
+    conferences |> viewConferenceList dispatch currentView
 
-              Level.item []
-                [
-                  conferences |> viewConferenceList dispatch currentView
-                ]
-              Level.item [ ]
-                [
-                  Button.button_a
-                    [
-                      Button.isPrimary
-                      Button.onClick (fun _ -> SwitchToNewConference |> dispatch)
-                    ]
-                    [
-                      Icon.faIcon [ Icon.isSmall ] [ Fa.icon Fa.I.PlusSquare ]
-                      span [] [ "New Conference" |> str ]
-                    ]
-               ]
-            ]
-          Level.right []
-            [
-               yield! modeButtons |> List.map (List.singleton >> Level.item [])
-            ]
-        ]
-
-  let tabs =
-    Tabs.tabs
+  let newConference =
+    Button.button_a
       [
-        Tabs.isFullwidth
-        Tabs.isBoxed
+        Button.isPrimary
+        Button.onClick (fun _ -> SwitchToNewConference |> dispatch)
       ]
       [
-        viewTab currentView selectEditorMsg AvailableEditor.ConferenceInformation "Information"
-        viewTab currentView selectEditorMsg AvailableEditor.VotingPanel "Votings"
-        viewTab currentView selectEditorMsg AvailableEditor.Organizers "Organizers"
+        Icon.faIcon
+          [ Icon.isSmall ]
+          [ Fa.icon Fa.I.PlusSquare ]
+
+        span
+          []
+          [ "New Conference" |> str ]
       ]
 
+  let levelLeft =
+    Level.left [ ]
+      [
+        Level.item [] [ conferenceSelect ]
+        Level.item [] [ newConference ]
+      ]
+
+  let levelRight =
+    Level.right []
+      [
+         yield! modeButtons |> List.map (List.singleton >> Level.item [])
+      ]
+
+  Level.level []
+    [
+      levelLeft
+      levelRight
+    ]
+
+let private viewHeader dispatch currentView notifications conferences =
   [
-    level
-    tabs
+    yield viewHeaderLine dispatch currentView conferences
+    yield! viewNotifications dispatch notifications
+    yield viewTabs currentView (SwitchToEditor>>dispatch)
   ]
   |> Container.container [ Container.isFluid ]
 
-
 let private viewConferenceInformation dispatch submodel confirmMsg resetMsg confirmLabel =
+  let conferenceInformation =
+    ConferenceInformation.View.view (ConferenceInformationMsg>>dispatch) submodel
+
+  let confirmButton =
+    Button.button_a
+      [
+        yield Button.onClick (fun _ -> confirmMsg |> dispatch )
+        yield Button.isPrimary
+        if submodel |> ConferenceInformation.Types.isValid |> not then
+          yield Button.isDisabled
+
+      ]
+      [ str confirmLabel ]
+
+  let resetButton =
+    Button.button_a
+      [
+        Button.onClick (fun _ -> resetMsg |> dispatch)
+        Button.isWarning
+      ]
+      [ str "Reset" ]
+
   [
     Columns.columns []
       [
@@ -473,7 +526,7 @@ let private viewConferenceInformation dispatch submodel confirmMsg resetMsg conf
             Column.Offset.isOneThird
           ]
           [
-            ConferenceInformation.View.view (ConferenceInformationMsg>>dispatch) submodel
+            conferenceInformation
           ]
       ]
 
@@ -485,22 +538,8 @@ let private viewConferenceInformation dispatch submodel confirmMsg resetMsg conf
             Column.Offset.isOneThird
           ]
           [
-            Button.button_a
-              [
-                yield Button.onClick (fun _ -> confirmMsg |> dispatch )
-                yield Button.isPrimary
-                if submodel |> ConferenceInformation.Types.isValid |> not then
-                  yield Button.isDisabled
-
-              ]
-              [ str confirmLabel ]
-
-            Button.button_a
-              [
-                Button.onClick (fun _ -> resetMsg |> dispatch)
-                Button.isWarning
-              ]
-              [ str "Reset" ]
+            confirmButton
+            resetButton
           ]
       ]
   ]
@@ -547,7 +586,7 @@ let viewCurrentView dispatch user currentView organizers =
 
 let root model dispatch =
   [
-    viewHeader dispatch model.View model.Conferences |> List.singleton |> Section.section []
+    viewHeader dispatch model.View model.OpenNotifications model.Conferences |> List.singleton |> Section.section []
     viewCurrentView dispatch model.Organizer model.View model.Organizers |> List.singleton |> Section.section []
     footer model.View model.LastEvents |> List.singleton |> Footer.footer []
   ]
