@@ -2,8 +2,8 @@ module Conference.Api.Organizers
 
 open API
 open Infrastructure.Types
-open Events
-open Model
+open Domain.Events
+open Domain.Model
 
 type OrganizersReadModel =
   Organizers

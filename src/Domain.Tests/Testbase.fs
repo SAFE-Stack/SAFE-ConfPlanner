@@ -4,9 +4,9 @@ open FsUnit
 open NUnit.Framework
 
 open System
-open Model
-open Behaviour
-open Events
+open Domain.Model
+open Domain.Behaviour
+open Domain.Events
 
 let Given (events : Event list) = events
 

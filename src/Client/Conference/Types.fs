@@ -3,7 +3,8 @@ module Conference.Types
 open Global
 open Infrastructure.Types
 open Server.ServerTypes
-open Model
+open Domain.Model
+open Domain.Events
 open Conference.Api
 
 type AvailableEditor =
@@ -22,7 +23,7 @@ type WhatIfMsg =
   | DecideNumberOfSlots of int
 
 type Msg =
-  | Received of ServerMsg<Events.Event,API.QueryResult>
+  | Received of ServerMsg<Domain.Events.Event,API.QueryResult>
   | WhatIfMsg of WhatIfMsg
   | ToggleMode
   | MakeItSo
@@ -33,12 +34,13 @@ type Msg =
   | ScheduleNewConference
   | UpdateConferenceInformation
   | ConferenceInformationMsg of ConferenceInformation.Types.Msg
+  | RemoveNotification of Event
 
 type WhatIf =
   {
-    Conference : Model.Conference
-    Commands : Command<Commands.Command> list
-    Events : Events.Event list
+    Conference : Domain.Model.Conference
+    Commands : Command<Domain.Commands.Command> list
+    Events : Domain.Events.Event list
   }
 
 type Mode =
@@ -55,15 +57,25 @@ type CurrentView =
   | Loading
   | Error of string
   | ScheduleNewConference of ConferenceInformation.Types.Model
-  | Edit of Editor * Model.Conference * Mode
+  | Edit of Editor * Domain.Model.Conference * Mode
+
+type Notification =
+  Notification of text : string * Event
+
+type NotificationType =
+  | Info
+  | Success
+  | Error
 
 type Model =
   {
     View : CurrentView
     Conferences : RemoteData<Conferences.Conferences>
-    Organizers : RemoteData<Model.Organizers>
-    LastEvents : Events.Event list
+    Organizers : RemoteData<Domain.Model.Organizers>
+    LastEvents : Domain.Events.Event list
     Organizer : OrganizerId
+    OpenTransactions : TransactionId list
+    OpenNotifications : Event list
   }
 
 let matchEditorWithAvailableEditor editor =

@@ -1,4 +1,4 @@
-module  Model
+module Domain.Model
 
 open System
 
@@ -35,6 +35,14 @@ type Points =
   | One
   | Two
   | Veto
+
+let pointsToString points =
+  match points with
+  | Zero -> "0"
+  | One -> "1"
+  | Two -> "2"
+  | Veto -> "veto"
+
 
 type OrganizerId = OrganizerId of Guid
 

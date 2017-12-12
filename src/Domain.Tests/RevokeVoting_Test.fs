@@ -2,8 +2,8 @@ module RevokeVotingTest
 
 open NUnit.Framework
 
-open Commands
-open Events
+open Domain.Commands
+open Domain.Events
 open Testbase
 
 
@@ -35,7 +35,7 @@ let ``Voting can not be revoked when voting period is already finished`` () =
       VotingPeriodWasFinished
     ]
   |> When (RevokeVoting voting)
-  |> ThenExpect [ RevocationOfVotingWasDenied (voting,"Voting Period Already Finished") ]
+  |> ThenExpect [ RevocationOfVotingWasDenied (voting,"Voting Period Already Finished") |> Error ]
 
 [<Test>]
 let ``Voting can not be revoked when not issued`` () =
@@ -48,4 +48,4 @@ let ``Voting can not be revoked when not issued`` () =
       TalkWasProposed <| proposedTalk()
     ]
   |> When (RevokeVoting voting)
-  |> ThenExpect [ RevocationOfVotingWasDenied (voting,"Voting Not Issued") ]
+  |> ThenExpect [ RevocationOfVotingWasDenied (voting,"Voting Not Issued") |> Error ]

@@ -1,7 +1,6 @@
 module Conference.Api.API
 
-open Model
-
+open Domain.Model
 
 type QueryParameter =
   | Conference of ConferenceId

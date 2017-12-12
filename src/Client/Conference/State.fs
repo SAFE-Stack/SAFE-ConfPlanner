@@ -9,21 +9,24 @@ open Infrastructure.Types
 open Conference.Types
 open Conference.Ws
 open Conference.Api
-open Model
+open Fable.Import.Browser
+open Domain
+open Domain.Model
 
 let private updateStateWithEvents conference events  =
-  events |> List.fold Projections.apply conference
+  events |> List.fold Domain.Projections.apply conference
 
 let private makeStreamId (Model.ConferenceId id) =
   id |> string |> StreamId
 
 let private makeConferenceId (StreamId id) =
-  id |> System.Guid.Parse |> ConferenceId
+  id |> System.Guid.Parse |> Model.ConferenceId
 
 let private eventSetIsForCurrentConference ((_,streamId),_) conference =
   streamId |> makeConferenceId = conference.Id
-let private commandHeader id =
-  transactionId(), id |> makeStreamId
+
+let private commandHeader transaction id =
+  transaction, id |> makeStreamId
 
 let private queryConference conferenceId =
   conferenceId
@@ -51,16 +54,52 @@ let init() =
     Organizers = RemoteData.NotAsked
     LastEvents = []
     Organizer = OrganizerId <| System.Guid.Parse "311b9fbd-98a2-401e-b9e9-bab15897dad4"
+    OpenTransactions = []
+    OpenNotifications = []
   }, Cmd.ofSub startWs
+
+let private timeoutCmd msg dispatch =
+  window.setTimeout((fun _ -> msg |> dispatch), 6000) |> ignore
 
 let private withView view model =
   { model with View = view }
 
+let private withOpenTransaction transaction model =
+   { model with OpenTransactions = transaction :: model.OpenTransactions}
+
+let private withOpenTransactions transactions model =
+  { model with OpenTransactions = List.concat [transactions ; model.OpenTransactions ] }
+
 let private withLastEvents events model =
   { model with LastEvents = events }
 
+let private withCommands commands model =
+  model, commands
+
 let private withoutCommands model =
   model, Cmd.none
+
+let withFinishedTransaction transaction events model =
+  if model.OpenTransactions |> List.exists (fun openTransaction -> transaction = openTransaction) then
+    let model =
+      { model with
+          OpenTransactions =  model.OpenTransactions |> List.filter (fun openTransaction -> transaction <> openTransaction)
+          OpenNotifications = model.OpenNotifications @ events
+      }
+
+    let commands =
+      events
+      |> List.map (RemoveNotification>>timeoutCmd>>Cmd.ofSub)
+      |> Cmd.batch
+
+    model |> withCommands commands
+  else
+    model |> withoutCommands
+
+
+let withoutNotification notification model =
+  { model with OpenNotifications = model.OpenNotifications |> List.filter (fun event -> event <> notification) }
+
 
 let private updateWhatIfView editor conference whatif behaviour command =
   let events =
@@ -69,8 +108,11 @@ let private updateWhatIfView editor conference whatif behaviour command =
   let newConference =
     events |> updateStateWithEvents conference
 
+  let transaction =
+    transactionId()
+
   let commands =
-     (conference.Id |> commandHeader, command) :: whatif.Commands
+     (conference.Id |> commandHeader transaction, command) :: whatif.Commands
 
   let whatif =
     WhatIf <|
@@ -158,10 +200,20 @@ let private liveUpdateCommand msg =
       number |> Commands.DecideNumberOfSlots
 
 let private withWsCmd command conference model =
-  model, wsCmd <| ClientMsg.Command (conference.Id |> commandHeader, command)
+  let transaction =
+    transactionId()
+
+  model
+  |> withOpenTransaction transaction
+  |> withCommands (wsCmd <| ClientMsg.Command (conference.Id |> commandHeader transaction, command))
 
 let withLiveUpdateCmd conference whatifMsg model =
-   model, wsCmd <| ClientMsg.Command (conference.Id |> commandHeader, liveUpdateCommand whatifMsg)
+  let transaction =
+    transactionId()
+
+  model
+  |> withOpenTransaction transaction
+  |> withCommands (wsCmd <| ClientMsg.Command (conference.Id |> commandHeader transaction, liveUpdateCommand whatifMsg))
 
 let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
   match msg with
@@ -178,11 +230,11 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
               |> withoutCommands
 
           | API.QueryResult.Conferences conferences ->
-              { model with Conferences = conferences |> Success }
+              { model with Conferences = conferences |> RemoteData.Success }
               |> withoutCommands
 
           | API.QueryResult.Organizers organizers ->
-              { model with Organizers = organizers |> Success }
+              { model with Organizers = organizers |> RemoteData.Success }
               |> withoutCommands
 
           | API.QueryResult.ConferenceNotFound ->
@@ -194,8 +246,8 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
   | Received (ServerMsg.Events eventSet) ->
       match model.View with
       | Edit (editor, conference, Live) when eventSetIsForCurrentConference eventSet conference  ->
-          let events =
-            eventSet |> (fun (_,events) -> events)
+          let transaction,events =
+            eventSet |> (fun ((transaction,_),events) -> transaction,events)
 
           let newConference =
             events |> updateStateWithEvents conference
@@ -203,7 +255,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
           model
           |> withView ((editor,newConference,Live) |> Edit)
           |> withLastEvents events
-          |> withoutCommands
+          |> withFinishedTransaction transaction events
 
       | _ ->
           model |> withoutCommands
@@ -225,14 +277,15 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
   | MakeItSo ->
       match model.View with
       | Edit (editor, conference, WhatIf whatif)  ->
-          let wsCmds =
+          let commands =
             whatif.Commands
             |> List.rev
             |> List.collect (ClientMsg.Command >> wsCmd)
 
-
-          { model with View = (editor,whatif.Conference,Live) |> Edit },
-          wsCmds @ (conference.Id |> queryConference)
+          model
+          |> withView ((editor,whatif.Conference,Live) |> Edit)
+          |> withOpenTransactions (whatif.Commands |> List.map messageAsTransactionId)
+          |> withCommands (Cmd.batch [commands ; conference.Id |> queryConference])
 
       | _ ->
           model |> withoutCommands
@@ -329,7 +382,8 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
             else
               Cmd.none
 
-          model, Cmd.batch [ titleCmd ; availableSlotsForTalksCmd ]
+          model
+          |> withCommands (Cmd.batch [ titleCmd ; availableSlotsForTalksCmd ])
 
       | _ ->
           model |> withoutCommands
@@ -384,5 +438,12 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
 
       | _ ->
           model |> withoutCommands
+
+  | RemoveNotification notification ->
+      model
+      |> withoutNotification notification
+      |> withoutCommands
+
+
 
 

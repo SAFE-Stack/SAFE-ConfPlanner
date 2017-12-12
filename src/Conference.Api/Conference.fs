@@ -2,9 +2,9 @@ module Conference.Api.Conference
 
 open API
 open Infrastructure.Types
-open Events
-open Model
-open Projections
+open Domain.Events
+open Domain.Model
+open Domain.Projections
 
 type ConferenceReadModel =
   Map<StreamId,Conference>
