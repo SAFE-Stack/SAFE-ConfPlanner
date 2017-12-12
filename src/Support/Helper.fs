@@ -2,8 +2,8 @@ module Support.Helper
 
 open System
 open Infrastructure.Types
-open Events
-open Model
+open Domain.Events
+open Domain.Model
 
 
 let transactionId () =

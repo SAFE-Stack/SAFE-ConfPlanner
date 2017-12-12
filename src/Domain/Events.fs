@@ -1,4 +1,4 @@
-module Events
+module Domain.Events
 
 open Model
 
@@ -68,13 +68,13 @@ let toString event =
       "Voting period was reopened"
 
   | AbstractWasProposed conferenceAbstract ->
-      sprintf "%A" event
+      sprintf "AbstractWasProposed %A" conferenceAbstract
 
   | AbstractWasAccepted abstractId ->
-      sprintf "%A" event
+      sprintf "AbstractWasAccepted %A" abstractId
 
   | AbstractWasRejected abstractId ->
-      sprintf "%A" event
+      sprintf "AbstractWasRejected %A" abstractId
 
   | Error error ->
       sprintf "Error: %A" error

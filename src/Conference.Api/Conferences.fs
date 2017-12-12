@@ -2,8 +2,8 @@ module Conference.Api.Conferences
 
 open API
 open Infrastructure.Types
-open Events
-open Model
+open Domain.Events
+open Domain.Model
 
 type Conferences =
   (ConferenceId * string) list

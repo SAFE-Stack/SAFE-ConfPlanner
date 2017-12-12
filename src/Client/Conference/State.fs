@@ -9,17 +9,18 @@ open Infrastructure.Types
 open Conference.Types
 open Conference.Ws
 open Conference.Api
-open Model
 open Fable.Import.Browser
+open Domain
+open Domain.Model
 
 let private updateStateWithEvents conference events  =
-  events |> List.fold Projections.apply conference
+  events |> List.fold Domain.Projections.apply conference
 
 let private makeStreamId (Model.ConferenceId id) =
   id |> string |> StreamId
 
 let private makeConferenceId (StreamId id) =
-  id |> System.Guid.Parse |> ConferenceId
+  id |> System.Guid.Parse |> Model.ConferenceId
 
 let private eventSetIsForCurrentConference ((_,streamId),_) conference =
   streamId |> makeConferenceId = conference.Id

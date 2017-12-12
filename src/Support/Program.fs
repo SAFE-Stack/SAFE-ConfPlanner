@@ -5,7 +5,7 @@ let readEvents,appendEvents =
   eventStore @"..\Server\conference_eventstore.json"
 
 [<EntryPoint>]
-let main argv =
+let main _ =
   [Conference1.eventSets(); Conference2.eventSets()]
   |> List.concat
   |> List.map (fun eventSet -> async { do! appendEvents eventSet})

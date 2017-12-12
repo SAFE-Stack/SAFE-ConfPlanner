@@ -1,4 +1,4 @@
-module  Model
+module Domain.Model
 
 open System
 

@@ -2,8 +2,8 @@ module VoteTest
 
 open NUnit.Framework
 
-open Commands
-open Events
+open Domain.Commands
+open Domain.Events
 open Testbase
 
 

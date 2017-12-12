@@ -1,8 +1,8 @@
 module Support.Conference2
 
 open System
-open Events
-open Model
+open Domain.Events
+open Domain.Model
 
 open Support.Helper
 

@@ -2,9 +2,9 @@ module ScheduleConferenceTest
 
 open NUnit.Framework
 
-open Model
-open Commands
-open Events
+open Domain.Model
+open Domain.Commands
+open Domain.Events
 open Testbase
 
 // Scenario

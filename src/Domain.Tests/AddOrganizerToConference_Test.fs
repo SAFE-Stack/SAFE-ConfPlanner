@@ -2,10 +2,9 @@ module AddOrganizerToConferenceTest
 
 open NUnit.Framework
 
-open Commands
-open Events
+open Domain.Commands
+open Domain.Events
 open Testbase
-
 
 [<Test>]
 let ``Organizer can be added to a conference`` () =

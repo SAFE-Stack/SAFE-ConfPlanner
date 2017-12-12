@@ -1,4 +1,4 @@
-module Commands
+module Domain.Commands
 
 open Model
 

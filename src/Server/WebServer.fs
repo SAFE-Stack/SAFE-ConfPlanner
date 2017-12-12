@@ -38,7 +38,7 @@ let conferenceWebsocket =
 
   websocket <|
     eventSourced
-      Behaviour.execute
+      Domain.Behaviour.execute
       [conferenceProjection ; conferencesProjection ; organizersProjection]
       [conferenceQueryHandler ; conferencesQueryHandler ; organizersQueryHandler]
       @".\conference_eventstore.json"

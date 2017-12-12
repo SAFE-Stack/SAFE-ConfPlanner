@@ -6,7 +6,8 @@ open Fable.Helpers.React
 open Fable.Helpers.React.Props
 
 open Global
-open Model
+open Domain
+open Domain.Model
 
 open Fulma.Layouts
 open Fulma.Components
@@ -44,7 +45,7 @@ let private messageWindow name content messageType =
     ]
 
 let private messageWindowType events =
-  match events |> List.exists (function | Events.Error _ -> true | _ -> false) with
+  match events |> List.exists (function | Domain.Events.Error _ -> true | _ -> false) with
   | true -> NotificationType.Error
   | false -> NotificationType.Success
 
@@ -68,7 +69,7 @@ let private viewVotingButton voteMsg revokeVotingMsg isActive btnType label =
     ]
     [ label |> str ]
 
-let private viewVotingButtons dispatch user vote (talk : Model.ConferenceAbstract) =
+let private viewVotingButtons dispatch user vote (talk : Domain.Model.ConferenceAbstract) =
   let possibleVotings =
     [
       Voting.Voting (talk.Id, user, Two), Button.isPrimary, "2"

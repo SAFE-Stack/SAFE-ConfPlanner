@@ -1,4 +1,4 @@
-module Behaviour
+module Domain.Behaviour
 
 open Model
 open Commands

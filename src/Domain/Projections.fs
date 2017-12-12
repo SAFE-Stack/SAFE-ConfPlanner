@@ -1,9 +1,8 @@
-module Projections
+module Domain.Projections
 
 open System
 open Model
 open Events
-
 let updateAbstractStatus abstractId status (abstr: ConferenceAbstract) =
     match abstr.Id = abstractId with
     | true -> { abstr with Status = status }
