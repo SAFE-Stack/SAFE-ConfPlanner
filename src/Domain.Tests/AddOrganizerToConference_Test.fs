@@ -17,4 +17,4 @@ let ``Organizer can be added to a conference`` () =
 let ``Organizer can not be added if already added`` () =
   Given [ OrganizerAddedToConference heimeshoff ]
   |> When (AddOrganizerToConference heimeshoff)
-  |> ThenExpect [ OrganizerAlreadyAddedToConference heimeshoff ]
+  |> ThenExpect [ OrganizerAlreadyAddedToConference heimeshoff |> Error ]

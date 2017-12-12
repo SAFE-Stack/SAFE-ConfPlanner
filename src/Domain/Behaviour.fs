@@ -57,9 +57,14 @@ let numberOfVotesExceeded votingResults getVote (voting : Voting) max =
 
 let handleProposeAbstract givenHistory proposed =
   match (conferenceState givenHistory).CallForPapers with
-  | Open -> [AbstractWasProposed proposed]
-  | NotOpened -> [ProposingDenied "Call For Papers Not Opened"]
-  | Closed -> [ProposingDenied "Call For Papers Closed"]
+  | Open ->
+      [AbstractWasProposed proposed]
+
+  | NotOpened ->
+      [ProposingDenied "Call For Papers Not Opened" |> Error]
+
+  | Closed ->
+      [ProposingDenied "Call For Papers Closed" |> Error]
 
 let score m (abstr : AbstractId) =
     match m |> Map.tryFind abstr with
@@ -124,12 +129,12 @@ let finishVotingPeriod conference =
         | 0 ->
             [VotingPeriodWasFinished]
             |> (@) (scoreAbstracts conference)
-        | _ -> [FinishingDenied "Not all abstracts have been voted for by all organisers"]
+        | _ -> [FinishingDenied "Not all abstracts have been voted for by all organisers" |> Error]
       events
 
-  | Closed,Finished -> [FinishingDenied "Voting Period Already Finished"]
+  | Closed,Finished -> [FinishingDenied "Voting Period Already Finished" |> Error]
 
-  | _,_ -> [FinishingDenied "Call For Papers Not Closed"]
+  | _,_ -> [FinishingDenied "Call For Papers Not Closed" |> Error]
 
 let handleFinishVotingPeriod givenHistory =
   givenHistory
@@ -142,7 +147,7 @@ let reopenVotingPeriod conference =
       [VotingPeriodWasReopened]
 
   | _,_ ->
-    [FinishingDenied "Call For Papers Not Closed"]
+    [FinishingDenied "Call For Papers Not Closed" |> Error]
 
 let handleReopenVotingPeriod givenHistory =
   givenHistory
@@ -152,12 +157,12 @@ let handleReopenVotingPeriod givenHistory =
 let vote voting conference =
   match conference.VotingPeriod with
   | Finished ->
-      [VotingDenied "Voting Period Already Finished"]
+      [VotingDenied "Voting Period Already Finished"|> Error]
 
   | InProgress ->
       match voting with
       | VoterIsNotAnOrganizer conference.Organizers _ ->
-          [VotingDenied "Voter Is Not An Organizer"]
+          [VotingDenied "Voter Is Not An Organizer" |> Error]
 
       | _ -> [VotingWasIssued voting]
 
@@ -170,12 +175,12 @@ let handleVote givenHistory voting =
 let revokeVoting voting conference =
   match conference.VotingPeriod with
   | Finished ->
-      [ RevocationOfVotingWasDenied (voting,"Voting Period Already Finished") ]
+      [ RevocationOfVotingWasDenied (voting,"Voting Period Already Finished") |> Error ]
 
   | InProgress ->
       match voting with
       | VotingisNotIssued conference.Votings _ ->
-          [ RevocationOfVotingWasDenied (voting,"Voting Not Issued") ]
+          [ RevocationOfVotingWasDenied (voting,"Voting Not Issued") |> Error ]
 
       | _ -> [ VotingWasRevoked voting ]
 
@@ -204,12 +209,12 @@ let handleScheduleConference givenHistory conference =
   if givenHistory |> List.isEmpty then
     [ConferenceScheduled conference]
   else
-    [ConferenceAlreadyScheduled]
+    [ConferenceAlreadyScheduled |> Error]
 
 let addOrganizerToConference organizer conference =
   match organizer with
   | OrganizerAlreadyInConference conference.Organizers _ ->
-      [OrganizerAlreadyAddedToConference organizer]
+      [OrganizerAlreadyAddedToConference organizer |> Error]
 
   | _ -> [OrganizerAddedToConference organizer]
 
@@ -221,7 +226,7 @@ let private handleAddOrganizerToConference givenHistory organizer =
 let removeOrganizerFromConference organizer conference =
   match organizer with
   | OrganizerNotInConference conference.Organizers _ ->
-      [OrganizerWasNotAddedToConference organizer]
+      [OrganizerWasNotAddedToConference organizer |> Error]
 
   | _ ->
     let revocations =

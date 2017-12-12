@@ -29,7 +29,7 @@ let ``Cannot finish an already finished voting period`` () =
     CallForPapersClosed
     VotingPeriodWasFinished]
   |> When FinishVotingPeriod
-  |> ThenExpect [FinishingDenied "Voting Period Already Finished"]
+  |> ThenExpect [FinishingDenied "Voting Period Already Finished" |> Error]
 
 
 [<Test>]
@@ -37,7 +37,7 @@ let ``Cannot finish a voting period when call for papers is not closed`` () =
   Given [
     CallForPapersOpened]
   |> When FinishVotingPeriod
-  |> ThenExpect [FinishingDenied "Call For Papers Not Closed"]
+  |> ThenExpect [FinishingDenied "Call For Papers Not Closed" |> Error]
 
 
 [<Test>]
@@ -67,8 +67,7 @@ let ``Cannot finish a voting period when not all abstracts have votes from every
     VotingWasIssued (voteOne talk3 poepke)]
 
   |> When FinishVotingPeriod
-  |> ThenExpect [
-      FinishingDenied "Not all abstracts have been voted for by all organisers"]
+  |> ThenExpect [ FinishingDenied "Not all abstracts have been voted for by all organisers" |> Error ]
 
 
 [<Test>]

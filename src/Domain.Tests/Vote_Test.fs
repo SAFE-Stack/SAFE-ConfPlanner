@@ -1,9 +1,7 @@
 module VoteTest
 
-open System
 open NUnit.Framework
 
-open Model
 open Commands
 open Events
 open Testbase
@@ -19,7 +17,7 @@ let ``Can not vote when voting period is already finished`` () =
     TalkWasProposed talk
     VotingPeriodWasFinished]
   |> When (Vote vote)
-  |> ThenExpect [VotingDenied "Voting Period Already Finished"]
+  |> ThenExpect [ VotingDenied "Voting Period Already Finished" |> Error ]
 
 
 [<Test>]
@@ -30,7 +28,7 @@ let ``Can not vote when voter is not organizer of conference`` () =
   Given [
     TalkWasProposed talk]
   |> When (Vote vote)
-  |> ThenExpect [VotingDenied "Voter Is Not An Organizer"]
+  |> ThenExpect [ VotingDenied "Voter Is Not An Organizer" |> Error ]
 
 
 [<Test>]
@@ -42,26 +40,26 @@ let ``Can vote when constraints are fulfilled`` () =
     OrganizerAddedToConference heimeshoff
     TalkWasProposed talk]
   |> When (Vote vote)
-  |> ThenExpect [VotingWasIssued vote]
+  |> ThenExpect [ VotingWasIssued vote ]
 
 
 [<Test>]
 let ``Voter can change previous vote for an abstract`` () =
-  let heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }
   let talk = proposedTalk()
   let vote = voteOne talk heimeshoff
 
-  Given [
-    OrganizerAddedToConference heimeshoff
-    TalkWasProposed talk
-    VotingWasIssued vote]
+  Given
+    [
+      OrganizerAddedToConference heimeshoff
+      TalkWasProposed talk
+      VotingWasIssued vote
+    ]
   |> When (Vote vote)
-  |> ThenExpect [VotingWasIssued vote]
+  |> ThenExpect [ VotingWasIssued vote ]
 
 
 [<Test>]
 let ``Can issue a veto when constraints are fulfilled`` () =
-  let heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }
   let talk = proposedTalk()
   let veto= veto talk heimeshoff
 
@@ -69,4 +67,4 @@ let ``Can issue a veto when constraints are fulfilled`` () =
     OrganizerAddedToConference heimeshoff
     TalkWasProposed talk]
   |> When (Vote veto)
-  |> ThenExpect [VotingWasIssued veto]
+  |> ThenExpect [ VotingWasIssued veto ]

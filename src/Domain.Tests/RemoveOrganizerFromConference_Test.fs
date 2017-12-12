@@ -5,8 +5,6 @@ open NUnit.Framework
 open Commands
 open Events
 open Testbase
-open ProposeAbstractTest
-
 
 [<Test>]
 let ``Organizer can be removed from a conference`` () =
@@ -49,4 +47,4 @@ let ``When an Organizer is removed all its votings are revoked`` () =
 let ``Organizer can not be remove if not added`` () =
   Given []
   |> When (RemoveOrganizerFromConference heimeshoff)
-  |> ThenExpect [ OrganizerWasNotAddedToConference heimeshoff ]
+  |> ThenExpect [ OrganizerWasNotAddedToConference heimeshoff |> Error ]

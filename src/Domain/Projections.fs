@@ -31,7 +31,9 @@ let apply (conference : Conference) event : Conference =
         { conference with CallForPapers = Open }
 
     | CallForPapersClosed ->
-        { conference with CallForPapers = Closed; VotingPeriod = InProgress }
+        { conference with
+            CallForPapers = Closed
+            VotingPeriod = InProgress }
 
     | TitleChanged title ->
         { conference with Title = title }
@@ -70,25 +72,7 @@ let apply (conference : Conference) event : Conference =
 
         { conference with Votings = votings }
 
-    | FinishingDenied _ ->
-        conference
-
-    | VotingDenied _ ->
-        conference
-
-    | RevocationOfVotingWasDenied _ ->
-        conference
-
-    | ProposingDenied _ ->
-        conference
-
-    | ConferenceAlreadyScheduled ->
-        conference
-
-    | OrganizerAlreadyAddedToConference _ ->
-        conference
-
-    | OrganizerWasNotAddedToConference _ ->
+    | Error _ ->
         conference
 
 let private emptyConference : Conference =
