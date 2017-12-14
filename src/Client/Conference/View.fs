@@ -113,7 +113,6 @@ let private viewTalk dispatch user votings (talk : Model.ConferenceAbstract) =
       JustifyContent "left"
     ]
 
-
   Card.card [ Card.props [ Style cardStyle ] ]
     [
       Card.header []
@@ -427,13 +426,38 @@ let private notificationType notification =
   | _ ->
       Notification.isSuccess
 
-
-let private viewNotification dispatch notification =
+let private viewNotification dispatch (notification,transaction,animation) =
   let closeMsg _ =
-    notification |> RemoveNotification |> dispatch
+    (notification,transaction,animation) |> RequestNotificationForRemoval |> dispatch
+
+  let itemStyle : ICSSProp list =
+    [
+      MaxHeight "100px"
+      Margin "1em 1em 0 1em"
+      Transition "max-height 0.6s, margin-top 0.6s"
+    ]
+
+  let leavingItemStyle : ICSSProp list =
+    itemStyle @
+      [
+        MaxHeight 0
+        MarginTop 0
+      ]
 
   Notification.notification
-    [ notification |> notificationType ]
+    [
+      match animation with
+      | Entered ->
+          yield Notification.customClass "animated bounceInRight"
+          yield Notification.props [ Style itemStyle ]
+
+      | Leaving ->
+          yield Notification.customClass "animated fadeOutRightBig"
+          yield Notification.props [ Style leavingItemStyle ]
+
+      yield notification |> notificationType
+
+    ]
     [
       Notification.delete
         [
@@ -443,7 +467,20 @@ let private viewNotification dispatch notification =
     ]
 
 let private viewNotifications dispatch notifications =
+  let containerStyle : ICSSProp list =
+    [
+      Position "fixed"
+      Top 60
+      Right 0
+      Width "100%"
+      MaxWidth "300px"
+      Padding 0
+      Margin 0
+      ZIndex 10.
+    ]
+
   notifications |> List.map (viewNotification dispatch)
+  |> div [ Style containerStyle ]
 
 let private viewHeaderLine dispatch currentView conferences =
   let modeButtons =
@@ -456,6 +493,7 @@ let private viewHeaderLine dispatch currentView conferences =
     Button.button_a
       [
         Button.isPrimary
+        Button.onClick (fun _ -> SwitchToNewConference |> dispatch)
         Button.onClick (fun _ -> SwitchToNewConference |> dispatch)
       ]
       [
@@ -487,10 +525,9 @@ let private viewHeaderLine dispatch currentView conferences =
       levelRight
     ]
 
-let private viewHeader dispatch currentView notifications conferences =
+let private viewHeader dispatch currentView conferences =
   [
     yield viewHeaderLine dispatch currentView conferences
-    yield! viewNotifications dispatch notifications
     yield viewTabs currentView (SwitchToEditor>>dispatch)
   ]
   |> Container.container [ Container.isFluid ]
@@ -585,10 +622,11 @@ let viewCurrentView dispatch user currentView organizers =
   |> List.singleton
   |> Container.container [ Container.isFluid ]
 
-let root model dispatch =
+let view model dispatch =
   [
-    viewHeader dispatch model.View model.OpenNotifications model.Conferences |> List.singleton |> Section.section []
-    viewCurrentView dispatch model.Organizer model.View model.Organizers |> List.singleton |> Section.section []
-    footer model.View model.LastEvents |> List.singleton |> Footer.footer []
+    yield viewNotifications dispatch model.OpenNotifications
+    yield viewHeader dispatch model.View model.Conferences |> List.singleton |> Section.section []
+    yield viewCurrentView dispatch model.Organizer model.View model.Organizers |> List.singleton |> Section.section []
+    yield footer model.View model.LastEvents |> List.singleton |> Footer.footer []
   ]
   |> div []

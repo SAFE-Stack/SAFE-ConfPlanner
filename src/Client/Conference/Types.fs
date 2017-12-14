@@ -7,6 +7,18 @@ open Domain.Model
 open Domain.Events
 open Conference.Api
 
+type NotificationType =
+  | Info
+  | Success
+  | Error
+
+type Animation =
+  | Entered
+  | Leaving
+
+type Notification =
+  Event * TransactionId * Animation
+
 type AvailableEditor =
   | VotingPanel
   | Organizers
@@ -34,7 +46,8 @@ type Msg =
   | ScheduleNewConference
   | UpdateConferenceInformation
   | ConferenceInformationMsg of ConferenceInformation.Types.Msg
-  | RemoveNotification of Event
+  | RequestNotificationForRemoval of Notification
+  | RemoveNotification of Notification
 
 type WhatIf =
   {
@@ -59,14 +72,6 @@ type CurrentView =
   | ScheduleNewConference of ConferenceInformation.Types.Model
   | Edit of Editor * Domain.Model.Conference * Mode
 
-type Notification =
-  Notification of text : string * Event
-
-type NotificationType =
-  | Info
-  | Success
-  | Error
-
 type Model =
   {
     View : CurrentView
@@ -75,7 +80,7 @@ type Model =
     LastEvents : Domain.Events.Event list
     Organizer : OrganizerId
     OpenTransactions : TransactionId list
-    OpenNotifications : Event list
+    OpenNotifications : Notification list
   }
 
 let matchEditorWithAvailableEditor editor =

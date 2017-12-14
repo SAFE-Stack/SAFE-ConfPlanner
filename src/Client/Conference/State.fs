@@ -58,8 +58,8 @@ let init() =
     OpenNotifications = []
   }, Cmd.ofSub startWs
 
-let private timeoutCmd msg dispatch =
-  window.setTimeout((fun _ -> msg |> dispatch), 6000) |> ignore
+let private timeoutCmd timeout msg dispatch =
+  window.setTimeout((fun _ -> msg |> dispatch), timeout) |> ignore
 
 let private withView view model =
   { model with View = view }
@@ -81,15 +81,19 @@ let private withoutCommands model =
 
 let withFinishedTransaction transaction events model =
   if model.OpenTransactions |> List.exists (fun openTransaction -> transaction = openTransaction) then
+    let notifications =
+      events
+      |> List.map (fun event -> event,transaction,Entered)
+
     let model =
       { model with
           OpenTransactions =  model.OpenTransactions |> List.filter (fun openTransaction -> transaction <> openTransaction)
-          OpenNotifications = model.OpenNotifications @ events
+          OpenNotifications = model.OpenNotifications @ notifications
       }
 
     let commands =
-      events
-      |> List.map (RemoveNotification>>timeoutCmd>>Cmd.ofSub)
+      notifications
+      |> List.map (RequestNotificationForRemoval>>(timeoutCmd 5000)>>Cmd.ofSub)
       |> Cmd.batch
 
     model |> withCommands commands
@@ -97,9 +101,28 @@ let withFinishedTransaction transaction events model =
     model |> withoutCommands
 
 
-let withoutNotification notification model =
-  { model with OpenNotifications = model.OpenNotifications |> List.filter (fun event -> event <> notification) }
+let withRequestedForRemovalNotification (notification,transaction,_) model =
+  let mapper (event,tx,animation) =
+    if event = notification && tx = transaction then
+      (event,tx,Leaving)
+    else
+      (event,tx,animation)
 
+  let cmd =
+    (notification,transaction,Leaving)
+    |> RemoveNotification
+    |> timeoutCmd 2000
+    |> Cmd.ofSub
+
+  { model with OpenNotifications = model.OpenNotifications |> List.map mapper }
+  |> withCommands cmd
+
+let withoutNotification (notification,transaction,_) model =
+  let newNotifications =
+     model.OpenNotifications
+     |> List.filter (fun (event,tx,_) -> (event = notification && tx = transaction) |> not )
+
+  { model with OpenNotifications = newNotifications }
 
 let private updateWhatIfView editor conference whatif behaviour command =
   let events =
@@ -439,11 +462,11 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
       | _ ->
           model |> withoutCommands
 
+  | RequestNotificationForRemoval notification ->
+      model
+      |> withRequestedForRemovalNotification notification
+
   | RemoveNotification notification ->
       model
       |> withoutNotification notification
       |> withoutCommands
-
-
-
-
