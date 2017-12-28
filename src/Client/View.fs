@@ -2,29 +2,25 @@ module App.View
 
 open Fable.Core.JsInterop
 open App.Types
-open Global
 
 importAll "../../sass/main.sass"
 
 open Fable.Helpers.React
 
 let view model dispatch =
-  let pageHtml =
-    function
-    | Page.About ->
+  let pageHtml currentPage =
+    match currentPage with
+    | CurrentPage.HomePage ->
         Info.View.view
 
-    | Counter ->
-        Counter.View.root model.CounterModel (CounterMsg >> dispatch)
+    | CurrentPage.Login submodel ->
+        Login.View.view submodel (LoginMsg >> dispatch)
 
-    | Login ->
-        Login.View.root model.LoginModel (LoginMsg >> dispatch)
+    | CurrentPage.Conference submodel ->
+        Conference.View.view submodel (ConferenceMsg >> dispatch)
 
-    | ConfPlanner ->
-        Conference.View.view model.ConferenceModel (ConferenceMsg >> dispatch)
-
-    | Websockets ->
-        Ws.root model.WsModel (WsMsg >> dispatch)
+    | CurrentPage.Ws submodel ->
+        Ws.view submodel (WsMsg >> dispatch)
 
   [
     Navbar.View.view model.CurrentPage

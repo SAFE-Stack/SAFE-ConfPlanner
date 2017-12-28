@@ -1,7 +1,5 @@
 module Login.View
 
-open Fable.Core
-open Fable.Import
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Client.Style
@@ -10,24 +8,14 @@ open Fable.Core.JsInterop
 
 open Login.Types
 
-let [<Literal>] ENTER_KEY = 13.
-
-let root model dispatch =
+let view model (dispatch: Msg -> unit) =
     let showErrorClass = if String.IsNullOrEmpty model.ErrorMsg then "hidden" else ""
     let buttonActive = if String.IsNullOrEmpty model.Login.UserName || String.IsNullOrEmpty model.Login.Password then "btn-disabled" else "btn-primary"
 
-    let onEnter msg dispatch =
-        function
-        | (ev:React.KeyboardEvent) when ev.keyCode = ENTER_KEY ->
-            ev.preventDefault()
-            dispatch msg
-        | _ -> ()
-        |> OnKeyDown
-
     match model.State with
-    | LoggedIn _ ->
+    | LoggedIn user ->
         div [Id "greeting"] [
-          h3 [ ClassName "text-center" ] [ str (sprintf "Hi %s!" model.Login.UserName) ]
+          h3 [ ClassName "text-center" ] [ str (sprintf "Hi %s!" user.UserName) ]
         ]
 
     | LoggedOut ->
@@ -58,6 +46,7 @@ let root model dispatch =
                 ]
                 input [
                         Id "password"
+                        Key ("password_" + model.Login.PasswordId.ToString())
                         HTMLAttr.Type "password"
                         ClassName "form-control input-lg"
                         Placeholder "Password"

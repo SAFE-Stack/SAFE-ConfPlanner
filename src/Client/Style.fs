@@ -18,7 +18,6 @@ type Page =
   | Login
   | WishList
 
-
 let toHash =
   function
   | Home -> "#home"

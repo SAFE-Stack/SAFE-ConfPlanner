@@ -182,7 +182,7 @@ let viewQueryResponse queryResponse =
   | None ->
       "No query sent, yet"
 
-let root model dispatch =
+let view model dispatch =
   div  [ ClassName "container" ]
     [
       div [ ClassName "columns" ]
