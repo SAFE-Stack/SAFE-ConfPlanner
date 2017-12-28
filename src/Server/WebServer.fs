@@ -65,12 +65,12 @@ let start clientPath port =
               ]
 
             POST >=> choose [
-                path "/api/users/login" >=> Auth.login
+                path Server.Urls.Login >=> Auth.login
             ]
 
             path "/dummyWebsocket" >=> handShake dummyWebsocket
 
-            path "/conferenceWebsocket" >=> handShake conferenceWebsocket
+            path Server.Urls.Conference  >=> websocketWithAuth handShake conferenceWebsocket
 
             NOT_FOUND "Page not found."
 

@@ -6,6 +6,7 @@ open Suave.WebSocket
 
 open Server.ServerTypes
 
+
 open Infrastructure.FableJson
 open Infrastructure.Types
 
@@ -123,6 +124,10 @@ let websocket
             | (op, data, fin) ->
               printfn "Unexpected Message: %A %A %A " op fin data
     }
+
+let websocketWithAuth handshake websocket (ctx: HttpContext) =
+  Server.Auth.useToken ctx (fun token -> async { return! handshake websocket ctx })
+
 //
 // The FIN byte:
 //

@@ -47,7 +47,7 @@ let private queryOrganizers =
   |> ClientMsg.Query
   |> wsCmd
 
-let init() =
+let init user  =
   {
     View = CurrentView.NotAsked
     Conferences = RemoteData.NotAsked
@@ -56,7 +56,10 @@ let init() =
     Organizer = OrganizerId <| System.Guid.Parse "311b9fbd-98a2-401e-b9e9-bab15897dad4"
     OpenTransactions = []
     OpenNotifications = []
-  }, Cmd.ofSub startWs
+  }, Cmd.ofSub <| startWs user.Token
+
+let dispose () =
+  Cmd.ofSub stopWs
 
 let private timeoutCmd timeout msg dispatch =
   window.setTimeout((fun _ -> msg |> dispatch), timeout) |> ignore

@@ -9,6 +9,7 @@
     <ProjectReference Include="../Conference.Api/Conference.Api.fsproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Urls.fs" />
     <Compile Include="AuthTypes.fs" />
     <Compile Include="ServerTypes.fs" />
     <Compile Include="JsonWebToken.fs" />

@@ -7,10 +7,16 @@ open Server.ServerTypes
 open Infrastructure.Types
 open Conference.Api
 
-let mutable private sendPerWebsocket : ClientMsg<Domain.Commands.Command,API.QueryParameter,API.QueryResult> -> unit =
+let private websocketNotConnected =
   fun _ -> failwith "WebSocket not connected"
 
-let startWs dispatch =
+let mutable private sendPerWebsocket : ClientMsg<Domain.Commands.Command,API.QueryParameter,API.QueryResult> -> unit =
+  websocketNotConnected
+
+let mutable closeWebsocket : unit -> unit =
+  websocketNotConnected
+
+let startWs token dispatch =
   let onMsg : System.Func<MessageEvent, obj> =
     (fun (wsMsg : MessageEvent) ->
       let msg =
@@ -21,7 +27,7 @@ let startWs dispatch =
       null
     ) |> unbox // temporary fix until Fable WS Import is upgraded to Fable 1.*
 
-  let ws = Fable.Import.Browser.WebSocket.Create("ws://127.0.0.1:8085/conferenceWebsocket")
+  let ws = Fable.Import.Browser.WebSocket.Create("ws://127.0.0.1:8085" + Server.Urls.Conference + "?jwt=" + token)
 
   let send msg =
     ws.send (toJson msg)
@@ -31,6 +37,13 @@ let startWs dispatch =
   ws.onerror <- (fun err -> printfn "%A" err ; null)
 
   sendPerWebsocket <- send
+
+  closeWebsocket <- (fun _ -> sendPerWebsocket <- websocketNotConnected ; ws.close (1000.,"") |> ignore )
+
+  ()
+
+let stopWs dispatch =
+  closeWebsocket ()
 
   ()
 
