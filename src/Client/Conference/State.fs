@@ -47,13 +47,13 @@ let private queryOrganizers =
   |> ClientMsg.Query
   |> wsCmd
 
-let init user  =
+let init (user : UserData)  =
   {
     View = CurrentView.NotAsked
     Conferences = RemoteData.NotAsked
     Organizers = RemoteData.NotAsked
     LastEvents = []
-    Organizer = OrganizerId <| System.Guid.Parse "311b9fbd-98a2-401e-b9e9-bab15897dad4"
+    Organizer = user.OrganizerId
     OpenTransactions = []
     OpenNotifications = []
   }, Cmd.ofSub <| startWs user.Token

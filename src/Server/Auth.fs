@@ -5,6 +5,29 @@ open Suave
 open Suave.RequestErrors
 
 open Infrastructure.FableJson
+open Domain.Model
+
+
+let rec private oneOf userprovider (username,password)  =
+  match userprovider with
+  | provider :: rest ->
+      match provider username password with
+      | None ->
+          oneOf rest (username,password)
+
+      | Some user ->
+          Some user
+
+  | _ -> None
+
+let userProvider username password =
+  if (username = "test" && password = "test") then
+    System.Guid.Parse "311b9fbd-98a2-401e-b9e9-bab15897dad4"
+    |> OrganizerId
+    |> Some
+  else
+    None
+
 
 /// Login web part that authenticates a user and returns a token in the HTTP body.
 let login (ctx: HttpContext) = async {
@@ -14,15 +37,25 @@ let login (ctx: HttpContext) = async {
       |> ofJson<Server.AuthTypes.Login>
 
   try
-      if (login.UserName <> "test" || login.Password <> "test") &&
-         (login.UserName <> "test2" || login.Password <> "test2") then
+      let organizerId =
+        (login.UserName,login.Password)
+        |> oneOf [ userProvider ]
+
+      match organizerId with
+      | Some organizerId ->
+          let user : ServerTypes.UserRights =
+            {
+              UserName = login.UserName
+              OrganizerId = organizerId
+            }
+
+          let token = JsonWebToken.encode user
+
+          return! Successful.OK token ctx
+
+       | None ->
           return! failwithf "Could not authenticate %s" login.UserName
-      let user : ServerTypes.UserRights =
-        { UserName = login.UserName }
 
-      let token = JsonWebToken.encode user
-
-      return! Successful.OK token ctx
   with
   | _ -> return! UNAUTHORIZED (sprintf "User '%s' can't be logged in." login.UserName) ctx
 }

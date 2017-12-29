@@ -9,6 +9,8 @@ open Fable.PowerPack.Fetch.Fetch_types
 open Server.AuthTypes
 open Login.Types
 open Global
+open Client
+open Server.ServerTypes
 
 let authUser (login:Login) =
   promise {
@@ -32,9 +34,17 @@ let authUser (login:Login) =
         return! failwithf "Error: %d" response.Status
       else
         let! data = response.text()
+
+        let userRights =
+          data
+          |> Utils.decodeJwt
+          |> ofJson<UserRights>
+
+        printfn "rights %A" userRights
         return
             {
-              UserName = login.UserName
+              OrganizerId = userRights.OrganizerId
+              UserName = userRights.UserName
               Token = data
             }
     with

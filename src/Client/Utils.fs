@@ -1,6 +1,7 @@
 module Client.Utils
 
 open Fable.Import
+open Fable.Core
 
 let load<'T> key =
     Browser.localStorage.getItem(key) |> unbox
@@ -11,3 +12,12 @@ let save key (data: 'T) =
 
 let delete key =
     Browser.localStorage.removeItem(key)
+
+
+[<Emit("atob($0)")>]
+let atob (str : string) : string = jsNative
+
+let decodeJwt (jwt : string) =
+  (jwt.Split ".").[1]
+  |> atob
+

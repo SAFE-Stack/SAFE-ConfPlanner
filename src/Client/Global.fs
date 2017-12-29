@@ -1,10 +1,12 @@
 module Global
 
 open Elmish.Browser.UrlParser
+open Domain.Model
 
 type UserData =
   {
     UserName : string
+    OrganizerId : OrganizerId
     Token : Server.AuthTypes.JWT
   }
 

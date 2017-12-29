@@ -6,7 +6,7 @@ open Fable.Import
 open Global
 open Types
 
-let dispose currentPage =
+let private dispose currentPage =
   match currentPage with
   | CurrentPage.Conference _ ->
       Conference.State.dispose ()
@@ -34,7 +34,7 @@ let urlUpdate (result : Page option) model =
           { model with CurrentPage = CurrentPage.Conference m }, Cmd.map ConferenceMsg cmd
 
       | None ->
-          model, Cmd.ofMsg Logout
+          model, Navigation.newUrl (toHash Page.Login)
 
   | Some Page.About ->
       { model with CurrentPage = CurrentPage.HomePage }, Cmd.none
