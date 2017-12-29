@@ -38,9 +38,6 @@ let menuItem label page currentPage =
     | CurrentPage.HomePage when page = Page.About ->
         true
 
-    | CurrentPage.Ws _ when page = Page.Websockets ->
-        true
-
     | CurrentPage.Login _ when page = Page.Login ->
         true
 

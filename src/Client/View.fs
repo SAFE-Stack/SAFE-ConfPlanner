@@ -19,9 +19,6 @@ let view model dispatch =
     | CurrentPage.Conference submodel ->
         Conference.View.view submodel (ConferenceMsg >> dispatch)
 
-    | CurrentPage.Ws submodel ->
-        Ws.view submodel (WsMsg >> dispatch)
-
   [
     Navbar.View.view model.CurrentPage
     pageHtml model.CurrentPage

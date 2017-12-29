@@ -42,7 +42,7 @@ let startWs token dispatch =
 
   ()
 
-let stopWs dispatch =
+let stopWs _ =
   closeWebsocket ()
 
   ()

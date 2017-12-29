@@ -1,6 +1,7 @@
 module Login.State
 
 open Elmish
+open Elmish.Helper
 open System
 open Fable.Core.JsInterop
 open Fable.PowerPack
@@ -12,7 +13,7 @@ open Global
 open Client
 open Server.ServerTypes
 
-let authUser (login:Login) =
+let private authUser (login:Login) =
   promise {
     if String.IsNullOrEmpty login.UserName then return! failwithf "You need to fill in a username." else
     if String.IsNullOrEmpty login.Password then return! failwithf "You need to fill in a password." else
@@ -40,7 +41,6 @@ let authUser (login:Login) =
           |> Utils.decodeJwt
           |> ofJson<UserRights>
 
-        printfn "rights %A" userRights
         return
             {
               OrganizerId = userRights.OrganizerId
@@ -51,29 +51,53 @@ let authUser (login:Login) =
     | _ -> return! failwithf "Could not authenticate user."
   }
 
-let authUserCmd login =
+let private authUserCmd login =
   Cmd.ofPromise authUser login LoginSuccess AuthError
 
-let init (user:UserData option) =
+let private withStateLoggedIn user model =
+  { model with State = LoggedIn user }
+
+let init (user : UserData option) =
+  let model =
+     {
+       Login = { UserName = ""; Password = ""; PasswordId = Guid.NewGuid() }
+       State = LoggedOut
+       ErrorMsg = ""
+      }
+
   match user with
   | None ->
-      { Login = { UserName = ""; Password = ""; PasswordId = Guid.NewGuid() }
-        State = LoggedOut
-        ErrorMsg = "" }, Cmd.none
+     model |> withoutCommands
+
   | Some user ->
-      { Login = { UserName = user.UserName; Password = ""; PasswordId = Guid.NewGuid() }
-        State = LoggedIn user
-        ErrorMsg = "" }, Cmd.none
+      model
+      |> withStateLoggedIn user
+      |> withoutCommands
+
+let private withLogin login model =
+  { model with Login = login }
 
 let update f onSuccess (msg:Msg) model : Model*Cmd<'a> =
   match msg with
   | LoginSuccess user ->
-      { model with State = LoggedIn user; Login = { model.Login with Password = ""; PasswordId = Guid.NewGuid() } }, onSuccess user
+      { model with State = LoggedIn user }
+      |> withLogin { model.Login with Password = ""; PasswordId = Guid.NewGuid() }
+      |> withCommand (onSuccess user)
+
   | SetUserName name ->
-      { model with Login = { model.Login with UserName = name; Password = ""; PasswordId = Guid.NewGuid() } }, Cmd.none
+      model
+      |> withLogin { model.Login with UserName = name; Password = ""; PasswordId = Guid.NewGuid() }
+      |> withoutCommands
+
   | SetPassword pw ->
-      { model with Login = { model.Login with Password = pw }}, Cmd.none
+      model
+      |> withLogin { model.Login with Password = pw }
+      |> withoutCommands
+
   | ClickLogIn ->
-      model, authUserCmd model.Login |> Cmd.map f
+      model
+      |> withCommand (authUserCmd model.Login |> Cmd.map f)
+
   | AuthError exn ->
-      { model with ErrorMsg = string (exn.Message) }, Cmd.none
+      { model with ErrorMsg = string (exn.Message) }
+      |> withoutCommands

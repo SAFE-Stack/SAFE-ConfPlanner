@@ -1,6 +1,7 @@
 module Conference.State
 
 open Elmish
+open Elmish.Helper
 open Global
 
 open Server.ServerTypes
@@ -76,12 +77,6 @@ let private withOpenTransactions transactions model =
 let private withLastEvents events model =
   { model with LastEvents = events }
 
-let private withCommands commands model =
-  model, commands
-
-let private withoutCommands model =
-  model, Cmd.none
-
 let withFinishedTransaction transaction events model =
   if model.OpenTransactions |> List.exists (fun openTransaction -> transaction = openTransaction) then
     let notifications =
@@ -99,7 +94,7 @@ let withFinishedTransaction transaction events model =
       |> List.map (RequestNotificationForRemoval>>(timeoutCmd 5000)>>Cmd.ofSub)
       |> Cmd.batch
 
-    model |> withCommands commands
+    model |> withCommand commands
   else
     model |> withoutCommands
 
@@ -118,7 +113,7 @@ let withRequestedForRemovalNotification (notification,transaction,_) model =
     |> Cmd.ofSub
 
   { model with OpenNotifications = model.OpenNotifications |> List.map mapper }
-  |> withCommands cmd
+  |> withCommand cmd
 
 let withoutNotification (notification,transaction,_) model =
   let newNotifications =
@@ -231,7 +226,7 @@ let private withWsCmd command conference model =
 
   model
   |> withOpenTransaction transaction
-  |> withCommands (wsCmd <| ClientMsg.Command (conference.Id |> commandHeader transaction, command))
+  |> withCommand (wsCmd <| ClientMsg.Command (conference.Id |> commandHeader transaction, command))
 
 let withLiveUpdateCmd conference whatifMsg model =
   let transaction =
@@ -239,7 +234,7 @@ let withLiveUpdateCmd conference whatifMsg model =
 
   model
   |> withOpenTransaction transaction
-  |> withCommands (wsCmd <| ClientMsg.Command (conference.Id |> commandHeader transaction, liveUpdateCommand whatifMsg))
+  |> withCommand (wsCmd <| ClientMsg.Command (conference.Id |> commandHeader transaction, liveUpdateCommand whatifMsg))
 
 let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
   match msg with
@@ -311,7 +306,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
           model
           |> withView ((editor,whatif.Conference,Live) |> Edit)
           |> withOpenTransactions (whatif.Commands |> List.map messageAsTransactionId)
-          |> withCommands (Cmd.batch [commands ; conference.Id |> queryConference])
+          |> withCommand (Cmd.batch [commands ; conference.Id |> queryConference])
 
       | _ ->
           model |> withoutCommands
@@ -409,7 +404,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
               Cmd.none
 
           model
-          |> withCommands (Cmd.batch [ titleCmd ; availableSlotsForTalksCmd ])
+          |> withCommand (Cmd.batch [ titleCmd ; availableSlotsForTalksCmd ])
 
       | _ ->
           model |> withoutCommands

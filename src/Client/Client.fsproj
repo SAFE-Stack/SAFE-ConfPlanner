@@ -16,6 +16,7 @@
     <Compile Include="../Server/Dummy.fs" />
     <Compile Include="../Server/Websockets.fs" />
     <Compile Include="Global.fs" />
+    <Compile Include="ElmishHelper.fs" />
     <Compile Include="Style.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="Info/View.fs" />
@@ -24,7 +25,6 @@
     <Compile Include="Conference/Ws.fs" />
     <Compile Include="Conference/State.fs" />
     <Compile Include="Conference/View.fs" />
-    <Compile Include="Websockets/websockets.fs" />
     <Compile Include="Login/Types.fs" />
     <Compile Include="Login/State.fs" />
     <Compile Include="Login/View.fs" />

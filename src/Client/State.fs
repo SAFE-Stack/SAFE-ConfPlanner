@@ -2,11 +2,12 @@ module App.State
 
 open Elmish
 open Elmish.Browser.Navigation
+open Elmish.Helper
 open Fable.Import
 open Global
 open Types
 
-let private dispose currentPage =
+let private disposeCmd currentPage =
   match currentPage with
   | CurrentPage.Conference _ ->
       Conference.State.dispose ()
@@ -14,32 +15,32 @@ let private dispose currentPage =
 
   | _ -> Cmd.none
 
-let withAdditionalCmd cmd (model, cmds) =
-  model, (Cmd.batch [cmds ; cmd])
-
 let urlUpdate (result : Page option) model =
   match result with
   | None ->
       Browser.console.error("Error parsing url: " + Browser.window.location.href)
-      ( model, Navigation.modifyUrl (toHash Page.About) )
+      model, Navigation.modifyUrl (toHash Page.About)
 
   | Some Page.Login ->
       let m,cmd = Login.State.init model.User
-      { model with CurrentPage = CurrentPage.Login m }, Cmd.map LoginMsg cmd
+      { model with CurrentPage = CurrentPage.Login m }
+      |> withCommand (Cmd.map LoginMsg cmd)
 
   | Some Page.Conference ->
       match model.User with
       | Some user ->
-          let m,cmd = Conference.State.init user
-          { model with CurrentPage = CurrentPage.Conference m }, Cmd.map ConferenceMsg cmd
+          let submodel,cmd = Conference.State.init user
+          { model with CurrentPage = CurrentPage.Conference submodel }
+          |> withCommand (Cmd.map ConferenceMsg cmd)
 
       | None ->
           model, Navigation.newUrl (toHash Page.Login)
 
   | Some Page.About ->
-      { model with CurrentPage = CurrentPage.HomePage }, Cmd.none
+      { model with CurrentPage = CurrentPage.HomePage }
+      |> withoutCommands
 
-  |> withAdditionalCmd (dispose model.CurrentPage)
+  |> withAdditionalCommand (disposeCmd model.CurrentPage)
 
 let private loadUser () =
   Client.Utils.load "user"
@@ -59,43 +60,45 @@ let init result =
     }
   urlUpdate result model
 
+let private withCurrentPage page model =
+   { model with CurrentPage = page }
+
 let update msg model =
   match msg, model.CurrentPage with
   | ConferenceMsg msg, CurrentPage.Conference submodel->
       let (conference, conferenceCmd) = Conference.State.update msg submodel
-      { model with CurrentPage = CurrentPage.Conference conference }, Cmd.map ConferenceMsg conferenceCmd
-
-  // | Page.Websockets, WsMsg msg ->
-  //     let (ws, wsCmd) = Ws.update msg model.WsModel
-  //     { model with WsModel = ws }, Cmd.map WsMsg wsCmd
+      model
+      |> withCurrentPage (CurrentPage.Conference conference )
+      |> withCommand (Cmd.map ConferenceMsg conferenceCmd)
 
   | LoginMsg msg, CurrentPage.Login submodel ->
       let onSuccess newUser =
         if model.User = Some newUser then
-            Cmd.ofMsg (LoggedIn newUser)
+            Cmd.ofMsg <| LoggedIn newUser
         else
             saveUserCmd newUser
 
-      let m,cmd = Login.State.update LoginMsg onSuccess msg submodel
+      let submodel,cmd = Login.State.update LoginMsg onSuccess msg submodel
 
-      { model with CurrentPage = CurrentPage.Login m }, cmd
+      model
+      |> withCurrentPage (CurrentPage.Login submodel)
+      |> withCommand cmd
 
   | LoggedIn newUser, _->
-      let nextPage = Page.Conference
-      { model with User = Some newUser }, Navigation.newUrl (toHash nextPage)
+      { model with User = Some newUser }
+      |> withCommand (Navigation.newUrl (toHash Page.Conference))
 
   | LoggedOut, _ ->
-      { model with
-          User = None
-          CurrentPage = CurrentPage.HomePage },
-        Navigation.newUrl (toHash Page.About)
+      { model with User = None }
+      |> withCurrentPage CurrentPage.HomePage
+      |> withCommand (Navigation.newUrl (toHash Page.About))
 
   | StorageFailure error, _ ->
       printfn "Unable to access local storage: %A" error
-      model, Cmd.none
+      model |> withoutCommands
 
   | Logout, _ ->
-      model, deleteUserCmd
+      model |> withCommand deleteUserCmd
 
   | _ , _ ->
-      model, Cmd.none
+      model |> withoutCommands
