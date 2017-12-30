@@ -10,7 +10,7 @@ open Fable.Helpers.React
 let view model dispatch =
   let pageHtml currentPage =
     match currentPage with
-    | CurrentPage.HomePage ->
+    | CurrentPage.About ->
         Info.View.view
 
     | CurrentPage.Login submodel ->
@@ -20,7 +20,7 @@ let view model dispatch =
         Conference.View.view (ConferenceMsg >> dispatch) submodel
 
   [
-    Navbar.View.view model.CurrentPage
+    Navbar.View.view dispatch model.User model.CurrentPage
     pageHtml model.CurrentPage
   ]
   |> div []

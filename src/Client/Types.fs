@@ -11,7 +11,7 @@ type Msg =
   | Logout
 
 type CurrentPage =
-  | HomePage
+  | About
   | Login of Login.Types.Model
   | Conference of Conference.Types.Model
 

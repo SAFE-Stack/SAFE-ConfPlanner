@@ -15,11 +15,19 @@ let private disposeCmd currentPage =
 
   | _ -> Cmd.none
 
+let private withCurrentPage page model =
+   { model with CurrentPage = page }
+
+let private navigateTo page model =
+  model
+  |> withCommand (page |> toHash |> Navigation.newUrl)
+
 let urlUpdate (result : Page option) model =
   match result with
   | None ->
       Browser.console.error("Error parsing url: " + Browser.window.location.href)
-      model, Navigation.modifyUrl (toHash Page.About)
+      model
+      |> navigateTo Page.About
 
   | Some Page.Login ->
       let m,cmd = Login.State.init model.User
@@ -34,10 +42,10 @@ let urlUpdate (result : Page option) model =
           |> withCommand (Cmd.map ConferenceMsg cmd)
 
       | None ->
-          model, Navigation.newUrl (toHash Page.Login)
+          model |> navigateTo Page.Login
 
   | Some Page.About ->
-      { model with CurrentPage = CurrentPage.HomePage }
+      { model with CurrentPage = CurrentPage.About }
       |> withoutCommands
 
   |> withAdditionalCommand (disposeCmd model.CurrentPage)
@@ -45,23 +53,20 @@ let urlUpdate (result : Page option) model =
 let private loadUser () =
   Client.Utils.load "user"
 
-let saveUserCmd user =
-    Cmd.ofFunc (Client.Utils.save "user") user (fun _ -> LoggedIn user) StorageFailure
+let private saveUserCmd user =
+  Cmd.ofFunc (Client.Utils.save "user") user (fun _ -> LoggedIn user) StorageFailure
 
-let deleteUserCmd =
-    Cmd.ofFunc Client.Utils.delete "user" (fun _ -> LoggedOut) StorageFailure
+let private deleteUserCmd =
+  Cmd.ofFunc Client.Utils.delete "user" (fun _ -> LoggedOut) StorageFailure
 
 let init result =
   let user : UserData option = loadUser ()
   let model =
     {
       User = user
-      CurrentPage = HomePage
+      CurrentPage = About
     }
   urlUpdate result model
-
-let private withCurrentPage page model =
-   { model with CurrentPage = page }
 
 let update msg model =
   match msg, model.CurrentPage with
@@ -86,12 +91,12 @@ let update msg model =
 
   | LoggedIn newUser, _->
       { model with User = Some newUser }
-      |> withCommand (Navigation.newUrl (toHash Page.Conference))
+      |> navigateTo Page.Conference
 
   | LoggedOut, _ ->
       { model with User = None }
-      |> withCurrentPage CurrentPage.HomePage
-      |> withCommand (Navigation.newUrl (toHash Page.About))
+      |> withCurrentPage CurrentPage.About
+      |> navigateTo Page.About
 
   | StorageFailure error, _ ->
       printfn "Unable to access local storage: %A" error

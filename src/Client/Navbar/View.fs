@@ -10,7 +10,7 @@ open Fulma.Elements.Form
 open Global
 open App.Types
 
-let navbarEnd =
+let private navbarEnd =
   Navbar.end_div []
     [
       Navbar.item_div []
@@ -32,10 +32,10 @@ let navbarEnd =
         ]
     ]
 
-let menuItem label page currentPage =
+let private menuItem label page currentPage =
   let isActive =
     match currentPage with
-    | CurrentPage.HomePage when page = Page.About ->
+    | CurrentPage.About when page = Page.About ->
         true
 
     | CurrentPage.Login _ when page = Page.Login ->
@@ -58,15 +58,29 @@ let menuItem label page currentPage =
       str label
     ]
 
-let navbarStart currentPage =
+let private viewLoginLogout dispatch user currentPage =
+  match user with
+  | None ->
+      menuItem "Login" Page.Login currentPage
+
+  | Some user ->
+      Navbar.item_a
+        [
+          Navbar.Item.props [ OnClick (fun _ -> Logout |> dispatch) ]
+        ]
+        [
+          str <| "Logout " + user.UserName
+        ]
+
+let private navbarStart dispatch user currentPage =
   Navbar.start_div []
     [
       menuItem "Conference" Page.Conference currentPage
-      // menuItem "Dummy" Page.Websockets currentPage
       menuItem "About" Page.About currentPage
+      viewLoginLogout dispatch user currentPage
     ]
 
-let view currentPage =
+let view dispatch user currentPage =
   div [ ClassName "navbar-bg" ]
     [
       Container.container [ Container.isFluid ]
@@ -83,7 +97,7 @@ let view currentPage =
                 ]
               Navbar.menu []
                 [
-                  navbarStart currentPage
+                  navbarStart dispatch user currentPage
                   navbarEnd
                 ]
             ]

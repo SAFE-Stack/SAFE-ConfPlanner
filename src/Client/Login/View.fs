@@ -99,14 +99,14 @@ let private viewLoginRow content =
     ]
 
 let private viewLoginButton dispatch username password =
-    Button.button_a
-      [
-        yield Button.onClick (fun _ -> ClickLogIn |> dispatch)
-        yield Button.isPrimary
-        if String.IsNullOrEmpty username || String.IsNullOrEmpty password then
-          yield Button.isDisabled
-      ]
-      [ str "Log in" ]
+  Button.button_a
+    [
+      yield Button.onClick (fun _ -> ClickLogIn |> dispatch)
+      yield Button.isPrimary
+      if String.IsNullOrEmpty username || String.IsNullOrEmpty password then
+        yield Button.isDisabled
+    ]
+    [ str "Log in" ]
 
 
 let private viewLoginForm dispatch model =
