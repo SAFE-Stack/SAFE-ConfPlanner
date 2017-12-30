@@ -622,7 +622,7 @@ let viewCurrentView dispatch user currentView organizers =
   |> List.singleton
   |> Container.container [ Container.isFluid ]
 
-let view model dispatch =
+let view dispatch model =
   [
     yield viewNotifications dispatch model.OpenNotifications
     yield viewHeader dispatch model.View model.Conferences |> List.singleton |> Section.section []

@@ -11,7 +11,7 @@ type Model =
   {
     State : LoginState
     Login : Login
-    ErrorMsg : string
+    ErrorMsg : string option
   }
 
 type Msg =

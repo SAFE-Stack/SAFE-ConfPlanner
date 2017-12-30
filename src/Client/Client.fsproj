@@ -17,7 +17,6 @@
     <Compile Include="../Server/Websockets.fs" />
     <Compile Include="Global.fs" />
     <Compile Include="ElmishHelper.fs" />
-    <Compile Include="Style.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="Info/View.fs" />
     <Compile Include="Conference/ConferenceInformation.fs" />

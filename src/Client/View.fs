@@ -14,10 +14,10 @@ let view model dispatch =
         Info.View.view
 
     | CurrentPage.Login submodel ->
-        Login.View.view submodel (LoginMsg >> dispatch)
+        Login.View.view (LoginMsg >> dispatch) submodel
 
     | CurrentPage.Conference submodel ->
-        Conference.View.view submodel (ConferenceMsg >> dispatch)
+        Conference.View.view (ConferenceMsg >> dispatch) submodel
 
   [
     Navbar.View.view model.CurrentPage

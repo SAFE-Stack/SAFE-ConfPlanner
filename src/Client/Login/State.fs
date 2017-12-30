@@ -62,7 +62,7 @@ let init (user : UserData option) =
      {
        Login = { UserName = ""; Password = ""; PasswordId = Guid.NewGuid() }
        State = LoggedOut
-       ErrorMsg = ""
+       ErrorMsg = None
       }
 
   match user with
@@ -77,6 +77,12 @@ let init (user : UserData option) =
 let private withLogin login model =
   { model with Login = login }
 
+let withError error model =
+  { model with ErrorMsg = error |> Some }
+
+let withoutError model =
+  { model with ErrorMsg = None }
+
 let update f onSuccess (msg:Msg) model : Model*Cmd<'a> =
   match msg with
   | LoginSuccess user ->
@@ -87,17 +93,21 @@ let update f onSuccess (msg:Msg) model : Model*Cmd<'a> =
   | SetUserName name ->
       model
       |> withLogin { model.Login with UserName = name; Password = ""; PasswordId = Guid.NewGuid() }
+      |> withoutError
       |> withoutCommands
 
   | SetPassword pw ->
       model
+      |> withoutError
       |> withLogin { model.Login with Password = pw }
       |> withoutCommands
 
   | ClickLogIn ->
       model
+      |> withoutError
       |> withCommand (authUserCmd model.Login |> Cmd.map f)
 
   | AuthError exn ->
-      { model with ErrorMsg = string (exn.Message) }
+      model
+      |> withError (exn.Message |> string)
       |> withoutCommands
