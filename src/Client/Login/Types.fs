@@ -1,18 +1,21 @@
 module Login.Types
 
 open Server.AuthTypes
+open Global
 
 type LoginState =
 | LoggedOut
-| LoggedIn of JWT
+| LoggedIn of UserData
 
-type Model = {
+type Model =
+  {
     State : LoginState
     Login : Login
-    ErrorMsg : string }
+    ErrorMsg : string option
+  }
 
 type Msg =
-  | GetTokenSuccess of string
+  | LoginSuccess of UserData
   | SetUserName of string
   | SetPassword of string
   | AuthError of exn

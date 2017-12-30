@@ -1,26 +1,37 @@
 module Global
 
-open Server.AuthTypes
+open Elmish.Browser.UrlParser
+open Domain.Model
 
 type UserData =
-  { UserName : string
-    Token : JWT }
+  {
+    UserName : string
+    OrganizerId : OrganizerId
+    Token : Server.AuthTypes.JWT
+  }
 
+[<RequireQualifiedAccess>]
 type Page =
-  | ConfPlanner
-  | Counter
+  | Conference
   | About
   | Login
-  | Websockets
-
 
 let toHash page =
   match page with
-  | About -> "#about"
-  | Counter -> "#counter"
-  | Login -> "#login"
-  | ConfPlanner -> "#conference"
-  | Websockets -> "#websockets"
+  | Page.About -> "#about"
+  | Page.Login -> "#login"
+  | Page.Conference -> "#conference"
+
+let private pageParser : Parser<Page -> Page,_> =
+  oneOf
+    [
+      map Page.About (s "about")
+      map Page.Login (s "login")
+      map Page.Conference (s "conference")
+    ]
+
+let urlParser location =
+  parseHash pageParser location
 
 type RemoteData<'Result> =
   | NotAsked

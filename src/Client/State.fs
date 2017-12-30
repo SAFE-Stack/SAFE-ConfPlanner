@@ -2,114 +2,108 @@ module App.State
 
 open Elmish
 open Elmish.Browser.Navigation
-open Elmish.Browser.UrlParser
-open Fable.Import.Browser
+open Elmish.Helper
+open Fable.Import
 open Global
 open Types
 
-let pageParser: Parser<Page->Page,Page> =
-  oneOf [
-    map About (s "about")
-    map Counter (s "counter")
-    map Login (s "login")
-    map ConfPlanner (s "conference")
-    map Websockets (s "websockets")
-  ]
+let private disposeCmd currentPage =
+  match currentPage with
+  | CurrentPage.Conference _ ->
+      Conference.State.dispose ()
+      |> Cmd.map ConferenceMsg
 
-let requiresAuthentication page model =
-    match model.CurrentUser with
-      | Some _ ->
-          { model with CurrentPage = page }, Cmd.none
+  | _ -> Cmd.none
 
-      | None ->
-          { model with CurrentPage = Login }, Navigation.modifyUrl (toHash Login)
+let private withCurrentPage page model =
+   { model with CurrentPage = page }
 
-let urlUpdate (result: Option<Page>) model =
+let private navigateTo page model =
+  model
+  |> withCommand (page |> toHash |> Navigation.newUrl)
+
+let urlUpdate (result : Page option) model =
   match result with
   | None ->
-        console.error("Error parsing url")
-        model,Navigation.modifyUrl (toHash model.CurrentPage)
+      Browser.console.error("Error parsing url: " + Browser.window.location.href)
+      model
+      |> navigateTo Page.About
 
-  | Some (Page.Counter as page) ->
-      requiresAuthentication page model
+  | Some Page.Login ->
+      let m,cmd = Login.State.init model.User
+      { model with CurrentPage = CurrentPage.Login m }
+      |> withCommand (Cmd.map LoginMsg cmd)
 
-  | Some page ->
-       { model with CurrentPage = page }, Cmd.none
+  | Some Page.Conference ->
+      match model.User with
+      | Some user ->
+          let submodel,cmd = Conference.State.init user
+          { model with CurrentPage = CurrentPage.Conference submodel }
+          |> withCommand (Cmd.map ConferenceMsg cmd)
+
+      | None ->
+          model |> navigateTo Page.Login
+
+  | Some Page.About ->
+      { model with CurrentPage = CurrentPage.About }
+      |> withoutCommands
+
+  |> withAdditionalCommand (disposeCmd model.CurrentPage)
+
+let private loadUser () =
+  Fable.PowerPack.BrowserLocalStorage.load<UserData> "user"
+
+let private saveUserCmd user =
+  Cmd.ofFunc (Fable.PowerPack.BrowserLocalStorage.save<UserData> "user") user (fun _ -> LoggedIn user) StorageFailure
+
+let private deleteUserCmd =
+  Cmd.ofFunc Fable.PowerPack.BrowserLocalStorage.delete "user" (fun _ -> LoggedOut) StorageFailure
 
 let init result =
-  let user : UserData option = Client.Utils.load "user"
-  let (conference, conferenceCmd) = Conference.State.init()
-  let (counter, counterCmd) = Counter.State.init()
-  let (login, loginCmd) = Login.State.init user
-  let (ws, wsCmd) = Ws.init()
-  let (model, cmd) =
-    urlUpdate result
-      {
-        CurrentPage = ConfPlanner
-        CurrentUser = user
-        LoginModel = login
-        CounterModel = counter
-        ConferenceModel = conference
-        WsModel = ws
-      }
-
-  let cmds =
-    [
-      cmd
-      Cmd.map ConferenceMsg conferenceCmd
-      Cmd.map CounterMsg counterCmd
-      Cmd.map LoginMsg loginCmd
-      Cmd.map WsMsg wsCmd
-    ]
-  model, Cmd.batch cmds
+  let user : UserData option = loadUser ()
+  let model =
+    {
+      User = user
+      CurrentPage = About
+    }
+  urlUpdate result model
 
 let update msg model =
-  match msg with
-  | ConferenceMsg msg ->
-      let (conference, conferenceCmd) = Conference.State.update msg model.ConferenceModel
-      { model with ConferenceModel = conference }, Cmd.map ConferenceMsg conferenceCmd
+  match msg, model.CurrentPage with
+  | ConferenceMsg msg, CurrentPage.Conference submodel->
+      let (conference, conferenceCmd) = Conference.State.update msg submodel
+      model
+      |> withCurrentPage (CurrentPage.Conference conference )
+      |> withCommand (Cmd.map ConferenceMsg conferenceCmd)
 
-  | CounterMsg msg ->
-      let (counter, counterCmd) = Counter.State.update msg model.CounterModel
-      { model with CounterModel = counter }, Cmd.map CounterMsg counterCmd
+  | LoginMsg msg, CurrentPage.Login submodel ->
+      let onSuccess newUser =
+        if model.User = Some newUser then
+            Cmd.ofMsg <| LoggedIn newUser
+        else
+            saveUserCmd newUser
 
-  | WsMsg msg ->
-      let (ws, wsCmd) = Ws.update msg model.WsModel
-      { model with WsModel = ws }, Cmd.map WsMsg wsCmd
+      let submodel,cmd = Login.State.update LoginMsg onSuccess msg submodel
 
-  | LoginMsg msg ->
-      let loginModel, cmd = Login.State.update msg model.LoginModel
-      let cmd = Cmd.map LoginMsg cmd
+      model
+      |> withCurrentPage (CurrentPage.Login submodel)
+      |> withCommand cmd
 
-      match loginModel.State with
-      | Login.Types.LoggedIn token ->
-          let newUser : UserData = { UserName = loginModel.Login.UserName; Token = token }
-          let cmd =
-            if model.CurrentUser = Some newUser then
-              cmd
-            else
-              Cmd.batch
-                [
-                  cmd
-                  Cmd.ofFunc (Client.Utils.save "user") newUser (fun _ -> LoggedIn) StorageFailure
-                ]
+  | LoggedIn newUser, _->
+      { model with User = Some newUser }
+      |> navigateTo Page.Conference
 
-          { model with CurrentUser = Some newUser; LoginModel = loginModel }, cmd
+  | LoggedOut, _ ->
+      { model with User = None }
+      |> withCurrentPage CurrentPage.About
+      |> navigateTo Page.About
 
-      | Login.Types.LoggedOut ->
-           { model with CurrentUser = None; LoginModel = loginModel }, cmd
-
-  | LoggedIn ->
-      model,
-      Navigation.newUrl (toHash Page.Counter)
-
-  | LoggedOut ->
-      { model with CurrentUser = None; LoginModel = Login.State.logout },
-      Navigation.newUrl (toHash Page.About)
-
-  | StorageFailure error ->
+  | StorageFailure error, _ ->
       printfn "Unable to access local storage: %A" error
-      model, Cmd.none
+      model |> withoutCommands
 
-  | Logout ->
-      model, Cmd.ofFunc Client.Utils.delete "user" (fun _ -> LoggedOut) StorageFailure
+  | Logout, _ ->
+      model |> withCommand deleteUserCmd
+
+  | _ , _ ->
+      model |> withoutCommands

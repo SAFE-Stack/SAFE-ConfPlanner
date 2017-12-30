@@ -6,7 +6,7 @@ module Server.JsonWebToken
 
 open System.IO
 open System.Text
-open Newtonsoft.Json
+open Infrastructure.FableJson
 
 let private createPassPhrase() =
     let crypto = System.Security.Cryptography.RandomNumberGenerator.Create()
@@ -25,18 +25,20 @@ let private passPhrase =
     File.ReadAllBytes(fi.FullName)
 
 let private encodeString (payload:string) =
-    Jose.JWT.Encode(payload, passPhrase, Jose.JweAlgorithm.A256KW, Jose.JweEncryption.A256CBC_HS512)
+    Jose.JWT.Encode(payload, passPhrase, Jose.JwsAlgorithm.HS256);
+    // Jose.JWT.Encode(payload, passPhrase, Jose.JweAlgorithm.A256KW, Jose.JweEncryption.A256CBC_HS512)
 
 let private decodeString (jwt:string) =
-    Jose.JWT.Decode(jwt, passPhrase, Jose.JweAlgorithm.A256KW, Jose.JweEncryption.A256CBC_HS512)
+    Jose.JWT.Decode(jwt, passPhrase, Jose.JwsAlgorithm.HS256)
+    // Jose.JWT.Decode(jwt, passPhrase, Jose.JweAlgorithm.A256KW, Jose.JweEncryption.A256CBC_HS512)
 
 let encode token =
-    JsonConvert.SerializeObject token
+    toJson token
     |> encodeString
 
 let decode<'a> (jwt:string) : 'a =
     decodeString jwt
-    |> JsonConvert.DeserializeObject<'a>
+    |> ofJson<'a>
 
 /// Returns true if the JSON Web Token is successfully decoded and the signature is verified.
 let isValid (jwt:string) : ServerTypes.UserRights option =

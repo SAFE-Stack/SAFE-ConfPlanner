@@ -1,19 +1,19 @@
 module Login.State
 
-open Fable.Core
-open Fable.Import
 open Elmish
+open Elmish.Helper
 open System
 open Fable.Core.JsInterop
-open Fable.Import.Browser
 open Fable.PowerPack
 open Fable.PowerPack.Fetch.Fetch_types
 
 open Server.AuthTypes
 open Login.Types
 open Global
+open Client
+open Server.ServerTypes
 
-let authUser (login:Login,apiUrl) =
+let private authUser (login:Login) =
   promise {
     if String.IsNullOrEmpty login.UserName then return! failwithf "You need to fill in a username." else
     if String.IsNullOrEmpty login.Password then return! failwithf "You need to fill in a password." else
@@ -21,61 +21,93 @@ let authUser (login:Login,apiUrl) =
     let body = toJson login
 
     let props =
-      [ RequestProperties.Method HttpMethod.POST
-        Fetch.requestHeaders [
-          HttpRequestHeaders.ContentType "application/json" ]
-        RequestProperties.Body !^body ]
+        [
+          RequestProperties.Method HttpMethod.POST
+          Fetch.requestHeaders [
+            HttpRequestHeaders.ContentType "application/json" ]
+          RequestProperties.Body !^body
+        ]
 
     try
-      let! response = Fetch.fetch apiUrl props
+      let! response = Fetch.fetch Server.Urls.Login props
 
       if not response.Ok then
         return! failwithf "Error: %d" response.Status
       else
         let! data = response.text()
-        return data
+
+        let userRights =
+          data
+          |> Utils.decodeJwt
+          |> ofJson<UserRights>
+
+        return
+            {
+              OrganizerId = userRights.OrganizerId
+              UserName = userRights.UserName
+              Token = data
+            }
     with
     | _ -> return! failwithf "Could not authenticate user."
   }
 
-let authUserCmd login apiUrl =
-  Cmd.ofPromise authUser (login,apiUrl) GetTokenSuccess AuthError
+let private authUserCmd login =
+  Cmd.ofPromise authUser login LoginSuccess AuthError
+
+let private withStateLoggedIn user model =
+  { model with State = LoggedIn user }
 
 let init (user : UserData option) =
+  let model =
+     {
+       Login = { UserName = ""; Password = ""; PasswordId = Guid.NewGuid() }
+       State = LoggedOut
+       ErrorMsg = None
+      }
+
   match user with
   | None ->
-      {
-        Login = { UserName = ""; Password = ""}
-        State = LoggedOut
-        ErrorMsg = ""
-      }, Cmd.none
+     model |> withoutCommands
+
   | Some user ->
-      {
-        Login = { UserName = user.UserName; Password = ""}
-        State = LoggedIn user.Token
-        ErrorMsg = ""
-      }, Cmd.none
+      model
+      |> withStateLoggedIn user
+      |> withoutCommands
 
-let logout =
-  {
-      Login = { UserName = ""; Password = ""}
-      State = LoggedOut
-      ErrorMsg = ""
-  }
+let private withLogin login model =
+  { model with Login = login }
 
-let update (msg:Msg) model : Model*Cmd<Msg> =
-    match msg with
-    | GetTokenSuccess token ->
-        { model with State = LoggedIn token;  Login = { model.Login with Password = "" } }, Cmd.none
+let withError error model =
+  { model with ErrorMsg = error |> Some }
 
-    | SetUserName name ->
-        { model with Login = { model.Login with UserName = name }}, Cmd.none
+let withoutError model =
+  { model with ErrorMsg = None }
 
-    | SetPassword pw ->
-        { model with Login = { model.Login with Password = pw }}, Cmd.none
+let update f onSuccess (msg:Msg) model : Model*Cmd<'a> =
+  match msg with
+  | LoginSuccess user ->
+      { model with State = LoggedIn user }
+      |> withLogin { model.Login with Password = ""; PasswordId = Guid.NewGuid() }
+      |> withCommand (onSuccess user)
 
-    | ClickLogIn ->
-        model, authUserCmd model.Login "/api/users/login"
+  | SetUserName name ->
+      model
+      |> withLogin { model.Login with UserName = name; Password = ""; PasswordId = Guid.NewGuid() }
+      |> withoutError
+      |> withoutCommands
 
-    | AuthError exn ->
-        { model with ErrorMsg = string (exn.Message) }, Cmd.none
+  | SetPassword pw ->
+      model
+      |> withoutError
+      |> withLogin { model.Login with Password = pw }
+      |> withoutCommands
+
+  | ClickLogIn ->
+      model
+      |> withoutError
+      |> withCommand (authUserCmd model.Login |> Cmd.map f)
+
+  | AuthError exn ->
+      model
+      |> withError (exn.Message |> string)
+      |> withoutCommands

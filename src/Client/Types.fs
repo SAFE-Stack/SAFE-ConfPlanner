@@ -4,19 +4,19 @@ open Global
 
 type Msg =
   | ConferenceMsg of Conference.Types.Msg
-  | CounterMsg of Counter.Types.Msg
   | LoginMsg of Login.Types.Msg
-  | WsMsg of Ws.Msg
-  | LoggedIn
+  | LoggedIn of UserData
   | LoggedOut
   | StorageFailure of exn
   | Logout
 
-type Model = {
-    CurrentPage: Page
-    CurrentUser : UserData option
-    LoginModel: Login.Types.Model
-    CounterModel: Counter.Types.Model
-    ConferenceModel : Conference.Types.Model
-    WsModel : Ws.Model
+type CurrentPage =
+  | About
+  | Login of Login.Types.Model
+  | Conference of Conference.Types.Model
+
+type Model =
+  {
+    User : UserData option
+    CurrentPage : CurrentPage
   }

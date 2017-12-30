@@ -1,72 +1,125 @@
 module Login.View
 
-open Fable.Core
-open Fable.Import
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
-open Client.Style
 open System
 open Fable.Core.JsInterop
 
 open Login.Types
 
-let [<Literal>] ENTER_KEY = 13.
+open Fulma.Layouts
+open Fulma.Elements
+open Fulma.Extra.FontAwesome
+open Fulma.Elements.Form
 
-let root model dispatch =
-    let showErrorClass = if String.IsNullOrEmpty model.ErrorMsg then "hidden" else ""
-    let buttonActive = if String.IsNullOrEmpty model.Login.UserName || String.IsNullOrEmpty model.Login.Password then "btn-disabled" else "btn-primary"
+let private typeAndIconAndError error =
+  match error with
+  | Some error ->
+      let help =
+        Help.help
+          [ Help.isDanger ]
+          [ str error ]
 
-    let onEnter msg dispatch =
-        function
-        | (ev:React.KeyboardEvent) when ev.keyCode = ENTER_KEY ->
-            ev.preventDefault()
-            dispatch msg
-        | _ -> ()
-        |> OnKeyDown
+      Input.isDanger,Fa.I.Times,help
 
-    match model.State with
-    | LoggedIn _ ->
-        div [Id "greeting"] [
-          h3 [ ClassName "text-center" ] [ str (sprintf "Hi %s!" model.Login.UserName) ]
+  | None ->
+      Input.isSuccess,Fa.I.Check,str ""
+
+let private viewFormField typeIs changeMsg field error label props =
+  let inputType,inputIcon,inputError =
+    error |> typeAndIconAndError
+
+  let defaultProps : IHTMLProp list =
+    [
+      OnChange (fun event -> !!event.target?value |>changeMsg)
+    ]
+
+  Form.Field.field_div []
+    [
+      Label.label [] [ str label ]
+      Control.control_div
+        [
+           Control.hasIconRight
         ]
+        [
+          Input.input
+            [
+              inputType
+              typeIs
+              Input.placeholder label
+              Input.value field
+              Input.props <| List.concat [ defaultProps ; props ]
 
-    | LoggedOut ->
-        div [ClassName "signInBox" ] [
-          h3 [ ClassName "text-center" ] [ str "Log in with 'test' / 'test'."]
-
-          div [ ClassName showErrorClass ] [
-                  div [ ClassName "alert alert-danger" ] [ str model.ErrorMsg ]
-           ]
-
-          div [ ClassName "input-group input-group-lg" ] [
-                span [ClassName "input-group-addon" ] [
-                  span [ClassName "glyphicon glyphicon-user"] []
-                ]
-                input [
-                    Id "username"
-                    HTMLAttr.Type "text"
-                    ClassName "form-control input-lg"
-                    Placeholder "Username"
-                    DefaultValue model.Login.UserName
-                    OnChange (fun ev -> dispatch (SetUserName !!ev.target?value))
-                    AutoFocus true ]
-          ]
-
-          div [ ClassName "input-group input-group-lg" ] [
-                span [ClassName "input-group-addon" ] [
-                  span [ClassName "glyphicon glyphicon-asterisk"] []
-                ]
-                input [
-                        Id "password"
-                        HTMLAttr.Type "password"
-                        ClassName "form-control input-lg"
-                        Placeholder "Password"
-                        DefaultValue model.Login.Password
-                        OnChange (fun ev -> dispatch (SetPassword !!ev.target?value))
-                        onEnter ClickLogIn dispatch  ]
             ]
+          Icon.faIcon
+            [
+              Icon.isSmall
+              Icon.isRight
+            ]
+            [ Fa.icon inputIcon ]
 
-          div [ ClassName "text-center" ] [
-              button [ ClassName ("btn " + buttonActive); OnClick (fun _ -> dispatch ClickLogIn) ] [ str "Log In" ]
-          ]
         ]
+      inputError
+    ]
+
+let private viewForm dispatch model =
+  form [ ]
+    [
+      viewFormField
+        Input.typeIsText
+        (SetUserName>>dispatch)
+        model.Login.UserName
+        model.ErrorMsg
+        "Username"
+        [
+          AutoFocus true
+          Client.Utils.onEnter dispatch ClickLogIn
+        ]
+
+      viewFormField
+        Input.typeIsPassword
+        (SetPassword>>dispatch)
+        model.Login.Password
+        model.ErrorMsg
+        "Password"
+        [ Client.Utils.onEnter dispatch ClickLogIn ]
+    ]
+
+let private viewLoginRow content =
+  Columns.columns []
+    [
+      Column.column
+        [
+          Column.Width.isHalf
+          Column.Offset.isOneThird
+        ]
+        [
+          content
+        ]
+    ]
+
+let private viewLoginButton dispatch username password =
+  Button.button_a
+    [
+      yield Button.onClick (fun _ -> ClickLogIn |> dispatch)
+      yield Button.isPrimary
+      if String.IsNullOrEmpty username || String.IsNullOrEmpty password then
+        yield Button.isDisabled
+    ]
+    [ str "Log in" ]
+
+
+let private viewLoginForm dispatch model =
+  [
+    yield viewLoginRow (viewForm dispatch model)
+    yield viewLoginRow (viewLoginButton dispatch model.Login.UserName model.Login.Password)
+  ]
+  |> Section.section []
+
+let view dispatch model =
+  match model.State with
+  | LoggedOut ->
+    viewLoginForm dispatch model
+
+  | LoggedIn _ ->
+      str ""
