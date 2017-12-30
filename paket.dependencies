@@ -25,6 +25,6 @@ nuget Fable.JsonConverter
 nuget Suave
 nuget jose-jwt
 
-nuget dotnet-test-nunit 3.4.0-beta-3
+nuget dotnet-test-nunit
 
 clitool dotnet-fable
