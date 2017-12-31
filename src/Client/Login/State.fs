@@ -48,7 +48,7 @@ let private authUser (login:Login) =
               Token = data
             }
     with
-    | _ -> return! failwithf "Could not authenticate user."
+    | _ -> return! failwithf "Could not authenticate user (did you run the fixtures for demo data? See README in Repo)."
   }
 
 let private authUserCmd login =
