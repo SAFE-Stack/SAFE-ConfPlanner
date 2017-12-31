@@ -25,6 +25,8 @@ The application showcases a couple of things:
 * It has BDD Style tests that show how nice the behaviour of Event-Sourced systems can be tested.
 * Websockets with Elmish/Suave
 
+## Playground
+Up to now there is no working version available online. Any help would be appreciated. If you want to try it locally, please run the fixtures (see [Demo Data](#demo-data) section below). Otherwise you will not be able to login or see any kind of data.
 
 ## Content
 This project consists of 6 dotnetcore subprojects
@@ -86,8 +88,8 @@ or in watch mode
 
 You can now edit files in `src/Domain` or `src/Domain.Tests` and recompile + testing will be triggered automatically.
 
-## Demo Data / Fixtures
-If you want (and currently you do, because there is no way to add abstracts or organizers) prefill the conference Event-Store with some demo data you can run:
+## Demo Data
+If you want prefill the conference Event-Store with some demo data you can run:
 
     > build.cmd RunFixtures // on windows
     $ ./build.sh RunFixtures // on unix
