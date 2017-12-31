@@ -92,7 +92,7 @@ let view dispatch user currentPage =
                   Navbar.item_a [ Navbar.Item.props [ Href "#" ] ]
                     [
                       Heading.p [ Heading.is4 ]
-                        [ str "ConfPlanner" ]
+                        [ str "SAFE-ConfPlanner" ]
                     ]
                 ]
               Navbar.menu []

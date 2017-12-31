@@ -1,11 +1,29 @@
-# ConfPlanner
+# SAFE - A web stack designed for developer happiness
+
+The following document describes a [SAFE-Stack](https://safe-stack.github.io/) sample project that brings together CQRS/Event-Sourcing on the backend and the Elm architecture on the frontend.
+
+SAFE is a technology stack that brings together several technologies into a single, coherent stack for typesafe,
+flexible end-to-end web-enabled applications that are written entirely in F#.
+
+![SAFE-Stack](src/Client/images/safe_logo.png "SAFE-Stack")
+
+# SAFE-ConfPlanner
+
+[![Build Status](https://travis-ci.org/rommsen/ConfPlanner.svg?branch=master)](https://travis-ci.org/rommsen/ConfPlanner)
+
 This is the sample project that is used in the talk "Domain Driven UI" ([Slides](http://bit.ly/DomainDrivenUi)). The title is a bit misleading as it is a bad name for "Reusing your datatypes and behaviour from your CQRS/Event-Sourced models in your Elm-architecture application."
 
 Given you use F# and Fable, you can actually build simple eventually connected systems and have the exact same model working in back and frontend.
 
-This project uses the [Safe-Stack](https://safe-stack.github.io/). Especially the build script leans heavily on the [Safe-Bookstore Example](https://github.com/SAFE-Stack/SAFE-BookStore).
+The application showcases a couple of things:
 
-[![Build Status](https://travis-ci.org/rommsen/ConfPlanner.svg?branch=master)](https://travis-ci.org/rommsen/ConfPlanner)
+* The reuse of the complete domain model on the client and server
+* Websockets with Elmish/Suave
+* It shows the nice fit of and similarity between CQRS/Event-Sourcing on the backend and the Elm-Architecture on the frontend
+* It reuses projections from the backend in the update function of the elmish app. The backend is sending domain events to the frontend and the (Elm-)model is updated with the help of projections defined in the backend (on all clients that are connected via websockets).
+* It shows an easy way of implementing "Whatif"-Scenarios, i.e. scenarios that enable the user try out different actions. When the user is happy with the result the system sends a batch of commands to the server. When "Whatif-Mode" is enabled the client reuses not only the projections but also the domain behaviour defined on the server to create the events needed by the update function. The potential commands are also stored.
+* It uses the awesome [Fulma](https://mangelmaxime.github.io/Fulma/) library for styling
+
 
 ## Content
 This project consists of 6 dotnetcore subprojects
@@ -22,7 +40,7 @@ This project consists of 6 dotnetcore subprojects
 - [.NET Framework 4.6.2](https://support.microsoft.com/en-us/help/3151800/the--net-framework-4-6-2-offline-installer-for-windows) on Windows
 - [node.js](https://nodejs.org/) - JavaScript runtime
 - [yarn](https://yarnpkg.com/) - Package manager for npm modules
-- [dotnet SDK 2.0.0](https://www.microsoft.com/net/core) is required but it will be downloaded automatically by the build script if not installed (see below).
+- [dotnet SDK 2.1.3](https://github.com/dotnet/core/blob/master/release-notes/download-archives/2.0.4-download.md) The .NET Core SDK (will be installed by build script)
 - Other tools like [Paket](https://fsprojects.github.io/Paket/) or [FAKE](https://fake.build/) will also be installed by the build script.
 
 ## Development mode
@@ -38,14 +56,44 @@ This will start Suave on port 8085 and the webpack-dev-server on port 8080. Then
 
 Enjoy.
 
+**NOTE**
+Currently there is a [bug](https://github.com/rommsen/ConfPlanner/issues/30) that might prevent Fable and the server to be started in parallel.
+
+If this is happening:
+  * open a terminal
+  * go to `src/Server`
+  * run `dotnet run`
+  * open another terminal
+  * go to `src/Client`
+  * run `dotnet fable yarn-run`
+
+
+## Testing
+
+With FAKE (does a full dotnet restore etc.)
+
+    > build.cmd RunTests // on windows
+    $ ./build.sh RunTests // on unix
+
+On the CLI (without building everything) in `src/Domain.Tests`:
+
+    > dotnet test
+
+or in watch mode
+
+    > dotnet watch test
+
+You can now edit files in `src/Domain` or `src/Domain.Tests` and recompile + testing will be triggered automatically.
+
 ## Demo Data / Fixtures
-If you want prefill the conference Event-Store with some demo data you can run:
+If you want (and currently you do, because there is no way to add abstracts or organizers) prefill the conference Event-Store with some demo data you can run:
 
     > build.cmd RunFixtures // on windows
     $ ./build.sh RunFixtures // on unix
 
 The events will be written to `src/Server/conference_eventstore.json`
 
+Currently you do want this, because there is no way to add abstracts or organizers.
 
 ## Plans for the future
 From the top of my head. If anyone wants to chip in, feel welcome.
@@ -59,12 +107,28 @@ From the top of my head. If anyone wants to chip in, feel welcome.
 * implement projections that can send notifications
 
 ### Server
-* implement a proper authentication for websockets
-
-
-### Client
-* use [Fulma](https://mangelmaxime.github.io/Fulma/) for styling
-* Learn CSS (and this time for real :D)
+* implement a proper autohrization system
 
 ### Domain
 * build an actual Conference Planner
+
+## Known Issues
+
+### Getting rid of errors in chrome/firefox
+
+- Either comment out the lines in `App.fs`:
+
+```fsharp
+#if DEBUG
+|> Program.withDebugger
+#endif
+```
+
+- Or install the [Redux DevTools](http://extension.remotedev.io/) as a Chrome/Firefox Extensions (recommended)
+Only one error remains, when visiting the WebApp the first time.
+
+## Maintainer(s)
+
+- [@rommsen](https://github.com/rommsen)
+- [@heimeshoff](https://github.com/heimeshoff)
+- you?
