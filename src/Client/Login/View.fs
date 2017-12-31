@@ -70,7 +70,7 @@ let private viewForm dispatch model =
         (SetUserName>>dispatch)
         model.Login.UserName
         model.ErrorMsg
-        "Username"
+        "Username (use test)"
         [
           AutoFocus true
           Client.Utils.onEnter dispatch ClickLogIn
@@ -81,7 +81,7 @@ let private viewForm dispatch model =
         (SetPassword>>dispatch)
         model.Login.Password
         model.ErrorMsg
-        "Password"
+        "Password (use test)"
         [ Client.Utils.onEnter dispatch ClickLogIn ]
     ]
 
