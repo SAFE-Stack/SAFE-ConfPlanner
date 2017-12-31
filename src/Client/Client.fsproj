@@ -18,7 +18,7 @@
     <Compile Include="Global.fs" />
     <Compile Include="ElmishHelper.fs" />
     <Compile Include="Utils.fs" />
-    <Compile Include="Info/View.fs" />
+    <Compile Include="About/View.fs" />
     <Compile Include="Conference/ConferenceInformation.fs" />
     <Compile Include="Conference/Types.fs" />
     <Compile Include="Conference/Ws.fs" />
