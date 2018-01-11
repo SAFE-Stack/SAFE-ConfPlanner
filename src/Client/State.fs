@@ -51,13 +51,13 @@ let urlUpdate (result : Page option) model =
   |> withAdditionalCommand (disposeCmd model.CurrentPage)
 
 let private loadUser () =
-  Fable.PowerPack.BrowserLocalStorage.load<UserData> "user"
+  Fable.PowerPack.BrowserLocalStorage.load<UserData> LocalStorageUserKey
 
 let private saveUserCmd user =
-  Cmd.ofFunc (Fable.PowerPack.BrowserLocalStorage.save<UserData> "user") user (fun _ -> LoggedIn user) StorageFailure
+  Cmd.ofFunc (Fable.PowerPack.BrowserLocalStorage.save<UserData> LocalStorageUserKey) user (fun _ -> LoggedIn user) StorageFailure
 
 let private deleteUserCmd =
-  Cmd.ofFunc Fable.PowerPack.BrowserLocalStorage.delete "user" (fun _ -> LoggedOut) StorageFailure
+  Cmd.ofFunc Fable.PowerPack.BrowserLocalStorage.delete LocalStorageUserKey (fun _ -> LoggedOut) StorageFailure
 
 let init result =
   let user : UserData option = loadUser ()

@@ -38,3 +38,5 @@ type RemoteData<'Result> =
   | Loading
   | Failure of string
   | Success of 'Result
+
+let LocalStorageUserKey = "ConfPlanner-User"
