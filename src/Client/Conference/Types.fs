@@ -78,7 +78,7 @@ type Model =
     Conferences : RemoteData<Conferences.Conferences>
     Organizers : RemoteData<Domain.Model.Organizers>
     LastEvents : Domain.Events.Event list
-    Organizer : OrganizerId
+    Organizer : OrganizerId option
     OpenTransactions : TransactionId list
     OpenNotifications : Notification list
   }

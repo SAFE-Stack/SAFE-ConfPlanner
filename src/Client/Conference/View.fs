@@ -71,12 +71,18 @@ let private viewVotingButton voteMsg revokeVotingMsg isActive btnType label =
 
 let private viewVotingButtons dispatch user vote (talk : Domain.Model.ConferenceAbstract) =
   let possibleVotings =
-    [
-      Voting.Voting (talk.Id, user, Two), Button.isPrimary, "2"
-      Voting.Voting (talk.Id, user, One), Button.isPrimary, "1"
-      Voting.Voting (talk.Id, user, Zero), Button.isPrimary, "0"
-      Voting.Voting (talk.Id, user, Veto), Button.isDanger, "Veto"
-    ]
+    match user with
+    | Some user ->
+        [
+          Voting.Voting (talk.Id, user, Two), Button.isPrimary, "2"
+          Voting.Voting (talk.Id, user, One), Button.isPrimary, "1"
+          Voting.Voting (talk.Id, user, Zero), Button.isPrimary, "0"
+          Voting.Voting (talk.Id, user, Veto), Button.isDanger, "Veto"
+        ]
+
+    | None ->
+        []
+
 
   let buttonMapper (voting,btnType,label) =
     viewVotingButton
@@ -98,7 +104,8 @@ let private viewVotingButtons dispatch user vote (talk : Domain.Model.Conference
 
 let private viewTalk dispatch user votings (talk : Model.ConferenceAbstract) =
   let vote =
-    votings |> extractVoteForAbstract user talk.Id
+    user
+    |> Option.bind (fun user -> votings |> extractVoteForAbstract user talk.Id)
 
   let cardStyle : ICSSProp list =
     [

@@ -7,7 +7,7 @@ open Server.AuthTypes
 type UserData =
   {
     UserName : Username
-    Roles : Role list
+    Roles : Roles.Container
     Token : Server.AuthTypes.JWT
   }
 

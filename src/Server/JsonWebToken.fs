@@ -41,7 +41,7 @@ let decode<'a> (jwt:string) : 'a =
     |> ofJson<'a>
 
 /// Returns true if the JSON Web Token is successfully decoded and the signature is verified.
-let isValid (jwt:string) : ServerTypes.UserRights option =
+let isValid (jwt:string) : ServerTypes.UserRights<'Permission> option =
     try
         let token = decode jwt
         Some token

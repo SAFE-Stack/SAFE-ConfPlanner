@@ -12,6 +12,7 @@ open Login.Types
 open Global
 open Client
 open Server.ServerTypes
+open Domain.Model
 
 let private authUser (login:Login) =
   promise {
@@ -41,12 +42,12 @@ let private authUser (login:Login) =
         let userRights =
           data
           |> Utils.decodeJwt
-          |> ofJson<UserRights>
+          |> ofJson<UserRights<Roles.Container>>
 
         return
             {
               UserName = userRights.UserName
-              Roles = userRights.Roles
+              Roles = userRights.Permission
               Token = data
             }
     with

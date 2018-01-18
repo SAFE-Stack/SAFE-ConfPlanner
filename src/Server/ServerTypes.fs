@@ -7,11 +7,11 @@ open Server.AuthTypes
 
 
 /// Represents the rights available for a request
-type UserRights =
+type UserRights<'Permission> =
    {
      UserName : Username
      Identity : Identity
-     Roles : Role list
+     Permission : 'Permission
    }
 
 

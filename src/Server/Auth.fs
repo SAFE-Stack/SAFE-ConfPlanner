@@ -9,13 +9,11 @@ open Domain.Model
 open Server
 open Server.AuthTypes
 
-
-
 type IdentityProvider =
   (Username * Password) -> Async<Identity option>
 
-type RoleProvider =
-  Identity -> Async<Role list>
+type PermissionProvider<'Permission> =
+  Identity -> Async<'Permission>
 
 let rec private oneIdentityOf (identityProviders : IdentityProvider list) (credentials : Credentials)=
   async {
@@ -33,19 +31,18 @@ let rec private oneIdentityOf (identityProviders : IdentityProvider list) (crede
     | _ -> return None
   }
 
-let combinedRoles (roleProviders : RoleProvider list) identity  =
+let concatPermissions (permissionProviders : PermissionProvider<Roles.Container> list) identity  =
   async {
-    let! roleAsyncs =
-      roleProviders
+    let! permissionAsyncs =
+      permissionProviders
       |> List.map (fun provider -> provider identity)
       |> Async.Parallel
 
-    let roles =
-      roleAsyncs
+    let permissions =
+      permissionAsyncs
       |> Array.toList
-      |> List.concat
 
-    return roles
+    return permissions
   }
 
 let adminIdentity =
@@ -53,25 +50,22 @@ let adminIdentity =
   |> System.Guid.Parse
   |> Identity
 
-let adminRole =
+let adminId =
   "4ad17799-6c3c-4e04-b1f0-9d7523cfa172"
   |> System.Guid.Parse
   |> AdminId
-  |> Admin
 
-let organizerRole =
+let organizerId =
   "311b9fbd-98a2-401e-b9e9-bab15897dad4"
   |> System.Guid.Parse
   |> OrganizerId
-  |> Organizer
 
 
 let adminIdentityProvider (Username username , Password password) =
   async {
     let identity =
       if (username = "admin" && password = "admin") then
-        adminIdentity
-        |> Some
+        Some adminIdentity
       else
         None
 
@@ -83,10 +77,11 @@ let adminRoleProvider identity =
     let roles =
       match identity with
       | identity when identity = adminIdentity ->
-          [adminRole]
+          Roles.empty
+          |> Roles.withAdmin adminId
 
       | _ ->
-          []
+          Roles.empty
 
     return roles
   }
@@ -96,10 +91,11 @@ let organizerRoleProvider identity =
     let roles =
       match identity with
       | identity when identity = adminIdentity ->
-          [organizerRole]
+          Roles.empty
+          |> Roles.withOrganizer organizerId
 
       | _ ->
-          []
+          Roles.empty
 
     return roles
   }
@@ -140,16 +136,17 @@ let login (ctx: HttpContext) = async {
 
       match identity with
       | Some identity ->
-          let roles =
+          let permission =
             identity
-            |> combinedRoles [ adminRoleProvider ; organizerRoleProvider ]
+            |> concatPermissions [ adminRoleProvider ; organizerRoleProvider ]
             |> Async.RunSynchronously
+            |> Roles.concat
 
-          let user : ServerTypes.UserRights =
+          let user : ServerTypes.UserRights<'Permission> =
             {
               UserName = login.UserName
               Identity = identity
-              Roles = roles
+              Permission = permission
             }
 
           let token = JsonWebToken.encode user

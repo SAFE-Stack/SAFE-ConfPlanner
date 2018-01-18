@@ -109,7 +109,59 @@ type Role =
   | Organizer of OrganizerId
   | Attendee of AttendeeId
 
+
 type Identity = Identity of System.Guid
+
+[<RequireQualifiedAccessAttribute>]
+module Roles =
+  type Container =
+    {
+      Admin : AdminId option
+      Organizer : OrganizerId option
+      Attendee : AttendeeId option
+    }
+
+  let empty =
+    {
+      Admin = None
+      Organizer = None
+      Attendee = None
+    }
+
+  let withAdmin admin roles =
+    { roles with Admin = Some admin }
+
+  let withOrganizer organizer roles =
+    { roles with Organizer = Some organizer }
+
+  let withAttendee attendee roles =
+    { roles with Attendee = Some attendee }
+
+  let private concatX b a get set =
+    match get a, get b with
+    | None, Some x ->
+        a |> set x
+
+    | _ -> a
+
+  let private concatAdmin b a =
+    concatX b a (fun x -> x.Admin) withAdmin
+
+  let private concatOrganizer a b =
+     concatX b a (fun x -> x.Organizer) withOrganizer
+
+  let private concatAttendee a b =
+     concatX b a (fun x -> x.Attendee) withAttendee
+
+  let private concatTwo a b =
+    a
+    |> concatAdmin b
+    |> concatAttendee b
+    |> concatOrganizer b
+
+  let concat list =
+    list |> List.reduce concatTwo
+
 
 type UserId = UserId of Guid
 

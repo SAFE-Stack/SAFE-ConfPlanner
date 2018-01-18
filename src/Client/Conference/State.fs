@@ -54,7 +54,7 @@ let init (user : UserData)  =
     Conferences = RemoteData.NotAsked
     Organizers = RemoteData.NotAsked
     LastEvents = []
-    Organizer = user.OrganizerId
+    Organizer = user.Roles.Organizer
     OpenTransactions = []
     OpenNotifications = []
   }, Cmd.ofSub <| startWs user.Token
