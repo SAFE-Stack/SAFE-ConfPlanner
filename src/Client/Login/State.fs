@@ -15,18 +15,20 @@ open Server.ServerTypes
 
 let private authUser (login:Login) =
   promise {
-    if String.IsNullOrEmpty login.UserName then return! failwithf "You need to fill in a username." else
-    if String.IsNullOrEmpty login.Password then return! failwithf "You need to fill in a password." else
+    let (Username username) = login.UserName
+    let (Password password) = login.Password
+    if String.IsNullOrEmpty username then return! failwithf "You need to fill in a username." else
+    if String.IsNullOrEmpty password then return! failwithf "You need to fill in a password." else
 
     let body = toJson login
 
     let props =
-        [
-          RequestProperties.Method HttpMethod.POST
-          Fetch.requestHeaders [
-            HttpRequestHeaders.ContentType "application/json" ]
-          RequestProperties.Body !^body
-        ]
+      [
+        RequestProperties.Method HttpMethod.POST
+        Fetch.requestHeaders [
+          HttpRequestHeaders.ContentType "application/json" ]
+        RequestProperties.Body !^body
+      ]
 
     try
       let! response = Fetch.fetch Server.Urls.Login props
@@ -43,8 +45,8 @@ let private authUser (login:Login) =
 
         return
             {
-              OrganizerId = userRights.OrganizerId
               UserName = userRights.UserName
+              Roles = userRights.Roles
               Token = data
             }
     with
@@ -60,7 +62,7 @@ let private withStateLoggedIn user model =
 let init (user : UserData option) =
   let model =
      {
-       Login = { UserName = ""; Password = ""; PasswordId = Guid.NewGuid() }
+       Login = { UserName = Username ""; Password = Password ""; PasswordId = Guid.NewGuid() }
        State = LoggedOut
        ErrorMsg = None
       }
@@ -87,19 +89,19 @@ let update f onSuccess (msg:Msg) model : Model*Cmd<'a> =
   match msg with
   | LoginSuccess user ->
       { model with State = LoggedIn user }
-      |> withLogin { model.Login with Password = ""; PasswordId = Guid.NewGuid() }
+      |> withLogin { model.Login with Password = Password ""; PasswordId = Guid.NewGuid() }
       |> withCommand (onSuccess user)
 
   | SetUserName name ->
       model
-      |> withLogin { model.Login with UserName = name; Password = ""; PasswordId = Guid.NewGuid() }
+      |> withLogin { model.Login with UserName = Username name; Password = Password ""; PasswordId = Guid.NewGuid() }
       |> withoutError
       |> withoutCommands
 
-  | SetPassword pw ->
+  | SetPassword password ->
       model
       |> withoutError
-      |> withLogin { model.Login with Password = pw }
+      |> withLogin { model.Login with Password = Password password }
       |> withoutCommands
 
   | ClickLogIn ->

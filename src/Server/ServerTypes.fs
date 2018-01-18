@@ -3,13 +3,15 @@ module Server.ServerTypes
 
 open Infrastructure.Types
 open Domain.Model
+open Server.AuthTypes
 
 
 /// Represents the rights available for a request
 type UserRights =
    {
-     UserName : string
-     OrganizerId : OrganizerId
+     UserName : Username
+     Identity : Identity
+     Roles : Role list
    }
 
 

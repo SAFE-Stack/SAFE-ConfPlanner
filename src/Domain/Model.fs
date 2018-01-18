@@ -100,6 +100,25 @@ type VotingPeriod =
   | InProgress
   | Finished
 
+type AttendeeId = AttendeeId of Guid
+
+type AdminId = AdminId of System.Guid
+
+type Role =
+  | Admin of AdminId
+  | Organizer of OrganizerId
+  | Attendee of AttendeeId
+
+type Identity = Identity of System.Guid
+
+type UserId = UserId of Guid
+
+type User =
+  {
+    Id : UserId
+    Roles : Role list
+  }
+
 type ConferenceId = ConferenceId of Guid
 
 type Conference = {

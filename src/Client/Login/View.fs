@@ -11,6 +11,7 @@ open Fulma.Layouts
 open Fulma.Elements
 open Fulma.Extra.FontAwesome
 open Fulma.Elements.Form
+open Server.AuthTypes
 
 let private typeAndIconAndError error =
   match error with
@@ -63,12 +64,14 @@ let private viewFormField typeIs changeMsg field error label props =
     ]
 
 let private viewForm dispatch model =
+  let (Username username) = model.Login.UserName
+  let (Password password) = model.Login.Password
   form [ ]
     [
       viewFormField
         Input.typeIsText
         (SetUserName>>dispatch)
-        model.Login.UserName
+        username
         model.ErrorMsg
         "Username (use: test)"
         [
@@ -79,7 +82,7 @@ let private viewForm dispatch model =
       viewFormField
         Input.typeIsPassword
         (SetPassword>>dispatch)
-        model.Login.Password
+        password
         model.ErrorMsg
         "Password (use: test)"
         [ Client.Utils.onEnter dispatch ClickLogIn ]
@@ -98,12 +101,15 @@ let private viewLoginRow content =
         ]
     ]
 
+let private credentialsValid (Username username) (Password password) =
+  String.IsNullOrEmpty username || String.IsNullOrEmpty password
+
 let private viewLoginButton dispatch username password =
   Button.button_a
     [
       yield Button.onClick (fun _ -> ClickLogIn |> dispatch)
       yield Button.isPrimary
-      if String.IsNullOrEmpty username || String.IsNullOrEmpty password then
+      if credentialsValid username password then
         yield Button.isDisabled
     ]
     [ str "Log in" ]

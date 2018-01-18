@@ -9,6 +9,7 @@ open Fulma.Extra.FontAwesome
 open Fulma.Elements.Form
 open Global
 open App.Types
+open Server.AuthTypes
 
 let private navbarEnd =
   Navbar.end_div []
@@ -58,18 +59,20 @@ let private menuItem label page currentPage =
       str label
     ]
 
-let private viewLoginLogout dispatch user currentPage =
+let private viewLoginLogout dispatch (user : UserData option) currentPage =
+
   match user with
   | None ->
       menuItem "Login" Page.Login currentPage
 
   | Some user ->
+      let (Username username) = user.UserName
       Navbar.item_a
         [
           Navbar.Item.props [ OnClick (fun _ -> Logout |> dispatch) ]
         ]
         [
-          str <| "Logout " + user.UserName
+          str <| "Logout " + username
         ]
 
 let private navbarStart dispatch user currentPage =

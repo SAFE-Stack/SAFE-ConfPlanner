@@ -25,8 +25,8 @@
     <Compile Include="Conference/State.fs" />
     <Compile Include="Conference/View.fs" />
     <Compile Include="Login/Types.fs" />
-    <Compile Include="Login/State.fs" />
     <Compile Include="Login/View.fs" />
+    <Compile Include="Login/State.fs" />
     <Compile Include="Types.fs" />
     <Compile Include="State.fs" />
     <Compile Include="Navbar/View.fs" />
