@@ -104,15 +104,38 @@ type AttendeeId = AttendeeId of Guid
 
 type AdminId = AdminId of System.Guid
 
-type Role =
-  | Admin of AdminId
-  | Organizer of OrganizerId
-  | Attendee of AttendeeId
+type ConferenceId = ConferenceId of Guid
+
+type Conference = {
+  Id : ConferenceId
+  Title : string
+  CallForPapers : CallForPapers
+  VotingPeriod : VotingPeriod
+  Abstracts : ConferenceAbstract list
+  Votings : Voting list
+  Organizers : Organizer list
+  AvailableSlotsForTalks : int
+}
+
+let emptyConference() = {
+  Id = System.Guid.NewGuid() |> ConferenceId
+  Title = ""
+  CallForPapers = NotOpened
+  VotingPeriod = InProgress
+  Abstracts = []
+  Votings = []
+  Organizers = []
+  AvailableSlotsForTalks = 2
+}
+
+let withTitle title conference =
+  { conference with Title = title }
+
+let withAvailableSlotsForTalks availableSlotsForTalks conference =
+  { conference with AvailableSlotsForTalks = availableSlotsForTalks }
 
 
-type Identity = Identity of System.Guid
-
-[<RequireQualifiedAccessAttribute>]
+[<RequireQualifiedAccess>]
 module Roles =
   type Container =
     {
@@ -163,40 +186,3 @@ module Roles =
     list |> List.reduce concatTwo
 
 
-type UserId = UserId of Guid
-
-type User =
-  {
-    Id : UserId
-    Roles : Role list
-  }
-
-type ConferenceId = ConferenceId of Guid
-
-type Conference = {
-  Id : ConferenceId
-  Title : string
-  CallForPapers : CallForPapers
-  VotingPeriod : VotingPeriod
-  Abstracts : ConferenceAbstract list
-  Votings : Voting list
-  Organizers : Organizer list
-  AvailableSlotsForTalks : int
-}
-
-let emptyConference() = {
-  Id = System.Guid.NewGuid() |> ConferenceId
-  Title = ""
-  CallForPapers = NotOpened
-  VotingPeriod = InProgress
-  Abstracts = []
-  Votings = []
-  Organizers = []
-  AvailableSlotsForTalks = 2
-}
-
-let withTitle title conference =
-  { conference with Title = title }
-
-let withAvailableSlotsForTalks availableSlotsForTalks conference =
-  { conference with AvailableSlotsForTalks = availableSlotsForTalks }

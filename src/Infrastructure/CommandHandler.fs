@@ -17,7 +17,6 @@ let getStream streamId events =
   |> List.filter (fun ((_,id), _) -> streamId = id)
   |> List.collect (fun (_,events) -> events)
 
-
 let informSubscribers data subscribers =
   subscribers |> List.iter (fun sub -> data |> sub)
 

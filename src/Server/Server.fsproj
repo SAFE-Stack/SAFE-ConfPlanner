@@ -5,16 +5,13 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../Infrastructure/Infrastructure.fsproj" />
-    <ProjectReference Include="../Domain/Domain.fsproj" />
     <ProjectReference Include="../Conference.Api/Conference.Api.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Urls.fs" />
-    <Compile Include="AuthTypes.fs" />
     <Compile Include="ServerTypes.fs" />
     <Compile Include="JsonWebToken.fs" />
     <Compile Include="Auth.fs" />
-    <Compile Include="Dummy.fs" />
     <Compile Include="Websockets.fs" />
     <Compile Include="WebServer.fs" />
     <Compile Include="Program.fs" />

@@ -6,12 +6,12 @@ open System
 open Fable.Core.JsInterop
 
 open Login.Types
+open Infrastructure.Auth
 
 open Fulma.Layouts
 open Fulma.Elements
 open Fulma.Extra.FontAwesome
 open Fulma.Elements.Form
-open Server.AuthTypes
 
 let private typeAndIconAndError error =
   match error with

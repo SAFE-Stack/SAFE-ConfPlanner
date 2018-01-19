@@ -8,6 +8,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="API.fs" />
+    <Compile Include="Authorization.fs" />
     <Compile Include="Conference.fs" />
     <Compile Include="Conferences.fs" />
     <Compile Include="Organizers.fs" />

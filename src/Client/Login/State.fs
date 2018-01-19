@@ -7,7 +7,7 @@ open Fable.Core.JsInterop
 open Fable.PowerPack
 open Fable.PowerPack.Fetch.Fetch_types
 
-open Server.AuthTypes
+open Infrastructure.Auth
 open Login.Types
 open Global
 open Client

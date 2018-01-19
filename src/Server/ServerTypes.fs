@@ -2,9 +2,7 @@
 module Server.ServerTypes
 
 open Infrastructure.Types
-open Domain.Model
-open Server.AuthTypes
-
+open Infrastructure.Auth
 
 /// Represents the rights available for a request
 type UserRights<'Permission> =
@@ -13,7 +11,6 @@ type UserRights<'Permission> =
      Identity : Identity
      Permission : 'Permission
    }
-
 
 // Client to Server
 type ClientMsg<'CommandPayload,'QueryParameter,'QueryResult> =

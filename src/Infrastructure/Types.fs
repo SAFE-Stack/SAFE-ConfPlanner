@@ -82,8 +82,6 @@ type EventSourced<'CommandPayload,'Event,'QueryParameter,'State,'QueryResult> =
      QueryManager : QueryManager<'QueryParameter,'QueryResult>
      EventPublisher : EventPublisher<'Event>
   }
-
-
 let inline messageAsTransactionId ((transactionId,_),_) =
   transactionId
 

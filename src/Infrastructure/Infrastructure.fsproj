@@ -4,6 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Types.fs" />
+    <Compile Include="Auth.fs" />
     <Compile Include="ReadHandler.fs" />
     <Compile Include="QueryManager.fs" />
     <Compile Include="FableJson.fs" />

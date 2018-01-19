@@ -9,7 +9,7 @@ open Fulma.Extra.FontAwesome
 open Fulma.Elements.Form
 open Global
 open App.Types
-open Server.AuthTypes
+open Infrastructure.Auth
 
 let private navbarEnd =
   Navbar.end_div []

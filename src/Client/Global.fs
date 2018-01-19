@@ -2,13 +2,13 @@ module Global
 
 open Elmish.Browser.UrlParser
 open Domain.Model
-open Server.AuthTypes
+open Infrastructure.Auth
 
 type UserData =
   {
     UserName : Username
     Roles : Roles.Container
-    Token : Server.AuthTypes.JWT
+    Token : JWT
   }
 
 [<RequireQualifiedAccess>]

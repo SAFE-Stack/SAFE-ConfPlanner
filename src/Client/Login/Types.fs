@@ -1,6 +1,6 @@
 module Login.Types
 
-open Server.AuthTypes
+open Infrastructure.Auth
 open Global
 
 type LoginState =
