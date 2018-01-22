@@ -5,12 +5,13 @@ open Infrastructure.Types
 open Infrastructure.Auth
 
 /// Represents the rights available for a request
-type UserRights<'Permission> =
-   {
-     UserName : Username
-     Identity : Identity
-     Permission : 'Permission
-   }
+type UserRights<'User,'Permission> =
+  {
+    Username : Username
+    Identity : Identity
+    User : 'User
+    Permissions : 'Permission
+  }
 
 // Client to Server
 type ClientMsg<'CommandPayload,'QueryParameter,'QueryResult> =

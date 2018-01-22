@@ -42,12 +42,13 @@ let private authUser (login:Login) =
         let userRights =
           data
           |> Utils.decodeJwt
-          |> ofJson<UserRights<Roles.Container>>
+          |> ofJson<UserRights<User,Roles.Container>>
 
         return
             {
-              UserName = userRights.UserName
-              Roles = userRights.Permission
+              Username = userRights.Username
+              User = userRights.User
+              Roles = userRights.Permissions
               Token = data
             }
     with

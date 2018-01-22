@@ -6,7 +6,8 @@ open Infrastructure.Auth
 
 type UserData =
   {
-    UserName : Username
+    Username : Username
+    User : User
     Roles : Roles.Container
     Token : JWT
   }

@@ -35,6 +35,7 @@ let conferenceWebsocket =
 let conferenceLogin =
   Auth.login
     Authorization.identityProvider
+    Authorization.userProvider
     Authorization.permissionProvider
 
 let start clientPath port =

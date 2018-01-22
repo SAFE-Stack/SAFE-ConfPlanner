@@ -104,6 +104,15 @@ type AttendeeId = AttendeeId of Guid
 
 type AdminId = AdminId of System.Guid
 
+type UserId = UserId of System.Guid
+
+type User =
+  {
+    Id : UserId
+    Firstname : string
+    Lastname : string
+  }
+
 type ConferenceId = ConferenceId of Guid
 
 type Conference = {

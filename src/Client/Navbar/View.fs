@@ -66,7 +66,7 @@ let private viewLoginLogout dispatch (user : UserData option) currentPage =
       menuItem "Login" Page.Login currentPage
 
   | Some user ->
-      let (Username username) = user.UserName
+      let (Username username) = user.Username
       Navbar.item_a
         [
           Navbar.Item.props [ OnClick (fun _ -> Logout |> dispatch) ]

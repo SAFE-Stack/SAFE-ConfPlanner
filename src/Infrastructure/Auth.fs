@@ -20,14 +20,20 @@ type Credentials =
 type AsyncIdentityProvider =
   (Username * Password) -> Async<Identity option>
 
-type AsyncPermissionProvider<'Permission> =
-  Identity -> Async<'Permission>
+type AsyncUserProvider<'User> =
+  Identity -> Async<'User option>
+
+type AsyncPermissionProvider<'User,'Permission> =
+  'User -> Async<'Permission>
 
 type IdentityProvider =
   (Username * Password) -> Identity option
 
-type PermissionProvider<'Permission> =
-  Identity -> 'Permission
+type UserProvider<'User> =
+  Identity -> 'User option
+
+type PermissionProvider<'User,'Permission> =
+  'User -> 'Permission
 
 // Login credentials.
 type Login =
@@ -53,11 +59,27 @@ let rec oneIdentityOf (identityProviders : AsyncIdentityProvider list) (credenti
     | _ -> return None
   }
 
-let allPermissions (permissionProviders : AsyncPermissionProvider<'Permission> list) identity  =
+let rec oneUserOf (userProviders : AsyncUserProvider<'User> list) identity =
+  async {
+    match userProviders with
+    | userProvider :: rest ->
+        let! result = userProvider identity
+
+        match result with
+        | None ->
+            return! oneUserOf rest identity
+
+        | Some user ->
+            return Some user
+
+    | _ -> return None
+  }
+
+let allPermissions (permissionProviders : AsyncPermissionProvider<'User,'Permission> list) user  =
   async {
     let! permissions =
       permissionProviders
-      |> List.map (fun provider -> provider identity)
+      |> List.map (fun provider -> provider user)
       |> Async.Parallel
 
     return

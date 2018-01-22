@@ -24,39 +24,48 @@ wenn einer Identity eine Rolle entzogen wurde, müssen die Konferenzen ebenfalls
 
 
 /// Login web part that authenticates a user and returns a token in the HTTP body.
-let login identityProvider permissionProvider (ctx: HttpContext) = async {
-  let login =
-      ctx.request.rawForm
-      |> System.Text.Encoding.UTF8.GetString
-      |> ofJson<Infrastructure.Auth.Login>
+let login (identityProvider : IdentityProvider)  (userProvider: UserProvider<'User>) (permissionProvider: PermissionProvider<'User,'Permission>) (ctx: HttpContext) =
+  async {
+    let login =
+        ctx.request.rawForm
+        |> System.Text.Encoding.UTF8.GetString
+        |> ofJson<Infrastructure.Auth.Login>
 
-  try
-      match identityProvider login.UserName login.Password with
-      | Some identity ->
-          let permission =
-            identity |> permissionProvider
+    try
+        let identityOption =
+          identityProvider (login.UserName, login.Password)
 
-          let user : ServerTypes.UserRights<'Permission> =
-            {
-              UserName = login.UserName
-              Identity = identity
-              Permission = permission
-            }
+        let userOption =
+          identityOption
+          |> Option.bind userProvider
 
-          let token = JsonWebToken.encode user
+        match identityOption, userOption with
+        | Some identity, Some user ->
+            let permission =
+              user |> permissionProvider
 
-          return! Successful.OK token ctx
+            let user : ServerTypes.UserRights<'User, 'Permission> =
+              {
+                Username = login.UserName
+                Identity = identity
+                User = user
+                Permissions = permission
+              }
 
-       | None ->
-          let (Username username) = login.UserName
+            let token = JsonWebToken.encode user
 
-          return! failwithf "Could not authenticate %s" username
+            return! Successful.OK token ctx
 
-  with
-  | _ ->
-      let (Username username) = login.UserName
-      return! UNAUTHORIZED (sprintf "User '%s' can't be logged in." username ) ctx
-}
+         | _ ->
+            let (Username username) = login.UserName
+
+            return! failwithf "Could not authenticate %s" username
+
+    with
+    | _ ->
+        let (Username username) = login.UserName
+        return! UNAUTHORIZED (sprintf "User '%s' can't be logged in." username ) ctx
+  }
 
 /// Invokes a function that produces the output for a web part if the HttpContext
 /// contains a valid auth token. Use to authorise the expressions in your web part
