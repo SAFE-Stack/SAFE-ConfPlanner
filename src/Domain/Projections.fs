@@ -19,7 +19,7 @@ let apply (conference : Conference) event : Conference =
     | OrganizerRemovedFromConference organizer ->
         let newOrganizers =
           conference.Organizers
-          |> List.filter (fun o -> o.Id <> organizer.Id)
+          |> List.filter (fun o -> o <> organizer)
 
         { conference with Organizers = newOrganizers }
 

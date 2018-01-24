@@ -10,11 +10,11 @@ open Testbase
 [<Test>]
 let ``A given vote can be revoked`` () =
   let talk = proposedTalk()
-  let voting = voteOne talk heimeshoff
+  let voting = voteOne talk heimeshoff.Id
 
   Given
     [
-      OrganizerAddedToConference heimeshoff
+      OrganizerAddedToConference heimeshoff.Id
       TalkWasProposed talk
       VotingWasIssued voting
     ]
@@ -25,11 +25,11 @@ let ``A given vote can be revoked`` () =
 [<Test>]
 let ``Voting can not be revoked when voting period is already finished`` () =
   let talk = proposedTalk()
-  let voting = voteOne talk heimeshoff
+  let voting = voteOne talk heimeshoff.Id
 
   Given
     [
-      OrganizerAddedToConference heimeshoff
+      OrganizerAddedToConference heimeshoff.Id
       TalkWasProposed talk
       VotingWasIssued voting
       VotingPeriodWasFinished
@@ -40,11 +40,11 @@ let ``Voting can not be revoked when voting period is already finished`` () =
 [<Test>]
 let ``Voting can not be revoked when not issued`` () =
   let talk = proposedTalk()
-  let voting = voteOne talk heimeshoff
+  let voting = voteOne talk heimeshoff.Id
 
   Given
     [
-      OrganizerAddedToConference heimeshoff
+      OrganizerAddedToConference heimeshoff.Id
       TalkWasProposed <| proposedTalk()
     ]
   |> When (RevokeVoting voting)

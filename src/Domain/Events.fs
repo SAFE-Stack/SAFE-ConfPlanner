@@ -3,18 +3,22 @@ module Domain.Events
 open Model
 
 type Error =
+  | PersonAlreadyRegistered of PersonId
   | ConferenceAlreadyScheduled
-  | OrganizerAlreadyAddedToConference of Organizer
-  | OrganizerWasNotAddedToConference of Organizer
+  | OrganizerAlreadyAddedToConference of PersonId
+  | OrganizerWasNotAddedToConference of PersonId
+  | OrganizerNotRegisteredInSystem of PersonId
+  | Organizer
   | RevocationOfVotingWasDenied of Voting * error : string
   | FinishingDenied of string
   | VotingDenied of string
   | ProposingDenied of string
 
 type Event =
+  | PersonRegistered of Person
   | ConferenceScheduled of Conference
-  | OrganizerAddedToConference of Organizer
-  | OrganizerRemovedFromConference of Organizer
+  | OrganizerAddedToConference of PersonId
+  | OrganizerRemovedFromConference of PersonId
   | TalkWasProposed of ConferenceAbstract
   | CallForPapersOpened
   | CallForPapersClosed
@@ -31,14 +35,17 @@ type Event =
 
 let toString event =
   match event with
+  | PersonRegistered person ->
+      sprintf "Person Registered: %A" person
+
   | ConferenceScheduled conference ->
       sprintf "Conference scheduled: %A" conference
 
   | OrganizerAddedToConference organizer ->
-      sprintf "The organizer %s %s was added to the conference" organizer.Firstname organizer.Lastname
+      sprintf "The organizer %A was added to the conference" organizer
 
   | OrganizerRemovedFromConference organizer ->
-      sprintf "The organizer %s %s was removed from the conference" organizer.Firstname organizer.Lastname
+      sprintf "The organizer %A was removed from the conference" organizer
 
   | TalkWasProposed conferenceAbstract ->
       sprintf "TalkWasProposed %A" conferenceAbstract

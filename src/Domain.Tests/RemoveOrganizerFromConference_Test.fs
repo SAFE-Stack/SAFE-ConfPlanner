@@ -8,9 +8,9 @@ open Testbase
 
 [<Test>]
 let ``Organizer can be removed from a conference`` () =
-  Given [ OrganizerAddedToConference heimeshoff ]
-  |> When (RemoveOrganizerFromConference heimeshoff)
-  |> ThenExpect [ OrganizerRemovedFromConference heimeshoff ]
+  Given [ OrganizerAddedToConference heimeshoff.Id ]
+  |> When (RemoveOrganizerFromConference heimeshoff.Id)
+  |> ThenExpect [ OrganizerRemovedFromConference heimeshoff.Id ]
 
 [<Test>]
 let ``When an Organizer is removed all its votings are revoked`` () =
@@ -18,13 +18,13 @@ let ``When an Organizer is removed all its votings are revoked`` () =
   let talk2 = proposedTalk()
   let talk3 = proposedTalk()
 
-  let vote1 = voteTwo talk1 heimeshoff
-  let vote2 = voteOne talk2 heimeshoff
-  let vote3 = veto talk3 heimeshoff
+  let vote1 = voteTwo talk1 heimeshoff.Id
+  let vote2 = voteOne talk2 heimeshoff.Id
+  let vote3 = veto talk3 heimeshoff.Id
 
   Given
     [
-      OrganizerAddedToConference heimeshoff
+      OrganizerAddedToConference heimeshoff.Id
 
       TalkWasProposed talk1
       TalkWasProposed talk2
@@ -34,10 +34,10 @@ let ``When an Organizer is removed all its votings are revoked`` () =
       VotingWasIssued vote2
       VotingWasIssued vote3
     ]
-  |> When (RemoveOrganizerFromConference heimeshoff)
+  |> When (RemoveOrganizerFromConference heimeshoff.Id)
   |> ThenExpect
       [
-        OrganizerRemovedFromConference heimeshoff
+        OrganizerRemovedFromConference heimeshoff.Id
         VotingWasRevoked vote1
         VotingWasRevoked vote2
         VotingWasRevoked vote3
@@ -46,5 +46,5 @@ let ``When an Organizer is removed all its votings are revoked`` () =
 [<Test>]
 let ``Organizer can not be remove if not added`` () =
   Given []
-  |> When (RemoveOrganizerFromConference heimeshoff)
-  |> ThenExpect [ OrganizerWasNotAddedToConference heimeshoff |> Error ]
+  |> When (RemoveOrganizerFromConference heimeshoff.Id)
+  |> ThenExpect [ OrganizerWasNotAddedToConference heimeshoff.Id |> Error ]

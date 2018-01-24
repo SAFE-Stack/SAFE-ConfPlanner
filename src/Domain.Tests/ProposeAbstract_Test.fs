@@ -13,7 +13,7 @@ let talk = proposedTalk()
 let ``Can propose an abstract when Call for Papers is open`` () =
   Given
     [
-      OrganizerAddedToConference heimeshoff
+      OrganizerAddedToConference heimeshoff.Id
       CallForPapersOpened
     ]
   |> When (ProposeAbstract talk)
@@ -22,7 +22,7 @@ let ``Can propose an abstract when Call for Papers is open`` () =
 
 [<Test>]
 let ``Can not propose an abstract when Call for Papers is not opened yet`` () =
-  Given [ OrganizerAddedToConference heimeshoff ]
+  Given [ OrganizerAddedToConference heimeshoff.Id ]
   |> When (ProposeAbstract talk)
   |> ThenExpect [ ProposingDenied "Call For Papers Not Opened" |> Error ]
 
@@ -31,7 +31,7 @@ let ``Can not propose an abstract when Call for Papers is not opened yet`` () =
 let ``Can not propose an abstract when Call for Papers is already closed`` () =
   Given
     [
-      OrganizerAddedToConference heimeshoff
+      OrganizerAddedToConference heimeshoff.Id
       CallForPapersClosed
     ]
   |> When (ProposeAbstract talk)

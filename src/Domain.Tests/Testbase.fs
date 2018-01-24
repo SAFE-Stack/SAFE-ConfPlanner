@@ -29,17 +29,17 @@ let ThenExpect expectedEvents actualEvents =
   | None ->
       None |> should equal expectedEvents
 
-let voteTwo (abstr: ConferenceAbstract) (organizer: Organizer) =
-   Voting.Voting (abstr.Id,organizer.Id, Two)
+let voteTwo (abstr: ConferenceAbstract) (organizer: PersonId) =
+   Voting.Voting (abstr.Id,organizer, Two)
 
-let voteOne (abstr: ConferenceAbstract) (organizer: Organizer) =
-   Voting.Voting (abstr.Id,organizer.Id, One)
+let voteOne (abstr: ConferenceAbstract) (organizer: PersonId) =
+   Voting.Voting (abstr.Id,organizer, One)
 
-let voteZero (abstr: ConferenceAbstract) (organizer: Organizer) =
-   Voting.Voting (abstr.Id,organizer.Id, Zero)
+let voteZero (abstr: ConferenceAbstract) (organizer: PersonId) =
+   Voting.Voting (abstr.Id,organizer, Zero)
 
-let veto (abstr: ConferenceAbstract) (organizer: Organizer) =
-   Voting.Voting (abstr.Id,organizer.Id, Veto)
+let veto (abstr: ConferenceAbstract) (organizer: PersonId) =
+   Voting.Voting (abstr.Id,organizer, Veto)
 
 
 let proposedTalk() =
@@ -53,4 +53,10 @@ let proposedTalk() =
    }
 
 let heimeshoff =
-  organizer "Marco" "Heimeshoff" (Guid.NewGuid() |> string)
+  person "Marco" "Heimeshoff" (Guid.NewGuid() |> string)
+
+let fellien =
+  person "Janek" "Fellien" (Guid.NewGuid() |> string)
+
+let poepke =
+  person "Conrad" "Poepke" (Guid.NewGuid() |> string)

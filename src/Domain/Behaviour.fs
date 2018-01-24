@@ -28,7 +28,6 @@ let (|DidNotVoteForAbstract|_|) votingResults voting =
 let (|VoterIsNotAnOrganizer|_|) (organizers: Organizers) (voting : Voting) =
   let isNotOrganizer voting =
     organizers
-    |> List.map (fun x -> x.Id)
     |> List.contains (extractVoterId voting)
     |> not
 
@@ -231,7 +230,7 @@ let removeOrganizerFromConference organizer conference =
   | _ ->
     let revocations =
       conference.Votings
-      |> votesOfOrganizer organizer.Id
+      |> votesOfOrganizer organizer
       |> List.map VotingWasRevoked
 
     [OrganizerRemovedFromConference organizer] @ revocations
@@ -241,8 +240,17 @@ let private handleRemoveOrganizerFromConference givenHistory organizer =
   |> conferenceState
   |> removeOrganizerFromConference organizer
 
+let private handleRegisterPerson givenHistory person =
+  if givenHistory |> List.isEmpty then
+    [PersonRegistered person]
+  else
+    [person.Id |> PersonAlreadyRegistered |> Error]
+
 let execute (givenHistory : Event list) (command : Command) : Event list =
   match command with
+  | RegisterPerson person ->
+       person |> handleRegisterPerson givenHistory
+
   | ScheduleConference conference ->
       conference |> handleScheduleConference givenHistory
 
@@ -274,5 +282,6 @@ let execute (givenHistory : Event list) (command : Command) : Event list =
       handleRevokeVoting givenHistory voting
 
   | AcceptAbstract(_) -> failwith "Not Implemented"
+
   | RejectAbstract(_) -> failwith "Not Implemented"
 

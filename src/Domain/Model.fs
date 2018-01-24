@@ -43,27 +43,27 @@ let pointsToString points =
   | Two -> "2"
   | Veto -> "veto"
 
+type PersonId =
+  PersonId of Guid
 
-type OrganizerId = OrganizerId of Guid
-
-type Organizer = {
-  Id : OrganizerId
+type Person = {
+  Id : PersonId
   Firstname : string
   Lastname : string
 }
 
 type Organizers =
-  Organizer list
+  PersonId list
 
-let organizer firstname lastname guid =
+let person firstname lastname guid =
   {
-    Id = OrganizerId <| Guid.Parse guid
+    Id = PersonId <| Guid.Parse guid
     Firstname = firstname
     Lastname = lastname
   }
 
 type Voting =
-  Voting of AbstractId * OrganizerId * Points
+  Voting of AbstractId * PersonId * Points
 
 let extractAbstractId (Voting (id,_,_)) =
   id
@@ -74,10 +74,10 @@ let extractVoterId  (Voting (_,id,_)) =
 let extractPoints (Voting (_,_,points)) =
   points
 
-let extractVoteForAbstract organizerId abstractId votings =
+let extractVoteForAbstract voterId abstractId votings =
   let vote =
     votings
-    |> List.filter (fun voting -> voting |> extractAbstractId = abstractId && voting |> extractVoterId = organizerId)
+    |> List.filter (fun voting -> voting |> extractAbstractId = abstractId && voting |> extractVoterId = voterId)
 
   match vote with
   | [vote] ->
@@ -86,9 +86,9 @@ let extractVoteForAbstract organizerId abstractId votings =
   | _ ->
       None
 
-let votesOfOrganizer organizerId votings =
+let votesOfOrganizer personId votings =
   votings
-  |> List.filter (fun voting -> voting |> extractVoterId = organizerId)
+  |> List.filter (fun voting -> voting |> extractVoterId = personId)
 
 
 type CallForPapers =
@@ -109,7 +109,7 @@ type Conference = {
   VotingPeriod : VotingPeriod
   Abstracts : ConferenceAbstract list
   Votings : Voting list
-  Organizers : Organizer list
+  Organizers : Organizers
   AvailableSlotsForTalks : int
 }
 
