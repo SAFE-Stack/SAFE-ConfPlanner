@@ -1,12 +1,12 @@
-module Conference.Api.Organizers
+module Conference.Api.Persons
 
 open API
 open Infrastructure.Types
 open Domain.Events
 open Domain.Model
 
-type OrganizersReadModel =
-  Organizers
+type PersonsReadModel =
+  Person list
 
 let heimeshoff = person "Marco" "Heimeshoff" "311b9fbd-98a2-401e-b9e9-bab15897dad4"
 let fellien = person "Janek" "Felien" "489cc178-9698-458e-9c4e-95488e159f6d"
@@ -22,17 +22,17 @@ let organizers =
     sachse
   ]
 
-let projection : ProjectionDefinition<OrganizersReadModel, Event>=
+let projection : ProjectionDefinition<PersonsReadModel, Event>=
   {
     InitialState = organizers
     UpdateState = fun readmodel _ -> readmodel
   }
 
-let queryHandler (query : Query<QueryParameter>) (readModel : OrganizersReadModel) : QueryHandled<QueryResult> =
+let queryHandler (query : Query<QueryParameter>) (readModel : PersonsReadModel) : QueryHandled<QueryResult> =
   match query.Parameter with
-  | QueryParameter.Organizers ->
+  | QueryParameter.Persons ->
       readModel
-      |> QueryResult.Organizers
+      |> QueryResult.Persons
       |> Handled
 
   | _ -> NotHandled

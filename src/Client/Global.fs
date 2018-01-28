@@ -6,7 +6,7 @@ open Domain.Model
 type UserData =
   {
     UserName : string
-    OrganizerId : OrganizerId
+    Person : Person
     Token : Server.AuthTypes.JWT
   }
 

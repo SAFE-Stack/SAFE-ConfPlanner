@@ -52,6 +52,13 @@ type Person = {
   Lastname : string
 }
 
+let emptyPerson() = {
+  Id = System.Guid.NewGuid() |> PersonId
+  Firstname = ""
+  Lastname = ""
+}
+
+
 type Organizers =
   PersonId list
 

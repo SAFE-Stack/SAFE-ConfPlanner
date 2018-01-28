@@ -43,7 +43,7 @@ let private authUser (login:Login) =
 
         return
             {
-              OrganizerId = userRights.OrganizerId
+              Person = userRights.Person
               UserName = userRights.UserName
               Token = data
             }

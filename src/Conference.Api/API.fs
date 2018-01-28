@@ -4,11 +4,14 @@ open Domain.Model
 
 type QueryParameter =
   | Conference of ConferenceId
-  | Organizers
+  | Person of PersonId
+  | Persons
   | Conferences
 
 type QueryResult =
   | Conference of Conference
+  | Person of Person
   | Conferences of (ConferenceId * string) list
-  | Organizers of Organizers
+  | Persons of Person list
   | ConferenceNotFound
+  | PersonNotFound

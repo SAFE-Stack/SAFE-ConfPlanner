@@ -55,7 +55,7 @@ let numberOfVotesExceeded votingResults getVote (voting : Voting) max =
   | false -> None
 
 let handleProposeAbstract givenHistory proposed =
-  match (conferenceState givenHistory).CallForPapers with
+  match (Conference.state givenHistory).CallForPapers with
   | Open ->
       [AbstractWasProposed proposed]
 
@@ -137,7 +137,7 @@ let finishVotingPeriod conference =
 
 let handleFinishVotingPeriod givenHistory =
   givenHistory
-  |> conferenceState
+  |> Conference.state
   |> finishVotingPeriod
 
 let reopenVotingPeriod conference =
@@ -150,7 +150,7 @@ let reopenVotingPeriod conference =
 
 let handleReopenVotingPeriod givenHistory =
   givenHistory
-  |> conferenceState
+  |> Conference.state
   |> reopenVotingPeriod
 
 let vote voting conference =
@@ -168,7 +168,7 @@ let vote voting conference =
 
 let handleVote givenHistory voting =
   givenHistory
-  |> conferenceState
+  |> Conference.state
   |> vote voting
 
 let revokeVoting voting conference =
@@ -188,7 +188,7 @@ let changeTitle title _ =
 
 let handleChangeTitle givenHistory title =
   givenHistory
-  |> conferenceState
+  |> Conference.state
   |> changeTitle title
 
 let decideNumberOfSlots number _ =
@@ -196,12 +196,12 @@ let decideNumberOfSlots number _ =
 
 let handleDecideNumberOfSlots givenHistory number =
   givenHistory
-  |> conferenceState
+  |> Conference.state
   |> decideNumberOfSlots number
 
 let handleRevokeVoting givenHistory voting =
   givenHistory
-  |> conferenceState
+  |> Conference.state
   |> revokeVoting voting
 
 let handleScheduleConference givenHistory conference =
@@ -219,7 +219,7 @@ let addOrganizerToConference organizer conference =
 
 let private handleAddOrganizerToConference givenHistory organizer =
   givenHistory
-  |> conferenceState
+  |> Conference.state
   |> addOrganizerToConference organizer
 
 let removeOrganizerFromConference organizer conference =
@@ -237,7 +237,7 @@ let removeOrganizerFromConference organizer conference =
 
 let private handleRemoveOrganizerFromConference givenHistory organizer =
   givenHistory
-  |> conferenceState
+  |> Conference.state
   |> removeOrganizerFromConference organizer
 
 let private handleRegisterPerson givenHistory person =

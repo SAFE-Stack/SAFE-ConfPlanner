@@ -16,17 +16,17 @@ let makeEventSets streamId events : EventSet<Event> list =
 let makeStreamId (ConferenceId id) =
   id |> string |> StreamId
 
-let voteTwo (abstr: ConferenceAbstract) (organizer: Organizer) =
-   Voting.Voting (abstr.Id,organizer.Id, Two)
+let voteTwo (abstr: ConferenceAbstract) organizer =
+   Voting.Voting (abstr.Id, organizer, Two)
 
-let voteOne (abstr: ConferenceAbstract) (organizer: Organizer) =
-   Voting.Voting (abstr.Id,organizer.Id, One)
+let voteOne (abstr: ConferenceAbstract) organizer =
+   Voting.Voting (abstr.Id, organizer, One)
 
-let voteZero (abstr: ConferenceAbstract) (organizer: Organizer) =
-   Voting.Voting (abstr.Id,organizer.Id, Zero)
+let voteZero (abstr: ConferenceAbstract) organizer =
+   Voting.Voting (abstr.Id, organizer, Zero)
 
-let veto (abstr: ConferenceAbstract) (organizer: Organizer) =
-   Voting.Voting (abstr.Id,organizer.Id, Veto)
+let veto (abstr: ConferenceAbstract) organizer =
+   Voting.Voting (abstr.Id, organizer, Veto)
 
 let proposedTalk title firstname lastname =
   let speaker =

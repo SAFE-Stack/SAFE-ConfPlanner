@@ -34,7 +34,7 @@ let conferenceWebsocket =
     toProjectionAndQueryHandler Conferences.projection Conferences.queryHandler
 
   let organizersProjection,organizersQueryHandler =
-    toProjectionAndQueryHandler Organizers.projection Organizers.queryHandler
+    toProjectionAndQueryHandler Persons.projection Persons.queryHandler
 
   websocket <|
     eventSourced

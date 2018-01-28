@@ -15,7 +15,7 @@ open Domain
 open Domain.Model
 
 let private updateStateWithEvents conference events  =
-  events |> List.fold Domain.Projections.apply conference
+  events |> List.fold Domain.Projections.Conference.apply conference
 
 let private makeStreamId (Model.ConferenceId id) =
   id |> string |> StreamId
@@ -43,7 +43,7 @@ let private queryConferences =
   |> wsCmd
 
 let private queryOrganizers =
-  API.QueryParameter.Organizers
+  API.QueryParameter.Persons
   |> createQuery
   |> ClientMsg.Query
   |> wsCmd
@@ -52,9 +52,9 @@ let init (user : UserData)  =
   {
     View = CurrentView.NotAsked
     Conferences = RemoteData.NotAsked
-    Organizers = RemoteData.NotAsked
+    Persons = RemoteData.NotAsked
     LastEvents = []
-    Organizer = user.OrganizerId
+    Person = user.Person
     OpenTransactions = []
     OpenNotifications = []
   }, Cmd.ofSub <| startWs user.Token
@@ -254,8 +254,8 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
               { model with Conferences = conferences |> RemoteData.Success }
               |> withoutCommands
 
-          | API.QueryResult.Organizers organizers ->
-              { model with Organizers = organizers |> RemoteData.Success }
+          | API.QueryResult.Persons organizers ->
+              { model with Persons = organizers |> RemoteData.Success }
               |> withoutCommands
 
           | API.QueryResult.ConferenceNotFound ->

@@ -9,7 +9,7 @@ open Domain.Model
 type UserRights =
    {
      UserName : string
-     OrganizerId : OrganizerId
+     Person : Person
    }
 
 

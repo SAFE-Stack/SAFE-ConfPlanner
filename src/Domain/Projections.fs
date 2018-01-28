@@ -3,89 +3,105 @@ module Domain.Projections
 open System
 open Model
 open Events
-let updateAbstractStatus abstractId status (abstr: ConferenceAbstract) =
-    match abstr.Id = abstractId with
-    | true -> { abstr with Status = status }
-    | false -> abstr
 
-let apply (conference : Conference) event : Conference =
-  match event with
-    | ConferenceScheduled conference ->
-        conference
+module Conference =
+  let private updateAbstractStatus abstractId status (abstr: ConferenceAbstract) =
+      match abstr.Id = abstractId with
+      | true -> { abstr with Status = status }
+      | false -> abstr
 
-    | OrganizerAddedToConference o ->
-        { conference with Organizers = o :: conference.Organizers }
+  let apply (conference : Conference) event : Conference =
+    match event with
+      | ConferenceScheduled conference ->
+          conference
 
-    | OrganizerRemovedFromConference organizer ->
-        let newOrganizers =
-          conference.Organizers
-          |> List.filter (fun o -> o <> organizer)
+      | OrganizerAddedToConference o ->
+          { conference with Organizers = o :: conference.Organizers }
 
-        { conference with Organizers = newOrganizers }
+      | OrganizerRemovedFromConference organizer ->
+          let newOrganizers =
+            conference.Organizers
+            |> List.filter (fun o -> o <> organizer)
 
-    | TalkWasProposed t ->
-        { conference with Abstracts = t :: conference.Abstracts }
+          { conference with Organizers = newOrganizers }
 
-    | CallForPapersOpened ->
-        { conference with CallForPapers = Open }
+      | TalkWasProposed t ->
+          { conference with Abstracts = t :: conference.Abstracts }
 
-    | CallForPapersClosed ->
-        { conference with
-            CallForPapers = Closed
-            VotingPeriod = InProgress }
+      | CallForPapersOpened ->
+          { conference with CallForPapers = Open }
 
-    | TitleChanged title ->
-        { conference with Title = title }
+      | CallForPapersClosed ->
+          { conference with
+              CallForPapers = Closed
+              VotingPeriod = InProgress }
 
-    | NumberOfSlotsDecided number ->
-        { conference with AvailableSlotsForTalks = number }
+      | TitleChanged title ->
+          { conference with Title = title }
 
-    | AbstractWasProposed proposed ->
-        { conference with Abstracts = proposed :: conference.Abstracts }
+      | NumberOfSlotsDecided number ->
+          { conference with AvailableSlotsForTalks = number }
 
-    | AbstractWasAccepted abstractId ->
-        { conference with Abstracts = conference.Abstracts |> List.map (updateAbstractStatus abstractId AbstractStatus.Accepted) }
+      | AbstractWasProposed proposed ->
+          { conference with Abstracts = proposed :: conference.Abstracts }
 
-    | AbstractWasRejected abstractId ->
-        { conference with Abstracts = conference.Abstracts |> List.map (updateAbstractStatus abstractId AbstractStatus.Rejected) }
+      | AbstractWasAccepted abstractId ->
+          { conference with Abstracts = conference.Abstracts |> List.map (updateAbstractStatus abstractId AbstractStatus.Accepted) }
 
-    | VotingPeriodWasFinished ->
-        { conference with VotingPeriod = Finished }
+      | AbstractWasRejected abstractId ->
+          { conference with Abstracts = conference.Abstracts |> List.map (updateAbstractStatus abstractId AbstractStatus.Rejected) }
 
-    | VotingPeriodWasReopened ->
-        { conference with
-            VotingPeriod = InProgress
-            Abstracts = conference.Abstracts |> List.map (fun abstr -> { abstr with Status = AbstractStatus.Proposed }) }
+      | VotingPeriodWasFinished ->
+          { conference with VotingPeriod = Finished }
 
-    | VotingWasIssued (Voting.Voting (abstractId, organizerId, _) as voting) ->
-        let votings =
-          conference.Votings
-          |> List.filter (fun voting -> voting |> extractAbstractId <> abstractId || voting |> extractVoterId <> organizerId)
+      | VotingPeriodWasReopened ->
+          { conference with
+              VotingPeriod = InProgress
+              Abstracts = conference.Abstracts |> List.map (fun abstr -> { abstr with Status = AbstractStatus.Proposed }) }
 
-        { conference with Votings = voting :: votings }
+      | VotingWasIssued (Voting.Voting (abstractId, organizerId, _) as voting) ->
+          let votings =
+            conference.Votings
+            |> List.filter (fun voting -> voting |> extractAbstractId <> abstractId || voting |> extractVoterId <> organizerId)
 
-    | VotingWasRevoked (Voting.Voting (abstractId, organizerId, _)) ->
-        let votings =
-          conference.Votings
-          |> List.filter (fun voting -> voting |> extractAbstractId <> abstractId || voting |> extractVoterId <> organizerId)
+          { conference with Votings = voting :: votings }
 
-        { conference with Votings = votings }
+      | VotingWasRevoked (Voting.Voting (abstractId, organizerId, _)) ->
+          let votings =
+            conference.Votings
+            |> List.filter (fun voting -> voting |> extractAbstractId <> abstractId || voting |> extractVoterId <> organizerId)
 
-    | Error _ ->
-        conference
+          { conference with Votings = votings }
 
-let private emptyConference : Conference =
-  {
-    Id = ConferenceId <| Guid.Empty
-    Title = ""
-    CallForPapers = NotOpened
-    VotingPeriod = InProgress
-    Abstracts = List.empty
-    Votings = List.empty
-    Organizers = List.empty
-    AvailableSlotsForTalks = 0
-  }
+      | Error _ ->
+          conference
 
-let conferenceState (givenHistory : Event list) =
+
+      | _ ->
+          conference
+
+  let private emptyConference : Conference =
+    {
+      Id = ConferenceId <| Guid.Empty
+      Title = ""
+      CallForPapers = NotOpened
+      VotingPeriod = InProgress
+      Abstracts = List.empty
+      Votings = List.empty
+      Organizers = List.empty
+      AvailableSlotsForTalks = 0
+    }
+
+  let state (givenHistory : Event list) =
     givenHistory
     |> List.fold apply emptyConference
+
+
+module Person =
+  let apply (person : Person) event : Person =
+    match event with
+    | PersonRegistered person ->
+        person
+
+    | _ ->
+        person

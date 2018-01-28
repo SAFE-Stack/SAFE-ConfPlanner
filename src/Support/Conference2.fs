@@ -10,9 +10,9 @@ let private conference =
   emptyConference()
   |> (fun conf -> { conf with Title = "Be Sharps" })
 
-let private heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.Parse "311b9fbd-98a2-401e-b9e9-bab15897dad4" }
-let private sachse = { Firstname = "Roman";  Lastname = "Sachse"; Id = OrganizerId <| Guid.NewGuid() }
-let private helmig = { Firstname = "Nils";  Lastname = "Helmig"; Id = OrganizerId <| Guid.NewGuid() }
+let private heimeshoff = person "Marco" "Heimeshoff" "311b9fbd-98a2-401e-b9e9-bab15897dad4"
+let private sachse = person "Roman" "Sachse" (Guid.NewGuid() |> string)
+let private helmig = person "Nils" "Helmig" (Guid.NewGuid() |> string)
 
 let private talk1 = proposedTalk "Elmish with React Native" "Steffen" "Forkmann"
 let private talk2 = proposedTalk "Everything Fable" "Maxime" "Mangel"
@@ -20,10 +20,13 @@ let private talk3 = proposedTalk "Azure and everything" "Isaac" "Abraham"
 
 let private events =
   [
+    PersonRegistered heimeshoff
+    PersonRegistered sachse
+    PersonRegistered helmig
     ConferenceScheduled conference
-    OrganizerAddedToConference heimeshoff
-    OrganizerAddedToConference sachse
-    OrganizerAddedToConference helmig
+    OrganizerAddedToConference heimeshoff.Id
+    OrganizerAddedToConference sachse.Id
+    OrganizerAddedToConference helmig.Id
     NumberOfSlotsDecided 2
 
     CallForPapersOpened
@@ -32,15 +35,15 @@ let private events =
     TalkWasProposed talk3
     CallForPapersClosed
 
-    VotingWasIssued (voteTwo talk3 heimeshoff)
-    VotingWasIssued (veto talk3 sachse)
-    VotingWasIssued (voteTwo talk3 helmig)
-    VotingWasIssued (voteOne talk2 heimeshoff)
-    VotingWasIssued (voteOne talk2 sachse)
-    VotingWasIssued (voteOne talk2 helmig)
-    VotingWasIssued (voteZero talk1 heimeshoff)
-    VotingWasIssued (voteZero talk1 sachse)
-    VotingWasIssued (voteZero talk1 helmig)
+    VotingWasIssued (voteTwo talk3 heimeshoff.Id)
+    VotingWasIssued (veto talk3 sachse.Id)
+    VotingWasIssued (voteTwo talk3 helmig.Id)
+    VotingWasIssued (voteOne talk2 heimeshoff.Id)
+    VotingWasIssued (voteOne talk2 sachse.Id)
+    VotingWasIssued (voteOne talk2 helmig.Id)
+    VotingWasIssued (voteZero talk1 heimeshoff.Id)
+    VotingWasIssued (voteZero talk1 sachse.Id)
+    VotingWasIssued (voteZero talk1 helmig.Id)
   ]
 
 let eventSets () =

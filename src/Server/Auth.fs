@@ -22,8 +22,11 @@ let rec private oneOf userprovider (username,password)  =
 
 let userProvider username password =
   if (username = "test" && password = "test") then
-    System.Guid.Parse "311b9fbd-98a2-401e-b9e9-bab15897dad4"
-    |> OrganizerId
+    {
+      Id = System.Guid.Parse "311b9fbd-98a2-401e-b9e9-bab15897dad4" |> PersonId
+      Firstname = "Marco"
+      Lastname = "Heimeshoff"
+    }
     |> Some
   else
     None
@@ -37,16 +40,16 @@ let login (ctx: HttpContext) = async {
       |> ofJson<Server.AuthTypes.Login>
 
   try
-      let organizerId =
+      let person =
         (login.UserName,login.Password)
         |> oneOf [ userProvider ]
 
-      match organizerId with
-      | Some organizerId ->
+      match person with
+      | Some person ->
           let user : ServerTypes.UserRights =
             {
               UserName = login.UserName
-              OrganizerId = organizerId
+              Person = person
             }
 
           let token = JsonWebToken.encode user

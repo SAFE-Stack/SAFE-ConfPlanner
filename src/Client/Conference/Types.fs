@@ -29,8 +29,8 @@ type WhatIfMsg =
   | RevokeVoting of Voting
   | FinishVotingperiod
   | ReopenVotingperiod
-  | AddOrganizerToConference of Organizer
-  | RemoveOrganizerFromConference of Organizer
+  | AddOrganizerToConference of PersonId
+  | RemoveOrganizerFromConference of PersonId
   | ChangeTitle of string
   | DecideNumberOfSlots of int
 
@@ -76,9 +76,9 @@ type Model =
   {
     View : CurrentView
     Conferences : RemoteData<Conferences.Conferences>
-    Organizers : RemoteData<Domain.Model.Organizers>
+    Persons : RemoteData<Domain.Model.Person list>
     LastEvents : Domain.Events.Event list
-    Organizer : OrganizerId
+    Person : Person
     OpenTransactions : TransactionId list
     OpenNotifications : Notification list
   }

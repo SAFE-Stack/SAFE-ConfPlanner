@@ -16,7 +16,7 @@ let private evolveState state (streamId : StreamId ,events) : ConferenceReadMode
     |> Option.defaultValue (emptyConference())
 
   state
-  |> Map.add streamId (events |> List.fold apply conference)
+  |> Map.add streamId (events |> List.fold Conference.apply conference)
 
 let projection : ProjectionDefinition<ConferenceReadModel, Event>=
   {

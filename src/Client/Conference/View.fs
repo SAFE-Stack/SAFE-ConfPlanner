@@ -69,13 +69,13 @@ let private viewVotingButton voteMsg revokeVotingMsg isActive btnType label =
     ]
     [ label |> str ]
 
-let private viewVotingButtons dispatch user vote (talk : Domain.Model.ConferenceAbstract) =
+let private viewVotingButtons dispatch person vote (talk : Domain.Model.ConferenceAbstract) =
   let possibleVotings =
     [
-      Voting.Voting (talk.Id, user, Two), Button.isPrimary, "2"
-      Voting.Voting (talk.Id, user, One), Button.isPrimary, "1"
-      Voting.Voting (talk.Id, user, Zero), Button.isPrimary, "0"
-      Voting.Voting (talk.Id, user, Veto), Button.isDanger, "Veto"
+      Voting.Voting (talk.Id, person, Two), Button.isPrimary, "2"
+      Voting.Voting (talk.Id, person, One), Button.isPrimary, "1"
+      Voting.Voting (talk.Id, person, Zero), Button.isPrimary, "0"
+      Voting.Voting (talk.Id, person, Veto), Button.isDanger, "Veto"
     ]
 
   let buttonMapper (voting,btnType,label) =
@@ -96,9 +96,9 @@ let private viewVotingButtons dispatch user vote (talk : Domain.Model.Conference
       yield! possibleVotings |> List.map buttonMapper
     ]
 
-let private viewTalk dispatch user votings (talk : Model.ConferenceAbstract) =
+let private viewTalk dispatch person votings (talk : Model.ConferenceAbstract) =
   let vote =
-    votings |> extractVoteForAbstract user talk.Id
+    votings |> extractVoteForAbstract person talk.Id
 
   let cardStyle : ICSSProp list =
     [
@@ -139,7 +139,7 @@ let private viewTalk dispatch user votings (talk : Model.ConferenceAbstract) =
         [
           Card.Footer.item [ Card.props [ Style footerStyle ] ]
             [
-              viewVotingButtons dispatch user vote talk
+              viewVotingButtons dispatch person vote talk
             ]
         ]
     ]
@@ -154,11 +154,11 @@ let private simpleButton txt dispatch action =
         ]
     ]
 
-let private abstractColumn dispatch color filter user conference  =
+let private abstractColumn dispatch color filter person conference  =
   let abstracts =
     conference.Abstracts
     |> List.filter filter
-    |> List.map (viewTalk dispatch user conference.Votings)
+    |> List.map (viewTalk dispatch person conference.Votings)
 
   let style : ICSSProp list =
     [
@@ -170,14 +170,14 @@ let private abstractColumn dispatch color filter user conference  =
   abstracts
   |> Column.column [ Column.props [ Style style ] ]
 
-let private proposedColumn dispatch user conference =
-  conference |> abstractColumn dispatch "#dddddd" (fun abs -> abs.Status = Proposed) user
+let private proposedColumn dispatch person conference =
+  conference |> abstractColumn dispatch "#dddddd" (fun abs -> abs.Status = Proposed) person
 
-let private acceptedColumn dispatch user conference =
-  conference |> abstractColumn dispatch "#ddffdd" (fun abs -> abs.Status = Accepted) user
+let private acceptedColumn dispatch person conference =
+  conference |> abstractColumn dispatch "#ddffdd" (fun abs -> abs.Status = Accepted) person
 
-let private rejectedColumn dispatch user conference =
-  conference |> abstractColumn dispatch "#ffdddd" (fun abs -> abs.Status = Rejected) user
+let private rejectedColumn dispatch person conference =
+  conference |> abstractColumn dispatch "#ffdddd" (fun abs -> abs.Status = Rejected) person
 
 let private viewVotingPanelHeader header =
   [ header |> str ]
@@ -185,7 +185,7 @@ let private viewVotingPanelHeader header =
   |> List.singleton
   |> Column.column []
 
-let private viewVotingPanel dispatch user conference =
+let private viewVotingPanel dispatch person conference =
   [
     Columns.columns []
       [
@@ -202,17 +202,17 @@ let private viewVotingPanel dispatch user conference =
 
     Columns.columns []
       [
-        conference |> proposedColumn dispatch user
-        conference |> acceptedColumn dispatch user
-        conference |> rejectedColumn dispatch user
+        conference |> proposedColumn dispatch person
+        conference |> acceptedColumn dispatch person
+        conference |> rejectedColumn dispatch person
       ]
   ]
   |> div []
 
-let private viewOrganizer dispatch conference (organizer : Organizer) =
+let private viewOrganizer dispatch conference (person : Person) =
   let isAddedToConference =
     conference.Organizers
-    |> List.exists (fun o -> organizer.Id = o.Id)
+    |> List.exists (fun organizer -> person.Id = organizer)
 
   let changeMsg =
     if isAddedToConference then
@@ -221,16 +221,16 @@ let private viewOrganizer dispatch conference (organizer : Organizer) =
       AddOrganizerToConference
 
   let switch =
-       Switch.switch
-        [
-          Switch.isChecked isAddedToConference
-          Switch.isRounded
-          Switch.isPrimary
-          Switch.onChange (fun _ -> organizer |> changeMsg |> WhatIfMsg |> dispatch)
-        ]
-        []
+     Switch.switch
+      [
+        Switch.isChecked isAddedToConference
+        Switch.isRounded
+        Switch.isPrimary
+        Switch.onChange (fun _ -> person.Id |> changeMsg |> WhatIfMsg |> dispatch)
+      ]
+      []
   [
-    Column.column [] [ str <| organizer.Firstname + " " + organizer.Lastname ]
+    Column.column [] [ str <| person.Firstname + " " + person.Lastname ]
     Column.column [] [ switch ]
   ]
   |> Columns.columns []
@@ -599,10 +599,10 @@ let viewConferenceInformationPanel dispatch submodel =
     ResetConferenceInformation
     "Save"
 
-let viewCurrentView dispatch user currentView organizers =
+let viewCurrentView dispatch person currentView organizers =
   match currentView with
   | Edit (VotingPanel, conference, _) ->
-      viewVotingPanel dispatch user conference
+      viewVotingPanel dispatch person conference
 
   | Edit (Organizers, conference, _) ->
       viewOrganizersPanel dispatch conference organizers
@@ -626,7 +626,7 @@ let view dispatch model =
   [
     yield viewNotifications dispatch model.OpenNotifications
     yield viewHeader dispatch model.View model.Conferences |> List.singleton |> Section.section []
-    yield viewCurrentView dispatch model.Organizer model.View model.Organizers |> List.singleton |> Section.section []
+    yield viewCurrentView dispatch model.Person.Id model.View model.Persons |> List.singleton |> Section.section []
     yield footer model.View model.LastEvents |> List.singleton |> Footer.footer []
   ]
   |> div []
