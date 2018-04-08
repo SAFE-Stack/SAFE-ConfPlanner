@@ -9,9 +9,10 @@ open Global
 open Domain
 open Domain.Model
 
+open Fulma
+open Fulma.Elements
 open Fulma.Layouts
 open Fulma.Components
-open Fulma.Elements
 open Fulma.Extra.FontAwesome
 open Fulma.Elements.Form
 open Fulma.Extensions
@@ -61,21 +62,21 @@ let private viewVotingButton voteMsg revokeVotingMsg isActive btnType label =
     else
       voteMsg
 
-  Button.button_a
+  Button.a
     [
-      yield Button.props [ OnClick clickMsg ]
+      yield Button.Props [ OnClick clickMsg ]
       if isActive then
-        yield btnType
+        yield Button.Color btnType
     ]
     [ label |> str ]
 
 let private viewVotingButtons dispatch user vote (talk : Domain.Model.ConferenceAbstract) =
   let possibleVotings =
     [
-      Voting.Voting (talk.Id, user, Two), Button.isPrimary, "2"
-      Voting.Voting (talk.Id, user, One), Button.isPrimary, "1"
-      Voting.Voting (talk.Id, user, Zero), Button.isPrimary, "0"
-      Voting.Voting (talk.Id, user, Veto), Button.isDanger, "Veto"
+      Voting.Voting (talk.Id, user, Two), IsPrimary, "2"
+      Voting.Voting (talk.Id, user, One), IsPrimary, "1"
+      Voting.Voting (talk.Id, user, Zero), IsPrimary, "0"
+      Voting.Voting (talk.Id, user, Veto), IsDanger, "Veto"
     ]
 
   let buttonMapper (voting,btnType,label) =
@@ -86,12 +87,10 @@ let private viewVotingButtons dispatch user vote (talk : Domain.Model.Conference
       btnType
       label
     |> List.singleton
-    |> Control.control_div []
+    |> Control.div []
 
-  Field.field_div
-    [
-      Field.hasAddons
-    ]
+  Field.div
+    [ Field.HasAddons  ]
     [
       yield! possibleVotings |> List.map buttonMapper
     ]
@@ -113,7 +112,7 @@ let private viewTalk dispatch user votings (talk : Model.ConferenceAbstract) =
       JustifyContent "left"
     ]
 
-  Card.card [ Card.props [ Style cardStyle ] ]
+  Card.card [ Props [ Style cardStyle ] ]
     [
       Card.header []
         [
@@ -137,7 +136,7 @@ let private viewTalk dispatch user votings (talk : Model.ConferenceAbstract) =
         ]
       Card.footer []
         [
-          Card.Footer.item [ Card.props [ Style footerStyle ] ]
+          Card.Footer.item [ Props [ Style footerStyle ] ]
             [
               viewVotingButtons dispatch user vote talk
             ]
@@ -147,8 +146,8 @@ let private viewTalk dispatch user votings (talk : Model.ConferenceAbstract) =
 let private simpleButton txt dispatch action =
   Column.column []
     [
-      Button.button_a
-        [ Button.onClick (fun _ -> action |> dispatch) ]
+      Button.a
+        [ Button.OnClick (fun _ -> action |> dispatch) ]
         [
           span [] [ str txt ]
         ]
@@ -168,7 +167,7 @@ let private abstractColumn dispatch color filter user conference  =
     ]
 
   abstracts
-  |> Column.column [ Column.props [ Style style ] ]
+  |> Column.column [ Column.Props [ Style style ] ]
 
 let private proposedColumn dispatch user conference =
   conference |> abstractColumn dispatch "#dddddd" (fun abs -> abs.Status = Proposed) user
@@ -181,7 +180,7 @@ let private rejectedColumn dispatch user conference =
 
 let private viewVotingPanelHeader header =
   [ header |> str ]
-  |> Heading.h1 [ Heading.is3 ]
+  |> Heading.h1 [ Heading.Is3 ]
   |> List.singleton
   |> Column.column []
 
@@ -223,10 +222,10 @@ let private viewOrganizer dispatch conference (organizer : Organizer) =
   let switch =
        Switch.switch
         [
-          Switch.isChecked isAddedToConference
-          Switch.isRounded
-          Switch.isPrimary
-          Switch.onChange (fun _ -> organizer |> changeMsg |> WhatIfMsg |> dispatch)
+          Switch.Checked isAddedToConference
+          Switch.IsRounded
+          Switch.Color IsPrimary
+          Switch.OnChange (fun _ -> organizer |> changeMsg |> WhatIfMsg |> dispatch)
         ]
         []
   [
@@ -240,8 +239,8 @@ let private viewOrganizers dispatch conference organizers =
     [
       yield Columns.columns []
         [
-          Column.column [] [ Heading.h1 [ Heading.is4 ]  [ str "Name" ] ]
-          Column.column [] [ Heading.h1 [ Heading.is4 ]  [ str "Added" ] ]
+          Column.column [] [ Heading.h1 [ Heading.Is4 ]  [ str "Name" ] ]
+          Column.column [] [ Heading.h1 [ Heading.Is4 ]  [ str "Added" ] ]
         ]
 
       yield! organizers |> List.map (viewOrganizer dispatch conference)
@@ -254,8 +253,8 @@ let private viewOrganizersPanel dispatch conference organizers =
         [
           Column.column
             [
-              Column.Width.isHalf
-              Column.Offset.isOneThird
+              Column.Width (Column.All, Column.IsHalf)
+              Column.Offset (Column.All, Column.IsOneThird)
             ]
             [
               viewOrganizers dispatch conference organizers
@@ -298,12 +297,12 @@ let footer currentView lastEvents =
 
   content
   |> List.singleton
-  |> Container.container [ Container.isFluid ]
+  |> Container.container [ Container.IsFluid ]
 
 let viewConferenceDropdownItem dispatch (conferenceId, title) =
-  Dropdown.item
+  Dropdown.Item.a
     [
-      Dropdown.Item.props [ OnClick (fun _ -> conferenceId |> SwitchToConference |> dispatch) ]
+      Dropdown.Item.Props [ OnClick (fun _ -> conferenceId |> SwitchToConference |> dispatch) ]
     ]
     [ str title ]
 
@@ -330,10 +329,10 @@ let private viewConferenceList dispatch currentView conferences =
       [
         div []
           [
-            Button.button_a []
+            Button.a []
               [
                 span [] [ currentView |> viewActiveConference |> str ]
-                Icon.faIcon [ Icon.isSmall ] [ Fa.icon Fa.I.AngleDown ]
+                Icon.faIcon [ Icon.Size IsSmall ] [ Fa.icon Fa.I.AngleDown ]
               ]
           ]
         Dropdown.menu []
@@ -344,7 +343,7 @@ let private viewConferenceList dispatch currentView conferences =
               ]
           ]
       ]
-      |> Dropdown.dropdown [ Dropdown.isHoverable ]
+      |> Dropdown.dropdown [ Dropdown.IsHoverable ]
 
   | _ ->
       [ div [ ClassName "column"] [ "Conferences not loaded" |> str ] ]
@@ -359,10 +358,8 @@ let private viewTab currentView selectEditorMsg targetEditor label =
 
       Tabs.tab
         [
-          if currentTarget = targetEditor then
-            yield Tabs.Tab.isActive
-
-          yield Tabs.Tab.props [ OnClick (fun _ -> targetEditor |> selectEditorMsg) ]
+          Tabs.Tab.IsActive (currentTarget = targetEditor)
+          Tabs.Tab.Props [ OnClick (fun _ -> targetEditor |> selectEditorMsg) ]
         ]
         [ a [ ] [str label] ]
 
@@ -371,8 +368,8 @@ let private viewTab currentView selectEditorMsg targetEditor label =
 let private viewTabs currentView selectEditorMsg =
   Tabs.tabs
     [
-      Tabs.isFullwidth
-      Tabs.isBoxed
+      Tabs.IsFullwidth
+      Tabs.IsBoxed
     ]
     [
       viewTab currentView selectEditorMsg AvailableEditor.ConferenceInformation "Information"
@@ -383,22 +380,22 @@ let private viewTabs currentView selectEditorMsg =
 let private viewWhatIfSwitch dispatch isChecked =
   Switch.switch
     [
-      Switch.isChecked isChecked
-      Switch.isRounded
-      Switch.isPrimary
-      Switch.onChange (fun _ -> ToggleMode |> dispatch)
+      Switch.Checked isChecked
+      Switch.IsRounded
+      Switch.Color IsPrimary
+      Switch.OnChange (fun _ -> ToggleMode |> dispatch)
     ]
     [ str "Whatif" ]
 
 let private viewMakeItSo dispatch =
-  Button.button_a
+  Button.a
     [
-      Button.isPrimary
-      Button.props [ OnClick (fun _ -> MakeItSo |> dispatch) ]
+      Button.Color IsPrimary
+      Button.Props [ OnClick (fun _ -> MakeItSo |> dispatch) ]
     ]
     [
 
-      Icon.faIcon [ Icon.isSmall ] [ Fa.icon Fa.I.CheckSquare ]
+      Icon.faIcon [ Icon.Size IsSmall ] [ Fa.icon Fa.I.CheckSquare ]
       span [] [ "Make It So" |> str ]
     ]
 
@@ -421,10 +418,10 @@ let private viewModeControls dispatch currentView =
 let private notificationType notification =
   match notification with
   | Events.Error _ ->
-      Notification.isDanger
+      Notification.Color IsDanger
 
   | _ ->
-      Notification.isSuccess
+      Notification.Color IsSuccess
 
 let private viewNotification dispatch (notification,transaction,animation) =
   let closeMsg _ =
@@ -448,21 +445,19 @@ let private viewNotification dispatch (notification,transaction,animation) =
     [
       match animation with
       | Entered ->
-          yield Notification.customClass "animated bounceInRight"
-          yield Notification.props [ Style itemStyle ]
+          yield Notification.CustomClass "animated bounceInRight"
+          yield Notification.Props [ Style itemStyle ]
 
       | Leaving ->
-          yield Notification.customClass "animated fadeOutRightBig"
-          yield Notification.props [ Style leavingItemStyle ]
+          yield Notification.CustomClass "animated fadeOutRightBig"
+          yield Notification.Props [ Style leavingItemStyle ]
 
       yield notification |> notificationType
 
     ]
     [
       Notification.delete
-        [
-          Notification.Delete.props [ OnClick closeMsg ]
-        ] []
+        [ Props [ OnClick closeMsg ] ] []
       notification |> Events.toString |> str
     ]
 
@@ -490,15 +485,15 @@ let private viewHeaderLine dispatch currentView conferences =
     conferences |> viewConferenceList dispatch currentView
 
   let newConference =
-    Button.button_a
+    Button.a
       [
-        Button.isPrimary
-        Button.onClick (fun _ -> SwitchToNewConference |> dispatch)
-        Button.onClick (fun _ -> SwitchToNewConference |> dispatch)
+        Button.Color IsPrimary
+        Button.OnClick (fun _ -> SwitchToNewConference |> dispatch)
+        Button.OnClick (fun _ -> SwitchToNewConference |> dispatch)
       ]
       [
         Icon.faIcon
-          [ Icon.isSmall ]
+          [ Icon.Size IsSmall ]
           [ Fa.icon Fa.I.PlusSquare ]
 
         span
@@ -530,28 +525,27 @@ let private viewHeader dispatch currentView conferences =
     yield viewHeaderLine dispatch currentView conferences
     yield viewTabs currentView (SwitchToEditor>>dispatch)
   ]
-  |> Container.container [ Container.isFluid ]
+  |> Container.container [ Container.IsFluid ]
 
 let private viewConferenceInformation dispatch submodel confirmMsg resetMsg confirmLabel =
   let conferenceInformation =
     ConferenceInformation.View.view (ConferenceInformationMsg>>dispatch) submodel
 
   let confirmButton =
-    Button.button_a
+    Button.a
       [
-        yield Button.onClick (fun _ -> confirmMsg |> dispatch )
-        yield Button.isPrimary
-        if submodel |> ConferenceInformation.Types.isValid |> not then
-          yield Button.isDisabled
+        Button.OnClick (fun _ -> confirmMsg |> dispatch )
+        Button.Color IsPrimary
+        Button.Disabled (submodel |> ConferenceInformation.Types.isValid |> not)
 
       ]
       [ str confirmLabel ]
 
   let resetButton =
-    Button.button_a
+    Button.a
       [
-        Button.onClick (fun _ -> resetMsg |> dispatch)
-        Button.isWarning
+        Button.OnClick (fun _ -> resetMsg |> dispatch)
+        Button.Color IsWarning
       ]
       [ str "Reset" ]
 
@@ -560,8 +554,8 @@ let private viewConferenceInformation dispatch submodel confirmMsg resetMsg conf
       [
         Column.column
           [
-            Column.Width.isHalf
-            Column.Offset.isOneThird
+            Column.Width (Column.All, Column.IsHalf)
+            Column.Offset (Column.All, Column.IsOneThird)
           ]
           [
             conferenceInformation
@@ -572,8 +566,8 @@ let private viewConferenceInformation dispatch submodel confirmMsg resetMsg conf
       [
         Column.column
           [
-            Column.Width.isHalf
-            Column.Offset.isOneThird
+            Column.Width (Column.All, Column.IsHalf)
+            Column.Offset (Column.All, Column.IsOneThird)
           ]
           [
             confirmButton
@@ -620,7 +614,7 @@ let viewCurrentView dispatch user currentView organizers =
       |> div [ ClassName "columns" ]
 
   |> List.singleton
-  |> Container.container [ Container.isFluid ]
+  |> Container.container [ Container.IsFluid ]
 
 let view dispatch model =
   [

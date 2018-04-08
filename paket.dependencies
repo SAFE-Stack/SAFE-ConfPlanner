@@ -5,7 +5,7 @@ nuget FSharp.Core
 nuget Chessie
 nuget FAKE
 nuget FsUnit
-nuget Fulma 1.0.0-beta-005
+nuget Fulma
 nuget Fulma.Extensions
 nuget Microsoft.NET.Test.Sdk
 nuget Newtonsoft.Json

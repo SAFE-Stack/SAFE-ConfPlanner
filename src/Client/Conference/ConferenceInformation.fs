@@ -3,6 +3,8 @@ namespace Conference.ConferenceInformation
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fable.Core.JsInterop
+open Fulma.Color
+open Fulma.Size
 open Fulma.Elements
 open Fulma.Elements.Form
 open Fulma.Extra.FontAwesome
@@ -72,38 +74,38 @@ module View =
     | Some error ->
         let help =
           Help.help
-            [ Help.isDanger ]
+            [ Help.Color IsDanger ]
             [ str error ]
 
-        Input.isDanger,Fa.I.Times,help
+        Input.Color IsDanger,Fa.I.Times,help
 
     | None ->
-        Input.isSuccess,Fa.I.Check,str ""
+        Input.Color IsSuccess,Fa.I.Check,str ""
 
   let private viewFormField changeMsg field error label =
     let inputType,inputIcon,inputError =
       error |> typeAndIconAndError
 
-    Form.Field.field_div []
+    Form.Field.div []
       [
         Label.label [] [ str label ]
-        Control.control_div
+        Control.div
           [
-             Control.hasIconRight
+             Control.HasIconRight
           ]
           [
             Input.input
               [
                 inputType
-                Input.typeIsText
-                Input.placeholder label
-                Input.value field
-                Input.props [ OnChange (fun event -> !!event.target?value |>changeMsg) ]
+                Input.Type Input.Text
+                Input.Placeholder label
+                Input.Value field
+                Input.Props [ OnChange (fun event -> !!event.target?value |>changeMsg) ]
               ]
             Icon.faIcon
               [
-                Icon.isSmall
-                Icon.isRight
+                Icon.Size IsSmall
+                Icon.IsRight
               ]
               [ Fa.icon inputIcon ]
 
