@@ -100,13 +100,13 @@ let private viewTalk dispatch user votings (talk : Model.ConferenceAbstract) =
   let vote =
     votings |> extractVoteForAbstract user talk.Id
 
-  let cardStyle : ICSSProp list =
+  let cardStyle : CSSProp list =
     [
       MarginTop 5
       MarginBottom 5
     ]
 
-  let footerStyle : ICSSProp list =
+  let footerStyle : CSSProp list =
     [
       Display Flex
       FlexDirection "row"
@@ -160,7 +160,7 @@ let private abstractColumn dispatch color filter user conference  =
     |> List.filter filter
     |> List.map (viewTalk dispatch user conference.Votings)
 
-  let style : ICSSProp list =
+  let style : CSSProp list =
     [
       BackgroundColor color
       Display Flex
@@ -430,14 +430,14 @@ let private viewNotification dispatch (notification,transaction,animation) =
   let closeMsg _ =
     (notification,transaction,animation) |> RequestNotificationForRemoval |> dispatch
 
-  let itemStyle : ICSSProp list =
+  let itemStyle : CSSProp list =
     [
       MaxHeight "100px"
       Margin "1em 1em 0 1em"
       Transition "max-height 0.6s, margin-top 0.6s"
     ]
 
-  let leavingItemStyle : ICSSProp list =
+  let leavingItemStyle : CSSProp list =
     itemStyle @
       [
         MaxHeight 0
@@ -467,7 +467,7 @@ let private viewNotification dispatch (notification,transaction,animation) =
     ]
 
 let private viewNotifications dispatch notifications =
-  let containerStyle : ICSSProp list =
+  let containerStyle : CSSProp list =
     [
       Position "fixed"
       Top 60

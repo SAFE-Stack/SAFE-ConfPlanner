@@ -17,7 +17,7 @@ let mutable closeWebsocket : unit -> unit =
   websocketNotConnected
 
 let startWs token dispatch =
-  let onMsg : System.Func<MessageEvent, obj> =
+  let onMsg : MessageEvent -> obj =
     (fun (wsMsg : MessageEvent) ->
       let msg =
         ofJson<ServerMsg<Domain.Events.Event,API.QueryResult>> <| unbox wsMsg.data
@@ -25,7 +25,7 @@ let startWs token dispatch =
       Msg.Received msg |> dispatch
 
       null
-    ) |> unbox // temporary fix until Fable WS Import is upgraded to Fable 1.*
+    )
 
   let ws = Fable.Import.Browser.WebSocket.Create("ws://127.0.0.1:8085" + Server.Urls.Conference + "?jwt=" + token)
 
