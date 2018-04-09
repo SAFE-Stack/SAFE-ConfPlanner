@@ -13,4 +13,5 @@
     <Compile Include="Conference2.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

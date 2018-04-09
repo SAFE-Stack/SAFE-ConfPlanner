@@ -7,21 +7,22 @@ open Fulma.Elements
 open Fulma.Layouts
 open Fulma.Extra.FontAwesome
 open Fulma.Elements.Form
+open Fulma.Color
 open Global
 open App.Types
 
 let private navbarEnd =
-  Navbar.end_div []
+  Navbar.End.div []
     [
-      Navbar.item_div []
+      Navbar.Item.div []
         [
-          Field.field_div [ Field.isGrouped ]
+          Field.div [ Field.IsGrouped ]
             [
-              Control.control_p [ ]
+              Control.p [ ]
                 [
-                  Button.button_a
+                  Button.a
                     [
-                      Button.props [ Href "https://github.com/rommsen/ConfPlanner" ]
+                      Button.Props [ Href "https://github.com/rommsen/ConfPlanner" ]
                     ]
                     [
                       Icon.faIcon [ ] [ Fa.icon Fa.I.Github ]
@@ -47,12 +48,10 @@ let private menuItem label page currentPage =
     | _ ->
         false
 
-  Navbar.item_a
+  Navbar.Item.a
     [
-      if isActive then
-        yield Navbar.Item.isActive
-
-      yield Navbar.Item.props [ Href <| toHash page ]
+      Navbar.Item.IsActive isActive
+      Navbar.Item.Props [ Href <| toHash page ]
     ]
     [
       str label
@@ -64,16 +63,16 @@ let private viewLoginLogout dispatch user currentPage =
       menuItem "Login" Page.Login currentPage
 
   | Some user ->
-      Navbar.item_a
+      Navbar.Item.a
         [
-          Navbar.Item.props [ OnClick (fun _ -> Logout |> dispatch) ]
+          Navbar.Item.Props [ OnClick (fun _ -> Logout |> dispatch) ]
         ]
         [
           str <| "Logout " + user.UserName
         ]
 
 let private navbarStart dispatch user currentPage =
-  Navbar.start_div []
+  Navbar.Start.a []
     [
       menuItem "Conference" Page.Conference currentPage
       menuItem "About" Page.About currentPage
@@ -83,15 +82,15 @@ let private navbarStart dispatch user currentPage =
 let view dispatch user currentPage =
   div [ ClassName "navbar-bg" ]
     [
-      Container.container [ Container.isFluid ]
+      Container.container [ Container.IsFluid ]
         [
-          Navbar.navbar [ Navbar.isPrimary ]
+          Navbar.navbar [ Navbar.Color IsPrimary ]
             [
-              Navbar.brand_div [ ]
+              Navbar.Brand.div [ ]
                 [
-                  Navbar.item_a [ Navbar.Item.props [ Href "#" ] ]
+                  Navbar.Item.a [ Navbar.Item.Props [ Href "#" ] ]
                     [
-                      Heading.p [ Heading.is4 ]
+                      Heading.p [ Heading.Is4 ]
                         [ str "SAFE-ConfPlanner" ]
                     ]
                 ]

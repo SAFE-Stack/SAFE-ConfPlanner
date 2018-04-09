@@ -9,6 +9,8 @@ open Login.Types
 
 open Fulma.Layouts
 open Fulma.Elements
+open Fulma.Color
+open Fulma.Size
 open Fulma.Extra.FontAwesome
 open Fulma.Elements.Form
 
@@ -17,13 +19,13 @@ let private typeAndIconAndError error =
   | Some error ->
       let help =
         Help.help
-          [ Help.isDanger ]
+          [ Help.Color IsDanger ]
           [ str error ]
 
-      Input.isDanger,Fa.I.Times,help
+      Input.Color IsDanger,Fa.I.Times,help
 
   | None ->
-      Input.isSuccess,Fa.I.Check,str ""
+      Input.Color IsSuccess,Fa.I.Check,str ""
 
 let private viewFormField typeIs changeMsg field error label props =
   let inputType,inputIcon,inputError =
@@ -34,27 +36,27 @@ let private viewFormField typeIs changeMsg field error label props =
       OnChange (fun event -> !!event.target?value |>changeMsg)
     ]
 
-  Form.Field.field_div []
+  Form.Field.div []
     [
       Label.label [] [ str label ]
-      Control.control_div
+      Control.div
         [
-           Control.hasIconRight
+           Control.HasIconRight
         ]
         [
           Input.input
             [
               inputType
-              typeIs
-              Input.placeholder label
-              Input.value field
-              Input.props <| List.concat [ defaultProps ; props ]
+              Input.Type typeIs
+              Input.Placeholder label
+              Input.Value field
+              Input.Props <| List.concat [ defaultProps ; props ]
 
             ]
           Icon.faIcon
             [
-              Icon.isSmall
-              Icon.isRight
+              Icon.Size IsSmall
+              Icon.IsRight
             ]
             [ Fa.icon inputIcon ]
 
@@ -66,7 +68,7 @@ let private viewForm dispatch model =
   form [ ]
     [
       viewFormField
-        Input.typeIsText
+        Input.Text
         (SetUserName>>dispatch)
         model.Login.UserName
         model.ErrorMsg
@@ -77,7 +79,7 @@ let private viewForm dispatch model =
         ]
 
       viewFormField
-        Input.typeIsPassword
+        Input.Password
         (SetPassword>>dispatch)
         model.Login.Password
         model.ErrorMsg
@@ -90,8 +92,8 @@ let private viewLoginRow content =
     [
       Column.column
         [
-          Column.Width.isHalf
-          Column.Offset.isOneThird
+          Column.Width (Column.All, Column.IsHalf)
+          Column.Offset (Column.All, Column.IsOneThird)
         ]
         [
           content
@@ -99,12 +101,11 @@ let private viewLoginRow content =
     ]
 
 let private viewLoginButton dispatch username password =
-  Button.button_a
+  Button.a
     [
-      yield Button.onClick (fun _ -> ClickLogIn |> dispatch)
-      yield Button.isPrimary
-      if String.IsNullOrEmpty username || String.IsNullOrEmpty password then
-        yield Button.isDisabled
+      Button.OnClick (fun _ -> ClickLogIn |> dispatch)
+      Button.Color IsPrimary
+      Button.Disabled (String.IsNullOrEmpty username || String.IsNullOrEmpty password)
     ]
     [ str "Log in" ]
 
