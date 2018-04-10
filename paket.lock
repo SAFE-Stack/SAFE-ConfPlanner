@@ -1,9 +1,5 @@
 NUGET
   remote: https://www.nuget.org/api/v2
-    Chessie (0.6)
-      FSharp.Core  - restriction: < netstandard1.6
-      FSharp.Core (>= 4.0.1.7-alpha) - restriction: >= netstandard1.6
-      NETStandard.Library (>= 1.6) - restriction: >= netstandard1.6
     dotnet-fable (1.3.14) - clitool: true
       Dotnet.ProjInfo (>= 0.9) - restriction: >= netcoreapp2.0
       Fable.Compiler (>= 1.3.14) - restriction: >= netcoreapp2.0

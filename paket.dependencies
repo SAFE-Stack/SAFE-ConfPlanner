@@ -2,7 +2,6 @@ source https://www.nuget.org/api/v2
 
 nuget FSharp.Core
 
-nuget Chessie
 nuget FAKE
 nuget FsUnit
 nuget Fulma
