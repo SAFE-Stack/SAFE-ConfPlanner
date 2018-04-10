@@ -2,7 +2,7 @@
 // FAKE build script
 // --------------------------------------------------------------------------------------
 
-#r "./packages/FAKE/tools/FakeLib.dll"
+#r @"packages/build/FAKE/tools/FakeLib.dll"
 
 open Fake
 open System
@@ -100,13 +100,14 @@ Target "InstallClient" (fun _ ->
     run nodeTool "--version" __SOURCE_DIRECTORY__
     printfn "Yarn version:"
     run yarnTool "--version" __SOURCE_DIRECTORY__
-    run yarnTool "install" __SOURCE_DIRECTORY__
-    runDotnet clientPath "restore"
+    run yarnTool "install --frozen-lockfile" __SOURCE_DIRECTORY__
 )
 
 Target "BuildClient" (fun _ ->
-    runDotnet clientPath "fable yarn-run build"
+    runDotnet clientPath "restore"
+    runDotnet clientPath "fable webpack --port free -- -p --mode production"
 )
+
 
 Target "RunFixtures" (fun _ ->
     runDotnet supportPath "run"

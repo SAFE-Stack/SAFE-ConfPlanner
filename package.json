@@ -8,7 +8,7 @@
     "prestartClient":
       "concurrently \"npm run restoreClient\" \"npm run restoreNetClient\" ",
     "startClient":
-      "cd src/Client && dotnet fable webpack-dev-server --port free"
+      "cd src/Client && dotnet fable webpack-dev-server --port free --mode development"
   },
   "keywords": [],
   "author": "",
