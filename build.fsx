@@ -2,7 +2,7 @@
 // FAKE build script
 // --------------------------------------------------------------------------------------
 
-#r "./packages/FAKE/tools/FakeLib.dll"
+#r @"packages/build/FAKE/tools/FakeLib.dll"
 
 open Fake
 open System
@@ -16,7 +16,7 @@ let serverPath = "./src/Server" |> FullName
 let supportPath = "./src/Support" |> FullName
 
 
-let dotnetcliVersion = "2.0.3"
+let dotnetcliVersion = Fake.DotNetCli.GetDotNetSDKVersionFromGlobalJson()
 
 let mutable dotnetExePath = "dotnet"
 
@@ -100,13 +100,14 @@ Target "InstallClient" (fun _ ->
     run nodeTool "--version" __SOURCE_DIRECTORY__
     printfn "Yarn version:"
     run yarnTool "--version" __SOURCE_DIRECTORY__
-    run yarnTool "install" __SOURCE_DIRECTORY__
-    runDotnet clientPath "restore"
+    run yarnTool "install --frozen-lockfile" __SOURCE_DIRECTORY__
 )
 
 Target "BuildClient" (fun _ ->
-    runDotnet clientPath "fable yarn-run build"
+    runDotnet clientPath "restore"
+    runDotnet clientPath "fable webpack --port free -- -p --mode production"
 )
+
 
 Target "RunFixtures" (fun _ ->
     runDotnet supportPath "run"
@@ -127,7 +128,7 @@ let port = 8080
 
 Target "Run" (fun _ ->
     let suave = async { runDotnet serverPath "run" }
-    let fablewatch = async { runDotnet clientPath "fable yarn-start" } // nicht  webpack-dev-server, sonst wird webpack config nicht gefunden
+    let fablewatch = async { runDotnet clientPath "fable webpack-dev-server --port free -- --mode development" } // nicht  webpack-dev-server, sonst wird webpack config nicht gefunden
     let openBrowser = async {
         System.Threading.Thread.Sleep(5000)
         Diagnostics.Process.Start("http://"+ ipAddress + sprintf ":%d" port) |> ignore }

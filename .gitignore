@@ -395,3 +395,4 @@ paket-files/
 tests
 *eventstore.json
 .history/
+packages/*

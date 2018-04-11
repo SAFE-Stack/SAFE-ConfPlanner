@@ -1,9 +1,8 @@
 source https://www.nuget.org/api/v2
+storage:none
 
 nuget FSharp.Core
 
-nuget Chessie
-nuget FAKE
 nuget FsUnit
 nuget Fulma
 nuget Fulma.Extensions
@@ -28,3 +27,8 @@ nuget jose-jwt
 nuget dotnet-test-nunit
 
 clitool dotnet-fable
+
+group Build
+  source https://nuget.org/api/v2
+  framework >= net461
+  nuget FAKE

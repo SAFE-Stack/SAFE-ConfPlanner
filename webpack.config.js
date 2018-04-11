@@ -3,47 +3,52 @@ var webpack = require("webpack");
 let fableUtils = require("fable-utils");
 
 function resolve(filePath) {
-  return path.join(__dirname, filePath)
+  return path.join(__dirname, filePath);
 }
 
 var babelOptions = fableUtils.resolveBabelOptions({
-  presets: [["es2015", { "modules": false }]],
-  plugins: [["transform-runtime", {
-    "helpers": true,
-    // We don't need the polyfills as we're already calling
-    // cdn.polyfill.io/v2/polyfill.js in index.html
-    "polyfill": false,
-    "regenerator": false
-  }]]
+  presets: [
+    [
+      "env",
+      {
+        targets: {
+          browsers: ["last 2 versions"]
+        },
+        modules: false
+      }
+    ]
+  ],
+  plugins: ["transform-runtime"]
 });
 
 var isProduction = process.argv.indexOf("-p") >= 0;
 var suavePort = process.env.SUAVE_FABLE_PORT || "8085";
-console.log("Bundling for " + (isProduction ? "production" : "development") + "...");
+console.log(
+  "Bundling for " + (isProduction ? "production" : "development") + "..."
+);
 
 module.exports = {
   devtool: "source-map",
-  entry: resolve('./src/Client/Client.fsproj'),
+  entry: resolve("./src/Client/Client.fsproj"),
   output: {
-    filename: 'bundle.js',
-    path: resolve('./public'),
+    path: resolve("./public"),
+    publicPath: "/public",
+    filename: "bundle.js"
   },
   resolve: {
-    modules: [
-      "node_modules", resolve("./node_modules/")
-    ]
+    modules: ["node_modules", resolve("./node_modules/")]
   },
   devServer: {
-    contentBase: resolve('./public'),
-    port: 8080,
-    hot: true,
-    inline: true,
     proxy: {
-      '/api/*': {
-        target: 'http://localhost:' + suavePort,
+      "/api/*": {
+        target: "http://localhost:" + suavePort,
         changeOrigin: true
       }
-    }
+    },
+    contentBase: resolve("./public"),
+    hot: true,
+    inline: true,
+    historyApiFallback: true
   },
   module: {
     rules: [
@@ -61,22 +66,20 @@ module.exports = {
         test: /\.js$/,
         exclude: /node_modules/,
         use: {
-          loader: 'babel-loader',
+          loader: "babel-loader",
           options: babelOptions
-        },
+        }
       },
       {
         test: /\.sass$/,
-        use: [
-          "style-loader",
-          "css-loader",
-          "sass-loader"
-        ]
+        use: ["style-loader", "css-loader", "sass-loader"]
       }
     ]
   },
-  plugins : isProduction ? [] : [
-    new webpack.HotModuleReplacementPlugin(),
-    new webpack.NamedModulesPlugin()
-  ]
+  plugins: isProduction
+    ? []
+    : [
+        new webpack.HotModuleReplacementPlugin(),
+        new webpack.NamedModulesPlugin()
+      ]
 };

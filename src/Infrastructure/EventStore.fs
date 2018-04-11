@@ -11,14 +11,14 @@ type Msg<'Event> =
 let eventStore store : ReadEvents<'Event> * AppendEvents<'Event> =
   let mailbox =
     MailboxProcessor.Start(fun inbox ->
-      printfn "Start"
+      // printfn "Start"
       let rec loop() =
           async {
             let! msg = inbox.Receive()
 
             match msg with
             | Events (eventSet,reply) ->
-                printfn "EventStore received new events: %A" eventSet
+                // printfn "EventStore received new events: %A" eventSet
                 try
                   use streamWriter = new StreamWriter(store, true)
 

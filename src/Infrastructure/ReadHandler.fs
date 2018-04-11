@@ -29,12 +29,12 @@ let readHandler
 
             match msg with
             | Events ((_,streamId),events) ->
-                printfn "ReadModel received new events: %A" events
+                // printfn "ReadModel received new events: %A" events
                 let newReadModel =
                   (streamId,events)
                   |> projectionDefinition.UpdateState state
 
-                printfn "New Readmodel: %A" newReadModel
+                // printfn "New Readmodel: %A" newReadModel
 
                 return! loop newReadModel
 

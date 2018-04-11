@@ -77,7 +77,7 @@ let commandHandler
         let initialEvents =
           match eventResult with
           | EventResult.Ok events ->
-              printfn "initial events %A" events
+              // printfn "initial events %A" events
               events
 
           | EventResult.Error _ ->
