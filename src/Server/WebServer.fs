@@ -15,16 +15,16 @@ open Conference.Api
 
 open Websocket
 
-let dummyWebsocket =
-  let projection,queryHandler =
-    toProjectionAndQueryHandler Dummy.projection Dummy.queryHandler
+// let dummyWebsocket =
+//   let projection,queryHandler =
+//     toProjectionAndQueryHandler Dummy.projection Dummy.queryHandler
 
-  websocket <|
-    eventSourced
-      Dummy.behaviour
-      [projection]
-      [queryHandler]
-      @".\dummy_eventstore.json"
+//   websocket <|
+//     eventSourced
+//       Dummy.behaviour
+//       [projection]
+//       [queryHandler]
+//       @".\dummy_eventstore.json"
 
 let conferenceWebsocket =
   let conferenceProjection,conferenceQueryHandler =
@@ -68,7 +68,7 @@ let start clientPath port =
                 path Server.Urls.Login >=> Auth.login
             ]
 
-            path "/dummyWebsocket" >=> handShake dummyWebsocket
+            // path "/dummyWebsocket" >=> handShake dummyWebsocket
 
             path Server.Urls.Conference  >=> websocketWithAuth handShake conferenceWebsocket
 
