@@ -32,7 +32,7 @@ Up to now there is no working version available online. Any help would be apprec
 This project consists of 6 dotnetcore subprojects
 * `Domain` - Message-based CQRS implementation of the Domain of a ConferencePlanner.
 * `Domain.Tests` - BDD-Style Tests for the `Domain`
-* `Client` - [Fable](http://fable.io/) Project that uses the Elm-Architecture (with [Fable-Elmish](https://fable-elmish.github.io/elmish/)). It reuses the projections of the `Domain` project. Furthermore it and can also reuse the behaviour of the Domain (when switched to `WhatIf-Mode`)
+* `Client` - [Fable](http://fable.io/) Project that uses the Elm-Architecture (with [Fable-Elmish](https://elmish.github.io/elmish/)). It reuses the projections of the `Domain` project. Furthermore it and can also reuse the behaviour of the Domain (when switched to `WhatIf-Mode`)
 * `Server` - A Suave Webserver that allows the Client to connect via Websockets.
 * `Infrastructure` - This is where all the backend infrastructure is implemented. It contains a simple (file based) event store, command and query handlers and the types that hold everything together. Most of the infrastructure is implemented asynchronously with the help of F# awesome [Mailbox Processors](https://fsharpforfunandprofit.com/posts/concurrency-actor-model/)
 * `Support` - A simple project to fill the EventStore with some initial values.
