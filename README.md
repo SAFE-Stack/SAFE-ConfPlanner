@@ -45,6 +45,14 @@ This project consists of 6 dotnetcore subprojects
 - [yarn](https://yarnpkg.com/) - Package manager for npm modules
 - [dotnet SDK 2.1.3](https://github.com/dotnet/core/blob/master/release-notes/download-archives/2.0.4-download.md) The .NET Core SDK (will be installed by build script)
 - Other tools like [Paket](https://fsprojects.github.io/Paket/) or [FAKE](https://fake.build/) will also be installed by the build script.
+- [Python 2.7](https://www.python.org/downloads/)
+
+### Visual Studio 2017 or 2015 / Windows Build Tools
+You might get certain build errors if you don't have the C++ or Windows Build Tools installed. There are a couple of ways to do this:
+1.  Use `npm install` [Link to npm windows-build-tool documentation](https://www.npmjs.com/package/windows-build-tools)
+2. Use the Visual Studio installer to install the Desktop Development Environment for C++.
+
+You might also get an error about failing to find the Windows 8.1 SDK. You can use the Visual Studio Installer to install it.
 
 ## Development mode
 
