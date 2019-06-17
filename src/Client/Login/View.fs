@@ -1,18 +1,14 @@
 module Login.View
 
-open Fable.Helpers.React
-open Fable.Helpers.React.Props
+open Fable.React
+open Fable.React.Props
 open System
 open Fable.Core.JsInterop
+open Fable.FontAwesome
 
 open Login.Types
 
-open Fulma.Layouts
-open Fulma.Elements
-open Fulma.Color
-open Fulma.Size
-open Fulma.Extra.FontAwesome
-open Fulma.Elements.Form
+open Fulma
 
 let private typeAndIconAndError error =
   match error with
@@ -22,10 +18,10 @@ let private typeAndIconAndError error =
           [ Help.Color IsDanger ]
           [ str error ]
 
-      Input.Color IsDanger,Fa.I.Times,help
+      Input.Color IsDanger,Fa.Solid.Times,help
 
   | None ->
-      Input.Color IsSuccess,Fa.I.Check,str ""
+      Input.Color IsSuccess,Fa.Solid.Check,str ""
 
 let private viewFormField typeIs changeMsg field error label props =
   let inputType,inputIcon,inputError =
@@ -36,7 +32,7 @@ let private viewFormField typeIs changeMsg field error label props =
       OnChange (fun event -> !!event.target?value |>changeMsg)
     ]
 
-  Form.Field.div []
+  Field.div []
     [
       Label.label [] [ str label ]
       Control.div
@@ -53,12 +49,12 @@ let private viewFormField typeIs changeMsg field error label props =
               Input.Props <| List.concat [ defaultProps ; props ]
 
             ]
-          Icon.faIcon
+          Icon.icon
             [
               Icon.Size IsSmall
               Icon.IsRight
             ]
-            [ Fa.icon inputIcon ]
+            [ Fa.i [ inputIcon ] [] ]
 
         ]
       inputError
@@ -92,8 +88,8 @@ let private viewLoginRow content =
     [
       Column.column
         [
-          Column.Width (Column.All, Column.IsHalf)
-          Column.Offset (Column.All, Column.IsOneThird)
+          Column.Width (Screen.All, Column.IsHalf)
+          Column.Offset (Screen.All, Column.IsOneThird)
         ]
         [
           content

@@ -4,8 +4,6 @@ storage:none
 nuget FSharp.Core
 
 nuget FsUnit
-nuget Fulma
-nuget Fulma.Extensions
 nuget Microsoft.NET.Test.Sdk
 nuget Newtonsoft.Json
 nuget NUnit.Console
@@ -14,12 +12,22 @@ nuget NUnit3TestAdapter
 nuget System.Net.NetworkInformation
 
 nuget Fable.Core
+nuget Fable.Browser.Dom
+nuget Fable.Browser.WebSocket
+nuget Fable.Browser.WebStorage
+nuget Fable.Fetch
+nuget Fable.Promise
 nuget Fable.Elmish
 nuget Fable.Elmish.HMR
 nuget Fable.Elmish.React
 nuget Fable.Elmish.Browser
 nuget Fable.Elmish.Debugger
-nuget Fable.JsonConverter
+nuget Fable.FontAwesome
+nuget Fable.FontAwesome.Free
+nuget Fulma
+nuget Fulma.Extensions.Wikiki.Switch
+nuget Thoth.Json prerelease
+nuget Thoth.Json.Net prerelease
 
 nuget Suave
 nuget jose-jwt

@@ -1,13 +1,10 @@
 namespace Conference.ConferenceInformation
 
-open Fable.Helpers.React
-open Fable.Helpers.React.Props
+open Fable.React
+open Fable.React.Props
 open Fable.Core.JsInterop
-open Fulma.Color
-open Fulma.Size
-open Fulma.Elements
-open Fulma.Elements.Form
-open Fulma.Extra.FontAwesome
+open Fable.FontAwesome
+open Fulma
 
 module Types =
   type Model =
@@ -22,7 +19,7 @@ module Types =
       AvailableSlotsForTalks : string option
     }
 
-  let isInteger str =
+  let isInteger (str: string) =
     str
     |> System.Int32.TryParse
     |> function | (true, _) -> true | _ -> false
@@ -77,16 +74,16 @@ module View =
             [ Help.Color IsDanger ]
             [ str error ]
 
-        Input.Color IsDanger,Fa.I.Times,help
+        Input.Color IsDanger,Fa.Solid.Times,help
 
     | None ->
-        Input.Color IsSuccess,Fa.I.Check,str ""
+        Input.Color IsSuccess,Fa.Solid.Check,str ""
 
   let private viewFormField changeMsg field error label =
     let inputType,inputIcon,inputError =
       error |> typeAndIconAndError
 
-    Form.Field.div []
+    Field.div []
       [
         Label.label [] [ str label ]
         Control.div
@@ -102,12 +99,12 @@ module View =
                 Input.Value field
                 Input.Props [ OnChange (fun event -> !!event.target?value |>changeMsg) ]
               ]
-            Icon.faIcon
+            Icon.icon
               [
                 Icon.Size IsSmall
                 Icon.IsRight
               ]
-              [ Fa.icon inputIcon ]
+              [ Fa.i [ inputIcon ] [] ]
 
           ]
         inputError

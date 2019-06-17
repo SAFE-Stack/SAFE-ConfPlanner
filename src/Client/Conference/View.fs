@@ -2,20 +2,16 @@ module Conference.View
 
 open Conference.Types
 
-open Fable.Helpers.React
-open Fable.Helpers.React.Props
+open Fable.React
+open Fable.React.Props
+open Fable.FontAwesome
 
 open Global
 open Domain
 open Domain.Model
 
 open Fulma
-open Fulma.Elements
-open Fulma.Layouts
-open Fulma.Components
-open Fulma.Extra.FontAwesome
-open Fulma.Elements.Form
-open Fulma.Extensions
+open Fulma.Extensions.Wikiki
 
 let private pleaseSelectAConference =
   "Please select a conference"
@@ -107,7 +103,7 @@ let private viewTalk dispatch user votings (talk : Model.ConferenceAbstract) =
 
   let footerStyle : CSSProp list =
     [
-      Display Flex
+      Display DisplayOptions.Flex
       FlexDirection "row"
       JustifyContent "left"
     ]
@@ -136,10 +132,10 @@ let private viewTalk dispatch user votings (talk : Model.ConferenceAbstract) =
         ]
       Card.footer []
         [
-          Card.Footer.item [ Props [ Style footerStyle ] ]
-            [
-              viewVotingButtons dispatch user vote talk
-            ]
+          // Content.content [ Props [ Style footerStyle ] ]
+          //   [
+          //     viewVotingButtons dispatch user vote talk
+          //   ]
         ]
     ]
 
@@ -162,7 +158,7 @@ let private abstractColumn dispatch color filter user conference  =
   let style : CSSProp list =
     [
       BackgroundColor color
-      Display Flex
+      Display DisplayOptions.Flex
       FlexDirection "column"
     ]
 
@@ -253,8 +249,8 @@ let private viewOrganizersPanel dispatch conference organizers =
         [
           Column.column
             [
-              Column.Width (Column.All, Column.IsHalf)
-              Column.Offset (Column.All, Column.IsOneThird)
+              Column.Width (Screen.All, Column.IsHalf)
+              Column.Offset (Screen.All, Column.IsOneThird)
             ]
             [
               viewOrganizers dispatch conference organizers
@@ -332,7 +328,7 @@ let private viewConferenceList dispatch currentView conferences =
             Button.a []
               [
                 span [] [ currentView |> viewActiveConference |> str ]
-                Icon.faIcon [ Icon.Size IsSmall ] [ Fa.icon Fa.I.AngleDown ]
+                Icon.icon [ Icon.Size IsSmall ] [ Fa.i [ Fa.Solid.AngleDown ] [] ]
               ]
           ]
         Dropdown.menu []
@@ -368,7 +364,7 @@ let private viewTab currentView selectEditorMsg targetEditor label =
 let private viewTabs currentView selectEditorMsg =
   Tabs.tabs
     [
-      Tabs.IsFullwidth
+      Tabs.IsFullWidth
       Tabs.IsBoxed
     ]
     [
@@ -395,7 +391,7 @@ let private viewMakeItSo dispatch =
     ]
     [
 
-      Icon.faIcon [ Icon.Size IsSmall ] [ Fa.icon Fa.I.CheckSquare ]
+      Icon.icon [ Icon.Size IsSmall ] [ Fa.i [ Fa.Solid.CheckSquare ] [] ]
       span [] [ "Make It So" |> str ]
     ]
 
@@ -464,7 +460,7 @@ let private viewNotification dispatch (notification,transaction,animation) =
 let private viewNotifications dispatch notifications =
   let containerStyle : CSSProp list =
     [
-      Position "fixed"
+      Position PositionOptions.Fixed
       Top 60
       Right 0
       Width "100%"
@@ -492,9 +488,9 @@ let private viewHeaderLine dispatch currentView conferences =
         Button.OnClick (fun _ -> SwitchToNewConference |> dispatch)
       ]
       [
-        Icon.faIcon
+        Icon.icon
           [ Icon.Size IsSmall ]
-          [ Fa.icon Fa.I.PlusSquare ]
+          [ Fa.i [ Fa.Solid.PlusSquare ] [] ]
 
         span
           []
@@ -554,8 +550,8 @@ let private viewConferenceInformation dispatch submodel confirmMsg resetMsg conf
       [
         Column.column
           [
-            Column.Width (Column.All, Column.IsHalf)
-            Column.Offset (Column.All, Column.IsOneThird)
+            Column.Width (Screen.All, Column.IsHalf)
+            Column.Offset (Screen.All, Column.IsOneThird)
           ]
           [
             conferenceInformation
@@ -566,8 +562,8 @@ let private viewConferenceInformation dispatch submodel confirmMsg resetMsg conf
       [
         Column.column
           [
-            Column.Width (Column.All, Column.IsHalf)
-            Column.Offset (Column.All, Column.IsOneThird)
+            Column.Width (Screen.All, Column.IsHalf)
+            Column.Offset (Screen.All, Column.IsOneThird)
           ]
           [
             confirmButton

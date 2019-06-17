@@ -10,7 +10,6 @@ open Infrastructure.Types
 open Conference.Types
 open Conference.Ws
 open Conference.Api
-open Fable.Import.Browser
 open Domain
 open Domain.Model
 
@@ -63,7 +62,7 @@ let dispose () =
   Cmd.ofSub stopWs
 
 let private timeoutCmd timeout msg dispatch =
-  window.setTimeout((fun _ -> msg |> dispatch), timeout) |> ignore
+  Browser.Dom.window.setTimeout((fun _ -> msg |> dispatch), timeout) |> ignore
 
 let private withView view model =
   { model with View = view }

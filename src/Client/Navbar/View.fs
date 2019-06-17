@@ -1,15 +1,11 @@
 module Navbar.View
 
-open Fable.Helpers.React
-open Fable.Helpers.React.Props
-open Fulma.Components
-open Fulma.Elements
-open Fulma.Layouts
-open Fulma.Extra.FontAwesome
-open Fulma.Elements.Form
-open Fulma.Color
+open Fable.React
+open Fable.React.Props
+open Fable.FontAwesome
 open Global
 open App.Types
+open Fulma
 
 let private navbarEnd =
   Navbar.End.div []
@@ -25,7 +21,7 @@ let private navbarEnd =
                       Button.Props [ Href "https://github.com/rommsen/ConfPlanner" ]
                     ]
                     [
-                      Icon.faIcon [ ] [ Fa.icon Fa.I.Github ]
+                      Icon.icon [ ] [ Fa.i [ Fa.Brand.Github ] [] ]
                       span [ ] [ str "Source" ]
                     ]
                 ]

@@ -1,11 +1,14 @@
 module App.State
 
 open Elmish
-open Elmish.Browser.Navigation
+open Elmish.Navigation
 open Elmish.Helper
 open Fable.Import
 open Global
 open Types
+
+open Thoth.Json
+open Fable.Core
 
 let private disposeCmd currentPage =
   match currentPage with
@@ -25,7 +28,7 @@ let private navigateTo page model =
 let urlUpdate (result : Page option) model =
   match result with
   | None ->
-      Browser.console.error("Error parsing url: " + Browser.window.location.href)
+      JS.console.error("Error parsing url: " + Browser.Dom.window.location.href)
       model
       |> navigateTo Page.About
 
@@ -50,14 +53,17 @@ let urlUpdate (result : Page option) model =
 
   |> withAdditionalCommand (disposeCmd model.CurrentPage)
 
-let private loadUser () =
-  Fable.PowerPack.BrowserLocalStorage.load<UserData> LocalStorageUserKey
+let loadUser () : UserData option =
+  let userDecoder = Decode.Auto.generateDecoder<UserData>()
+  match LocalStorage.load userDecoder "user" with
+  | Ok user -> Some user
+  | Error _ -> None
 
 let private saveUserCmd user =
-  Cmd.ofFunc (Fable.PowerPack.BrowserLocalStorage.save<UserData> LocalStorageUserKey) user (fun _ -> LoggedIn user) StorageFailure
+  Cmd.OfFunc.either (LocalStorage.save LocalStorageUserKey) user (fun _ -> LoggedIn user) StorageFailure
 
 let private deleteUserCmd =
-  Cmd.ofFunc Fable.PowerPack.BrowserLocalStorage.delete LocalStorageUserKey (fun _ -> LoggedOut) StorageFailure
+  Cmd.OfFunc.either LocalStorage.delete LocalStorageUserKey (fun _ -> LoggedOut) StorageFailure
 
 let init result =
   let user : UserData option = loadUser ()
