@@ -4,7 +4,7 @@ module Infrastructure.FableJson
 open Thoth.Json.Net
 
 let toJson value =
-  Encode.Auto.toString(0, (Encode.Auto.toString(0, value)))
+  Encode.Auto.toString(0, value)
 
 let ofJson<'a> (json:string) : 'a =
   Decode.Auto.unsafeFromString<'a> json
