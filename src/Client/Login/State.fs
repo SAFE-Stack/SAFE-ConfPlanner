@@ -22,8 +22,7 @@ let private authUser (login:Login) =
     let props =
         [
           RequestProperties.Method HttpMethod.POST
-          Fetch.requestHeaders [
-            HttpRequestHeaders.ContentType "application/json" ]
+          Fetch.requestHeaders [ HttpRequestHeaders.ContentType "application/json" ]
           RequestProperties.Body !^body
         ]
 
@@ -38,7 +37,7 @@ let private authUser (login:Login) =
         let userRights =
           data
           |> Utils.decodeJwt
-          |> Decode.Auto.unsafeFromString<UserData>
+          |> Decode.Auto.unsafeFromString<UserRights>
 
         return
             {

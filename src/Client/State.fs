@@ -55,7 +55,7 @@ let urlUpdate (result : Page option) model =
 
 let loadUser () : UserData option =
   let userDecoder = Decode.Auto.generateDecoder<UserData>()
-  match LocalStorage.load userDecoder "user" with
+  match LocalStorage.load userDecoder LocalStorageUserKey with
   | Ok user -> Some user
   | Error _ -> None
 

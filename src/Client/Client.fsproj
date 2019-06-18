@@ -11,10 +11,7 @@
     <Compile Include="../Server/Urls.fs" />
     <Compile Include="../Server/AuthTypes.fs" />
     <Compile Include="../Server/ServerTypes.fs" />
-    <Compile Include="../Server/JsonWebToken.fs" />
-    <Compile Include="../Server/Auth.fs" />
     <!-- <Compile Include="../Server/Dummy.fs" /> -->
-    <Compile Include="../Server/Websockets.fs" />
     <Compile Include="Global.fs" />
     <Compile Include="ElmishHelper.fs" />
     <Compile Include="Utils.fs" />
