@@ -101,13 +101,6 @@ let private viewTalk dispatch user votings (talk : Model.ConferenceAbstract) =
       MarginBottom 5
     ]
 
-  let footerStyle : CSSProp list =
-    [
-      Display DisplayOptions.Flex
-      FlexDirection "row"
-      JustifyContent "left"
-    ]
-
   Card.card [ Props [ Style cardStyle ] ]
     [
       Card.header []
@@ -127,15 +120,10 @@ let private viewTalk dispatch user votings (talk : Model.ConferenceAbstract) =
                     ]
                 ]
               Content.content []
-                [str "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec iaculis mauris."]
+                [ str "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec iaculis mauris."]
+              Content.content []
+                [  viewVotingButtons dispatch user vote talk ]
             ]
-        ]
-      Card.footer []
-        [
-          // Content.content [ Props [ Style footerStyle ] ]
-          //   [
-          //     viewVotingButtons dispatch user vote talk
-          //   ]
         ]
     ]
 
