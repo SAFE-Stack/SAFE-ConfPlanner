@@ -216,14 +216,14 @@ let private viewOrganizer dispatch conference (organizer : Organizer) =
       AddOrganizerToConference
 
   let switch =
-       Switch.switch
-        [
-          Switch.Checked isAddedToConference
-          Switch.IsRounded
-          Switch.Color IsPrimary
-          Switch.OnChange (fun _ -> organizer |> changeMsg |> WhatIfMsg |> dispatch)
-        ]
-        []
+    Switch.switch
+      [
+        Switch.Id ("switch-organizer" + (string organizer.Id))
+        Switch.Checked isAddedToConference
+        Switch.IsRounded
+        Switch.Color IsPrimary
+        Switch.OnChange (fun _ -> organizer |> changeMsg |> WhatIfMsg |> dispatch)
+      ] []
   [
     Column.column [] [ str <| organizer.Firstname + " " + organizer.Lastname ]
     Column.column [] [ switch ]
@@ -376,6 +376,7 @@ let private viewTabs currentView selectEditorMsg =
 let private viewWhatIfSwitch dispatch isChecked =
   Switch.switch
     [
+      Switch.Id "switch-whatif"
       Switch.Checked isChecked
       Switch.IsRounded
       Switch.Color IsPrimary
