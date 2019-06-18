@@ -3,7 +3,6 @@ module App.App
 open Elmish
 open Elmish.Navigation
 
-open Elmish.HMR
 open Elmish.React
 open Elmish.Debug
 
