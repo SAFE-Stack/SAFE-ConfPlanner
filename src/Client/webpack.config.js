@@ -113,7 +113,19 @@ module.exports = {
                     loader: 'babel-loader',
                     options: CONFIG.babel
                 },
-            }
+            },
+            {
+              test: /\.(sass|scss|css)$/,
+              use: [
+                  isProduction ? MiniCssExtractPlugin.loader : 'style-loader',
+                  'css-loader',
+                  'sass-loader',
+              ],
+            },
+            {
+                test: /\.css$/,
+                use: ['style-loader', 'css-loader']
+            },
         ]
     }
 };
