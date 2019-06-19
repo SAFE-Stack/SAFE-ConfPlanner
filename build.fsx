@@ -104,8 +104,7 @@ Target "InstallClient" (fun _ ->
 )
 
 Target "BuildClient" (fun _ ->
-    runDotnet clientPath "restore"
-    runDotnet clientPath "fable webpack --port free -- -p --mode production"
+    run yarnTool "webpack --config src/Client/webpack.config.js -p" clientPath
 )
 
 
