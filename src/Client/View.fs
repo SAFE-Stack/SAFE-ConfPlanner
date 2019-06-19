@@ -3,9 +3,9 @@ module App.View
 open Fable.Core.JsInterop
 open App.Types
 
-importAll "../../sass/main.sass"
+importAll "./sass/main.sass"
 
-open Fable.Helpers.React
+open Fable.React
 
 let view model dispatch =
   let pageHtml currentPage =

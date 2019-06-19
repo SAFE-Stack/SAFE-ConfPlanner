@@ -1,6 +1,6 @@
 module Global
 
-open Elmish.Browser.UrlParser
+open Elmish.UrlParser
 open Domain.Model
 
 type UserData =

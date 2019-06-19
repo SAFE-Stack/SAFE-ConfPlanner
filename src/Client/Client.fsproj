@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../Domain/Domain.fsproj" />
@@ -11,13 +11,11 @@
     <Compile Include="../Server/Urls.fs" />
     <Compile Include="../Server/AuthTypes.fs" />
     <Compile Include="../Server/ServerTypes.fs" />
-    <Compile Include="../Server/JsonWebToken.fs" />
-    <Compile Include="../Server/Auth.fs" />
     <!-- <Compile Include="../Server/Dummy.fs" /> -->
-    <Compile Include="../Server/Websockets.fs" />
     <Compile Include="Global.fs" />
     <Compile Include="ElmishHelper.fs" />
     <Compile Include="Utils.fs" />
+    <Compile Include="LocalStorage.fs" />
     <Compile Include="About/View.fs" />
     <Compile Include="Conference/ConferenceInformation.fs" />
     <Compile Include="Conference/Types.fs" />

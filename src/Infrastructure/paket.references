@@ -1,3 +1,2 @@
 FSharp.Core
-Newtonsoft.Json
-Fable.JsonConverter
+Thoth.Json.Net

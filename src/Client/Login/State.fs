@@ -4,27 +4,25 @@ open Elmish
 open Elmish.Helper
 open System
 open Fable.Core.JsInterop
-open Fable.PowerPack
-open Fable.PowerPack.Fetch.Fetch_types
-
 open Server.AuthTypes
 open Login.Types
 open Global
 open Client
 open Server.ServerTypes
+open Thoth.Json
+open Fetch.Types
 
 let private authUser (login:Login) =
   promise {
     if String.IsNullOrEmpty login.UserName then return! failwithf "You need to fill in a username." else
     if String.IsNullOrEmpty login.Password then return! failwithf "You need to fill in a password." else
 
-    let body = toJson login
+    let body = Encode.Auto.toString(0, login)
 
     let props =
         [
           RequestProperties.Method HttpMethod.POST
-          Fetch.requestHeaders [
-            HttpRequestHeaders.ContentType "application/json" ]
+          Fetch.requestHeaders [ HttpRequestHeaders.ContentType "application/json" ]
           RequestProperties.Body !^body
         ]
 
@@ -39,7 +37,7 @@ let private authUser (login:Login) =
         let userRights =
           data
           |> Utils.decodeJwt
-          |> ofJson<UserRights>
+          |> Decode.Auto.unsafeFromString<UserRights>
 
         return
             {
@@ -52,7 +50,7 @@ let private authUser (login:Login) =
   }
 
 let private authUserCmd login =
-  Cmd.ofPromise authUser login LoginSuccess AuthError
+  Cmd.OfPromise.either authUser login LoginSuccess AuthError
 
 let private withStateLoggedIn user model =
   { model with State = LoggedIn user }

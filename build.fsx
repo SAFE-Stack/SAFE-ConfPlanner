@@ -104,8 +104,7 @@ Target "InstallClient" (fun _ ->
 )
 
 Target "BuildClient" (fun _ ->
-    runDotnet clientPath "restore"
-    runDotnet clientPath "fable webpack --port free -- -p --mode production"
+    run yarnTool "webpack --config src/Client/webpack.config.js -p" clientPath
 )
 
 
@@ -128,7 +127,9 @@ let port = 8080
 
 Target "Run" (fun _ ->
     let suave = async { runDotnet serverPath "run" }
-    let fablewatch = async { runDotnet clientPath "fable webpack-dev-server --port free -- --mode development" } // nicht  webpack-dev-server, sonst wird webpack config nicht gefunden
+    let fablewatch = async {
+        run yarnTool "webpack-dev-server --config src/Client/webpack.config.js" clientPath
+    }
     let openBrowser = async {
         System.Threading.Thread.Sleep(5000)
         Diagnostics.Process.Start("http://"+ ipAddress + sprintf ":%d" port) |> ignore }

@@ -2,7 +2,7 @@ module Client.Utils
 
 open Fable.Import
 open Fable.Core
-open Fable.Helpers.React.Props
+open Fable.React.Props
 
 [<Emit("atob($0)")>]
 let atob (str : string) : string = jsNative
@@ -13,7 +13,7 @@ let decodeJwt (jwt : string) =
 
 
 let onEnter dispatch msg =
-  OnKeyDown (fun (ev:React.KeyboardEvent) ->
+  OnKeyDown (fun (ev:Browser.Types.KeyboardEvent) ->
       match ev with
       | _ when ev.keyCode = 13. ->
           ev.preventDefault()
