@@ -1,13 +1,7 @@
 /// Login web part and functions for API web part request authorisation with JWT.
 module Server.Auth
 
-open Suave
-open Suave.RequestErrors
-
-open Infrastructure.FableJson
 open Domain.Model
-
-
 let rec private oneOf userprovider (username,password)  =
   match userprovider with
   | provider :: rest ->
@@ -29,50 +23,74 @@ let userProvider username password =
     None
 
 
-/// Login web part that authenticates a user and returns a token in the HTTP body.
-let login (ctx: HttpContext) = async {
-  let login =
-      ctx.request.rawForm
-      |> System.Text.Encoding.UTF8.GetString
-      |> ofJson<Server.AuthTypes.Login>
-
-  try
-      let organizerId =
-        (login.UserName,login.Password)
-        |> oneOf [ userProvider ]
-
-      match organizerId with
-      | Some organizerId ->
-          let user : ServerTypes.UserRights =
-            {
-              UserName = login.UserName
-              OrganizerId = organizerId
-            }
-
-          let token = JsonWebToken.encode user
-
-          return! Successful.OK token ctx
-
-       | None ->
-          return! failwithf "Could not authenticate %s" login.UserName
-
-  with
-  | _ -> return! UNAUTHORIZED (sprintf "User '%s' can't be logged in." login.UserName) ctx
-}
-
 /// Invokes a function that produces the output for a web part if the HttpContext
 /// contains a valid auth token. Use to authorise the expressions in your web part
 /// code (e.g. WishList.getWishList).
-let useToken ctx f = async {
-    match ctx.request.queryParam "jwt" with // TODO extract into variable
-    | Choice1Of2 jwt ->
-        match JsonWebToken.isValid jwt with
-        | None ->
-            return! FORBIDDEN "Accessing this API is not allowed" ctx
+// let useToken ctx f = async {
+//     match ctx.request.queryParam "jwt" with // TODO extract into variable
+//     | Choice1Of2 jwt ->
+//         match JsonWebToken.isValid jwt with
+//         | None ->
+//             return! FORBIDDEN "Accessing this API is not allowed" ctx
 
-        | Some token ->
-            return! f token
+//         | Some token ->
+//             return! f token
 
-    | _ ->
-        return! BAD_REQUEST "Request doesn't contain a JSON Web Token" ctx
-}
+//     | _ ->
+//         return! BAD_REQUEST "Request doesn't contain a JSON Web Token" ctx
+// }
+
+
+open Giraffe
+open RequestErrors
+open Microsoft.AspNetCore.Http
+open FSharp.Control.Tasks.V2
+
+let createUserData (login : AuthTypes.Login) organizerId : ServerTypes.UserData =
+  let userRights : ServerTypes.UserRights =
+    {
+      UserName = login.UserName
+      OrganizerId = organizerId
+    }
+
+  {
+      UserName = login.UserName
+      OrganizerId = organizerId
+      Token = userRights |> JsonWebToken.encode
+  }
+
+/// Authenticates a user and returns a token in the HTTP body.
+// DEMO08a - tasks on the server
+let login (next : HttpFunc) (ctx : HttpContext) =
+  task {
+    let! login = ctx.BindJsonAsync<AuthTypes.Login>()
+
+    let organizerId =
+      (login.UserName,login.Password)
+      |> oneOf [ userProvider ]
+
+    match organizerId with
+    | Some organizerId ->
+        let data = createUserData login organizerId
+
+        return! ctx.WriteJsonAsync data
+
+     | None ->
+        return! UNAUTHORIZED "Bearer" "" (sprintf "User '%s' can't be logged in." login.UserName) next ctx
+  }
+
+let private missingToken = RequestErrors.BAD_REQUEST "Request doesn't contain a JSON Web Token"
+let private invalidToken = RequestErrors.FORBIDDEN "Accessing this API is not allowed"
+
+/// Checks if the HTTP request has a valid JWT token for API.
+/// On success it will invoke the given `f` function by passing in the valid token.
+let requiresJwtTokenForAPI f : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        (match ctx.TryGetRequestHeader "Authorization" with
+        | Some authHeader ->
+            let jwt = authHeader.Replace("Bearer ", "")
+            match JsonWebToken.isValid jwt with
+            | Some token -> f token
+            | None -> invalidToken
+        | None -> missingToken) next ctx
+

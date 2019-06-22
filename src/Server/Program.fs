@@ -1,41 +1,86 @@
 ﻿/// Server program entry point module.
 module Server.Program
 
+open System
 open System.IO
+open Microsoft.AspNetCore
+open Microsoft.AspNetCore.Builder
+open Microsoft.AspNetCore.Hosting
+open Microsoft.Extensions.Logging
+open Microsoft.Extensions.DependencyInjection
+open Giraffe
+open Giraffe.Serialization.Json
+open Giraffe.HttpStatusCodeHandlers.ServerErrors
+open Thoth.Json.Giraffe
 
 let GetEnvVar var =
-  match System.Environment.GetEnvironmentVariable(var) with
-  | null -> None
-  | value -> Some value
+    match Environment.GetEnvironmentVariable(var) with
+    | null -> None
+    | value -> Some value
 
 let getPortsOrDefault defaultVal =
-  match System.Environment.GetEnvironmentVariable("SUAVE_FABLE_PORT") with
-  | null -> defaultVal
-  | value -> value |> uint16
+    match Environment.GetEnvironmentVariable("GIRAFFE_FABLE_PORT") with
+    | null -> defaultVal
+    | value -> value |> uint16
+
+let errorHandler (ex : Exception) (logger : ILogger) =
+    match ex with
+    | _ ->
+        logger.LogError(EventId(), ex, "An unhandled exception has occurred while executing the request.")
+        clearResponse >=> INTERNAL_ERROR ex.Message
+
+let configureApp (app : IApplicationBuilder) =
+    app.UseGiraffeErrorHandler(errorHandler)
+       .UseStaticFiles()
+       .UseGiraffe (WebServer.webApp)
+
+let configureServices (services : IServiceCollection) =
+    // Add default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    services.AddSingleton<IJsonSerializer>(ThothSerializer())
+    |> ignore
+
+let configureLogging (loggerBuilder : ILoggingBuilder) =
+    loggerBuilder.AddFilter(fun lvl -> lvl.Equals LogLevel.Error)
+                 .AddConsole()
+                 .AddDebug() |> ignore
 
 [<EntryPoint>]
 let main args =
-  try
-    let clientPath =
-        match args |> Array.toList with
-        | clientPath:: _  when Directory.Exists clientPath ->
-            clientPath
+    try
+        let args = Array.toList args
+        let clientPath =
+            match args with
+            | clientPath:: _  when Directory.Exists clientPath -> clientPath
+            | _ ->
+                // did we start from server folder?
+                let devPath = Path.Combine("..","Client")
+                if Directory.Exists devPath then devPath
+                else
+                    // maybe we are in root of project?
+                    let devPath = Path.Combine("src", "Client")
+                    if Directory.Exists devPath then devPath
+                    else @"./client"
+            |> Path.GetFullPath
 
-        | _ ->
-            let devPath = Path.Combine("..","Client")
-            printfn "dev path: %A" devPath
-            printfn "full path : %A" <| Path.GetFullPath devPath
-            if Directory.Exists devPath then
-              devPath
-            else
-              @"C:/src/ConfPlanner/src/Client"
+        let port = getPortsOrDefault 8085us
 
-    WebServer.start (Path.GetFullPath clientPath) (getPortsOrDefault 8085us)
-    0
-  with
-  | exn ->
-      let color = System.Console.ForegroundColor
-      System.Console.ForegroundColor <- System.ConsoleColor.Red
-      System.Console.WriteLine(exn.Message)
-      System.Console.ForegroundColor <- color
-      1
+        WebHost
+            .CreateDefaultBuilder()
+            .UseWebRoot(clientPath)
+            .UseContentRoot(clientPath)
+            .ConfigureLogging(configureLogging)
+            .ConfigureServices(configureServices)
+            .Configure(Action<IApplicationBuilder> configureApp)
+            .UseUrls("http://0.0.0.0:" + port.ToString() + "/")
+            .Build()
+            .Run()
+        0
+    with
+    | exn ->
+        let color = Console.ForegroundColor
+        Console.ForegroundColor <- System.ConsoleColor.Red
+        Console.WriteLine(exn.Message)
+        Console.ForegroundColor <- color
+        1
