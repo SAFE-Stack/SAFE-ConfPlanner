@@ -1,6 +1,12 @@
 FSharp.Core
-Suave
-Microsoft.Extensions.Logging.Console
 System.Net.NetworkInformation
-Newtonsoft.Json
 jose-jwt
+Giraffe
+Giraffe.TokenRouter
+Microsoft.AspNetCore.StaticFiles
+Microsoft.AspNetCore
+Microsoft.AspNetCore.WebSockets
+Microsoft.AspNetCore.WebSockets.Server
+Microsoft.Extensions.Logging.Console
+Thoth.Json.Net
+Thoth.Json.Giraffe

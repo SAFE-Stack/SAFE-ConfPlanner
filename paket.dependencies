@@ -1,15 +1,21 @@
 source https://www.nuget.org/api/v2
 storage:none
 
-nuget FSharp.Core
+nuget FSharp.Core redirects: force
+nuget Giraffe
+nuget Giraffe.TokenRouter
+nuget Microsoft.AspNetCore.StaticFiles
+nuget Microsoft.AspNetCore
+nuget Microsoft.AspNetCore.WebSockets
+nuget Microsoft.AspNetCore.WebSockets.Server
+nuget System.Net.NetworkInformation
+nuget jose-jwt
 
 nuget FsUnit
 nuget Microsoft.NET.Test.Sdk
-nuget Newtonsoft.Json
 nuget NUnit.Console
 nuget Microsoft.Extensions.Logging.Console
 nuget NUnit3TestAdapter
-nuget System.Net.NetworkInformation
 
 nuget Fable.Core
 nuget Fable.Browser.Dom
@@ -27,10 +33,8 @@ nuget Fable.FontAwesome.Free
 nuget Fulma
 nuget Fulma.Extensions.Wikiki.Switch
 nuget Thoth.Json prerelease
+nuget Thoth.Json.Giraffe prerelease
 nuget Thoth.Json.Net prerelease
-
-nuget Suave
-nuget jose-jwt
 
 nuget dotnet-test-nunit
 
