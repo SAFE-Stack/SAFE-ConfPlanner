@@ -32,9 +32,9 @@ nuget Fable.FontAwesome
 nuget Fable.FontAwesome.Free
 nuget Fulma
 nuget Fulma.Extensions.Wikiki.Switch
-nuget Thoth.Json prerelease
-nuget Thoth.Json.Giraffe prerelease
-nuget Thoth.Json.Net prerelease
+nuget Thoth.Json
+nuget Thoth.Json.Giraffe
+nuget Thoth.Json.Net
 
 nuget dotnet-test-nunit
 
