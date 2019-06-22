@@ -1,14 +1,6 @@
 module Global
 
 open Elmish.UrlParser
-open Domain.Model
-
-type UserData =
-  {
-    UserName : string
-    OrganizerId : OrganizerId
-    Token : Server.AuthTypes.JWT
-  }
 
 [<RequireQualifiedAccess>]
 type Page =

@@ -1,7 +1,7 @@
 module Login.Types
 
 open Server.AuthTypes
-open Global
+open Server.ServerTypes
 
 type LoginState =
 | LoggedOut

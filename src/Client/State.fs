@@ -9,6 +9,7 @@ open Types
 
 open Thoth.Json
 open Fable.Core
+open Server.ServerTypes
 
 let private disposeCmd currentPage =
   match currentPage with

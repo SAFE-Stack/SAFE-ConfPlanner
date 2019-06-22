@@ -1,6 +1,6 @@
 module App.Types
 
-open Global
+open Server.ServerTypes
 
 type Msg =
   | ConferenceMsg of Conference.Types.Msg

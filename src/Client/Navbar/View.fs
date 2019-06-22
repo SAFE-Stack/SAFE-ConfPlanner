@@ -4,6 +4,7 @@ open Fable.React
 open Fable.React.Props
 open Fable.FontAwesome
 open Global
+open Server.ServerTypes
 open App.Types
 open Fulma
 
