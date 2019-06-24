@@ -10,3 +10,5 @@ Microsoft.AspNetCore.WebSockets.Server
 Microsoft.Extensions.Logging.Console
 Thoth.Json.Net
 Thoth.Json.Giraffe
+Elmish.Streams.AspNetCore.Middleware
+FSharp.Control.AsyncRx

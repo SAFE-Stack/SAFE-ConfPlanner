@@ -35,6 +35,8 @@ nuget Fulma.Extensions.Wikiki.Switch
 nuget Thoth.Json
 nuget Thoth.Json.Giraffe
 nuget Thoth.Json.Net
+nuget FSharp.Control.AsyncRx
+nuget Elmish.Streams.AspNetCore.Middleware
 
 nuget dotnet-test-nunit
 
