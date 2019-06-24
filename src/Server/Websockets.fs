@@ -1,143 +1,47 @@
-// module Websocket
+module Server.Websocket
 
-// open Suave
-// open Suave.Sockets.Control
-// open Suave.WebSocket
+open FSharp.Control
+open Elmish.Streams.AspNetCore.Middleware
+open Server.ServerTypes
+open Infrastructure.Types
 
-// open Server.ServerTypes
+
+let eventObservable eventSourced =
+  let dispatcher, observable = AsyncRx.subject ()
+
+  let eventSubscriber events  =
+    events
+    |> dispatcher.OnNextAsync
+    |> Async.StartImmediate
 
 
-// open Infrastructure.FableJson
-// open Infrastructure.Types
+  eventSourced.EventPublisher eventSubscriber
 
-// type Msg<'CommandPayload,'Event,'QueryParameter,'QueryResult> =
-//   | Connected
-//   | Closed
-//   | Received of ClientMsg<'CommandPayload,'QueryParameter,'QueryResult>
-//   | Events of EventSet<'Event>
-//   | QueryResponse of QueryResponse<'QueryResult>
+  observable
 
-// let send (webSocket : WebSocket) (msg : ServerMsg<'Event,'QueryResult>) =
-//   let byteResponse =
-//     msg
-//     |> toJson
-//     |> System.Text.Encoding.ASCII.GetBytes
-//     |> Suave.Sockets.ByteSegment
+let stream (eventSourced : EventSourced<_,_,_,_>) eventObservable (connectionId: ConnectionId) (msgs: IAsyncObservable<Msg<_,_,_,_>*ConnectionId>) : IAsyncObservable<Msg<_,_,_,_>*ConnectionId> =
+  let serverMsgs =
+    eventObservable
+    |> AsyncRx.map (fun msg -> (msg |> Events |> ServerMsg, connectionId))
 
-//   webSocket.send Text byteResponse true
-//     |> Async.Ignore
-//     |> Async.Start
+  msgs
+  |> AsyncRx.filter (fun (_,id) -> connectionId = id)
+  |> AsyncRx.mapAsync(fun (msg,id) ->
+      match msg with
+      | ClientMsg msg ->
+          match msg with
+          | Query query ->
+              async {
+                let! result = eventSourced.QueryManager query
 
-// let emptyResponse =
-//   [||] |> Suave.Sockets.ByteSegment
+                return (result |> QueryResponse |> ServerMsg,connectionId)
+              }
 
-// let websocket
-//   (eventSourced : EventSourced<'CommandPayload,'Event,'QueryParameter,'State,'QueryResult>)
-//   (webSocket : WebSocket)
-//   (context: HttpContext) =
+          | Command command ->
+              eventSourced.CommandHandler command
+              async { return (msg |> ClientMsg ,id) }
 
-//     let webSocketHandler =
-//       MailboxProcessor.Start(fun inbox ->
-//         eventSourced.EventPublisher (Msg.Events >> inbox.Post)
-
-//         let queryReplyChannel = Msg.QueryResponse >> inbox.Post
-
-//         let rec loop() =
-//           async {
-//             let! msg = inbox.Receive()
-
-//             match msg with
-//             | Connected ->
-//                 printfn "webSocketHandler connected"
-//                 return! loop()
-
-//             | Received clientMsg  ->
-//                 match clientMsg with
-//                 | Command (header,command as payload) ->
-//                     printfn "handle incoming command with header %A..." header
-//                     eventSourced.CommandHandler payload
-//                     return! loop()
-
-//                 | Query query ->
-//                     printfn "handle incoming query %A..." query
-//                     eventSourced.QueryManager (query,queryReplyChannel)
-//                     return! loop()
-
-//                 | Connect ->
-//                     printfn "ClientMsg.Connect"
-//                     ServerMsg.Connected
-//                     |> send webSocket
-
-//                     return! loop()
-
-//             | Events (header,events as payload) ->
-//                 printfn "events %A for header %A will be send to client..." events header
-//                 let response =
-//                   ServerMsg.Events payload
-//                   |> send webSocket
-
-//                 return! loop()
-
-//             | Msg.QueryResponse response ->
-//                 printfn "query response %A will be send to client..." response
-//                 let response =
-//                   ServerMsg.QueryResponse response
-//                   |> send webSocket
-
-//                 return! loop()
-
-//             | Closed ->
-//                  printfn "Client closed connection"
-//           }
-
-//         loop()
-//       )
-
-//     socket {
-//         let mutable loop = true
-//         while loop do
-//             let! msg = webSocket.read()
-//             match msg with
-//             | (Text, data, true) ->
-//                 let str =
-//                   data
-//                   |> System.Text.Encoding.UTF8.GetString
-
-//                 let deserialized =
-//                   str
-//                   |> ofJson<ClientMsg<'CommandPayload,'QueryParameter,'QueryResult>>
-
-//                 printfn "Received: %A" deserialized
-//                 webSocketHandler.Post (Msg.Received deserialized)
-
-//             | (Ping, _, _) ->
-//                 do! webSocket.send Pong emptyResponse true
-
-//             | (Pong, _, _) -> ()
-
-//             | (Close, _, _) ->
-//                 printfn "%s %s" "Connection closed..." (webSocket.ToString())
-//                 Msg.Closed |> webSocketHandler.Post
-//                 do! webSocket.send Close emptyResponse true
-//                 loop <- false
-
-//             | (op, data, fin) ->
-//               printfn "Unexpected Message: %A %A %A " op fin data
-//     }
-
-// let websocketWithAuth handshake websocket (ctx: HttpContext) =
-//   Server.Auth.useToken ctx (fun token -> async { return! handshake websocket ctx })
-
-// //
-// // The FIN byte:
-// //
-// // A single message can be sent separated by fragments. The FIN byte indicates the final fragment. Fragments
-// //
-// // As an example, this is valid code, and will send only one message to the client:
-// //
-// // do! webSocket.send Text firstPart false
-// // do! webSocket.send Continuation secondPart false
-// // do! webSocket.send Continuation thirdPart true
-// //
-// // More information on the WebSocket protocol can be found at: https://tools.ietf.org/html/rfc6455#page-34
-// //
+      | _ ->
+         async { return (msg,id) }
+      )
+  |> AsyncRx.merge serverMsgs

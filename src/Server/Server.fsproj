@@ -17,7 +17,7 @@
     <Compile Include="JsonWebToken.fs" />
     <Compile Include="Auth.fs" />
     <!-- <Compile Include="Dummy.fs" /> -->
-    <!-- <Compile Include="Websockets.fs" /> -->
+    <Compile Include="Websockets.fs" />
     <Compile Include="WebServer.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

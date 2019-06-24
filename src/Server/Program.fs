@@ -12,6 +12,30 @@ open Giraffe
 open Giraffe.Serialization.Json
 open Giraffe.HttpStatusCodeHandlers.ServerErrors
 open Thoth.Json.Giraffe
+open Elmish.Streams.AspNetCore.Middleware
+
+
+open Infrastructure.EventSourced
+open Conference.Api
+open Domain
+
+let conference () =
+  let conferenceProjection,conferenceQueryHandler =
+    toProjectionAndQueryHandler Conference.projection Conference.queryHandler
+
+  let conferencesProjection,conferencesQueryHandler =
+    toProjectionAndQueryHandler Conferences.projection Conferences.queryHandler
+
+  let organizersProjection,organizersQueryHandler =
+    toProjectionAndQueryHandler Organizers.projection Organizers.queryHandler
+
+  eventSourced
+    Behaviour.execute
+    [conferenceProjection ; conferencesProjection ; organizersProjection]
+    [conferenceQueryHandler ; conferencesQueryHandler ; organizersQueryHandler]
+    @".\conference_eventstore.json"
+
+
 
 let GetEnvVar var =
     match Environment.GetEnvironmentVariable(var) with
@@ -30,7 +54,17 @@ let errorHandler (ex : Exception) (logger : ILogger) =
         clearResponse >=> INTERNAL_ERROR ex.Message
 
 let configureApp (app : IApplicationBuilder) =
+    let conference = conference ()
+    let eventObservable = Websocket.eventObservable conference
+
     app.UseGiraffeErrorHandler(errorHandler)
+       .UseWebSockets()
+       .UseStream<ServerTypes.Msg<_,_,_,_>>(fun options ->
+         { options with
+             Stream = Websocket.stream conference eventObservable
+             Encode = ServerTypes.Msg<_,_,_,_>.Encode
+             Decode = ServerTypes.Msg<_,_,_,_>.Decode
+         })
        .UseStaticFiles()
        .UseGiraffe (WebServer.webApp)
 
