@@ -43,8 +43,6 @@ type QueryHandler<'QueryParameter,'QueryResult> =
 type QueryHandlerDefinition<'QueryParameter,'State,'QueryResult> =
   Query<'QueryParameter> -> 'State -> QueryHandled<'QueryResult>
 
-type QueryResponseChannel<'QueryResult> =
-  QueryResponse<'QueryResult> -> unit
 
 type MessageHeader =
   TransactionId * StreamId
@@ -74,9 +72,9 @@ type EventPublisher<'Event> =
   Subscriber<EventSet<'Event>> -> unit
 
 type QueryManager<'QueryParameter,'QueryResult> =
-  Query<'QueryParameter> * QueryResponseChannel<'QueryResult> -> unit
+  Query<'QueryParameter> -> Async<QueryResponse<'QueryResult>>
 
-type EventSourced<'CommandPayload,'Event,'QueryParameter,'State,'QueryResult> =
+type EventSourced<'CommandPayload,'Event,'QueryParameter,'QueryResult> =
   {
      CommandHandler : CommandHandler<'CommandPayload>
      QueryManager : QueryManager<'QueryParameter,'QueryResult>

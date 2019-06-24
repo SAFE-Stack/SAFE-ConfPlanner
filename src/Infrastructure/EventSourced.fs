@@ -14,7 +14,7 @@ let eventSourced
       (projections : Projection<'Event> list)
       (queryHandlers : QueryHandler<'QueryParameter,'QueryResult> list)
       store
-      : EventSourced<'CommandPayload,'Event,'QueryParameter,'State,'QueryResult> =
+      : EventSourced<'CommandPayload,'Event,'QueryParameter,'QueryResult> =
 
   let readEvents,appendEvents =
     eventStore store

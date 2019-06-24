@@ -3,7 +3,7 @@ module Infrastructure.QueryManager
 open Infrastructure.Types
 
 type Msg<'QueryParameter,'QueryResult> =
-  | Query of Query<'QueryParameter> * QueryResponseChannel<'QueryResult>
+  | Query of Query<'QueryParameter> * AsyncReplyChannel<'QueryResult>
 
 let rec private oneOf (queryHandler : QueryHandler<'QueryParameter,'QueryResult> list) query : QueryHandled<'QueryResult> =
   match queryHandler with
@@ -17,7 +17,7 @@ let rec private oneOf (queryHandler : QueryHandler<'QueryParameter,'QueryResult>
 
   | _ -> NotHandled
 
-let queryManager (queryHandler : QueryHandler<'QueryParameter,'QueryResult> list) : (Query<'QueryParameter> * QueryResponseChannel<'QueryResult>) -> unit =
+let queryManager (queryHandler : QueryHandler<'QueryParameter,'QueryResult> list) =
   let mailbox =
     MailboxProcessor.Start(fun inbox ->
       let rec loop() =
@@ -30,7 +30,7 @@ let queryManager (queryHandler : QueryHandler<'QueryParameter,'QueryResult> list
                 QueryResponse.QueryId = query.Id
                 QueryResponse.Result = oneOf queryHandler query
               }
-              |> reply
+              |> reply.Reply
 
           return! loop()
         }
@@ -38,8 +38,8 @@ let queryManager (queryHandler : QueryHandler<'QueryParameter,'QueryResult> list
       loop()
     )
 
-  let queryHandler =
-    Msg.Query >> mailbox.Post
+  let queryHandler query =
+    mailbox.PostAndAsyncReply(fun reply -> Query(query,reply))
 
   queryHandler
 
