@@ -11,14 +11,6 @@ open Thoth.Json
 open Fable.Core
 open Server.ServerTypes
 
-let private disposeCmd currentPage =
-  match currentPage with
-  | CurrentPage.Conference _ ->
-      Conference.State.dispose ()
-      |> Cmd.map ConferenceMsg
-
-  | _ -> Cmd.none
-
 let private withCurrentPage page model =
    { model with CurrentPage = page }
 
@@ -42,6 +34,7 @@ let urlUpdate (result : Page option) model =
       match model.User with
       | Some user ->
           let submodel,cmd = Conference.State.init user
+          printfn "init commands: %A" cmd
           { model with CurrentPage = CurrentPage.Conference submodel }
           |> withCommand (Cmd.map ConferenceMsg cmd)
 
@@ -51,8 +44,6 @@ let urlUpdate (result : Page option) model =
   | Some Page.About ->
       { model with CurrentPage = CurrentPage.About }
       |> withoutCommands
-
-  |> withAdditionalCommand (disposeCmd model.CurrentPage)
 
 let loadUser () : UserData option =
   let userDecoder = Decode.Auto.generateDecoder<UserData>()
@@ -79,6 +70,7 @@ let update msg model =
   match msg, model.CurrentPage with
   | ConferenceMsg msg, CurrentPage.Conference submodel->
       let (conference, conferenceCmd) = Conference.State.update msg submodel
+      printfn "command %A" conferenceCmd
       model
       |> withCurrentPage (CurrentPage.Conference conference )
       |> withCommand (Cmd.map ConferenceMsg conferenceCmd)

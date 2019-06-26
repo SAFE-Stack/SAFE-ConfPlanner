@@ -462,6 +462,25 @@ let private viewNotifications dispatch notifications =
   notifications |> List.map (viewNotification dispatch)
   |> div [ Style containerStyle ]
 
+
+open Conference.Api
+open Infrastructure.Types
+open Server.ServerTypes
+
+let createQuery (query : API.QueryParameter) =
+  {
+    Query.Id = QueryId <| System.Guid.NewGuid()
+    Query.Parameter = query
+  }
+
+
+
+let private queryConferences =
+  API.QueryParameter.Conferences
+  |> createQuery
+  |> ClientToServerMsg.Query
+  |> SendToServer
+
 let private viewHeaderLine dispatch currentView conferences =
   let modeButtons =
     viewModeControls dispatch currentView
@@ -473,8 +492,7 @@ let private viewHeaderLine dispatch currentView conferences =
     Button.a
       [
         Button.Color IsPrimary
-        Button.OnClick (fun _ -> SwitchToNewConference |> dispatch)
-        Button.OnClick (fun _ -> SwitchToNewConference |> dispatch)
+        Button.OnClick (fun _ -> queryConferences |> dispatch)
       ]
       [
         Icon.icon
@@ -483,7 +501,7 @@ let private viewHeaderLine dispatch currentView conferences =
 
         span
           []
-          [ "New Conference" |> str ]
+          [ "New Query" |> str ]
       ]
 
   let levelLeft =

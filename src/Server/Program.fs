@@ -57,16 +57,16 @@ let configureApp (app : IApplicationBuilder) =
     let conference = conference ()
     let eventObservable = Websocket.eventObservable conference
 
-    app.UseGiraffeErrorHandler(errorHandler)
+    app
        .UseWebSockets()
        .UseStream<ServerTypes.Msg<_,_,_,_>>(fun options ->
          { options with
              Stream = Websocket.stream conference eventObservable
-             Encode = ServerTypes.Msg<_,_,_,_>.Encode
-             Decode = ServerTypes.Msg<_,_,_,_>.Decode
+             Encode = ServerTypes.encodeMsg
+             Decode = ServerTypes.decodeMsg
          })
        .UseStaticFiles()
-       .UseGiraffe (WebServer.webApp)
+       .UseGiraffe WebServer.webApp
 
 let configureServices (services : IServiceCollection) =
     // Add default Giraffe dependencies

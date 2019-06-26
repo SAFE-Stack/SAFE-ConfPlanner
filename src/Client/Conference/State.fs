@@ -1,6 +1,8 @@
 module Conference.State
 
+open FSharp.Control
 open Elmish
+open Elmish.Streams
 open Elmish.Helper
 open Global
 
@@ -8,7 +10,6 @@ open Server.ServerTypes
 open Infrastructure.Types
 
 open Conference.Types
-open Conference.Ws
 open Conference.Api
 open Domain
 open Domain.Model
@@ -28,26 +29,44 @@ let private eventSetIsForCurrentConference ((_,streamId),_) conference =
 let private commandHeader transaction id =
   transaction, id |> makeStreamId
 
+let transactionId() =
+  TransactionId <| System.Guid.NewGuid()
+
+let createQuery (query : API.QueryParameter) =
+  {
+    Query.Id = QueryId <| System.Guid.NewGuid()
+    Query.Parameter = query
+  }
+
 let private queryConference conferenceId =
   conferenceId
   |> API.QueryParameter.Conference
   |> createQuery
-  |> ClientMsg.Query
-  |> wsCmd
+  |> ClientToServerMsg.Query
+  |> fun x -> async { return SendToServer x }
+  |> Cmd.OfAsync.result
 
 let private queryConferences =
   API.QueryParameter.Conferences
   |> createQuery
-  |> ClientMsg.Query
-  |> wsCmd
+  |> ClientToServerMsg.Query
+  |> fun x -> async { return SendToServer x }
+  |> Cmd.OfAsync.result
 
 let private queryOrganizers =
   API.QueryParameter.Organizers
   |> createQuery
-  |> ClientMsg.Query
-  |> wsCmd
+  |> ClientToServerMsg.Query
+  |> fun x -> async { return SendToServer x }
+  |> Cmd.OfAsync.result
 
 let init (user : UserData)  =
+  let commands =
+    [ queryConferences ; queryOrganizers ]
+    |> Cmd.batch
+
+  // todo auth
+
   {
     View = CurrentView.NotAsked
     Conferences = RemoteData.NotAsked
@@ -56,10 +75,7 @@ let init (user : UserData)  =
     Organizer = user.OrganizerId
     OpenTransactions = []
     OpenNotifications = []
-  }, Cmd.ofSub <| startWs user.Token
-
-let dispose () =
-  Cmd.ofSub stopWs
+  },  commands
 
 let private timeoutCmd timeout msg dispatch =
   Browser.Dom.window.setTimeout((fun _ -> msg |> dispatch), timeout) |> ignore
@@ -219,25 +235,18 @@ let private liveUpdateCommand msg =
   | DecideNumberOfSlots number ->
       number |> Commands.DecideNumberOfSlots
 
-let private withWsCmd command conference model =
-  let transaction =
-    transactionId()
 
-  model
-  |> withOpenTransaction transaction
-  |> withCommand (wsCmd <| ClientMsg.Command (conference.Id |> commandHeader transaction, command))
+// let withLiveUpdateCmd conference whatifMsg model =
+//   let transaction =
+//     transactionId()
 
-let withLiveUpdateCmd conference whatifMsg model =
-  let transaction =
-    transactionId()
-
-  model
-  |> withOpenTransaction transaction
-  |> withCommand (wsCmd <| ClientMsg.Command (conference.Id |> commandHeader transaction, liveUpdateCommand whatifMsg))
+//   model
+//   |> withOpenTransaction transaction
+//   |> withCommand (wsCmd <| ClientToServerMsg.Command (conference.Id |> commandHeader transaction, liveUpdateCommand whatifMsg))
 
 let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
   match msg with
-  | Received (ServerMsg.QueryResponse response) ->
+  | Received (ServerToClientMsg.QueryResponse response) ->
       match response.Result with
       | NotHandled ->
           model |> withoutCommands
@@ -260,10 +269,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
           | API.QueryResult.ConferenceNotFound ->
               model |> withoutCommands
 
-  | Received (ServerMsg.Connected) ->
-      model, Cmd.batch [ queryConferences ; queryOrganizers ]
-
-  | Received (ServerMsg.Events eventSet) ->
+  | Received (ServerToClientMsg.Events eventSet) ->
       match model.View with
       | Edit (editor, conference, Live) when eventSetIsForCurrentConference eventSet conference  ->
           let transaction,events =
@@ -283,8 +289,8 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
   | WhatIfMsg whatifMsg ->
       match model.View with
       | Edit (_, conference, Live) ->
-          model
-          |> withLiveUpdateCmd conference whatifMsg
+          model |> withoutCommands
+          // |> withLiveUpdateCmd conference whatifMsg
 
       | Edit (editor, conference, WhatIf whatif) ->
           model
@@ -300,12 +306,12 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
           let commands =
             whatif.Commands
             |> List.rev
-            |> List.collect (ClientMsg.Command >> wsCmd)
+            |> List.collect (ClientToServerMsg.Command >> SendToServer >> Cmd.OfFunc.result)
 
           model
           |> withView ((editor,whatif.Conference,Live) |> Edit)
           |> withOpenTransactions (whatif.Commands |> List.map messageAsTransactionId)
-          |> withCommand (Cmd.batch [commands ; conference.Id |> queryConference])
+          |> withCommand (Cmd.batch [commands (* todo query conference again?*) ])
 
       | _ ->
           model |> withoutCommands
@@ -422,8 +428,14 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
             |> withTitle title
             |> withAvailableSlotsForTalks availableSlotsForTalks
 
+          let transaction =
+            transactionId()
+
           let command =
-            conference |> Commands.ScheduleConference
+            (conference.Id |> commandHeader transaction, Commands.ScheduleConference conference)
+            |> ClientToServerMsg.Command
+            |> SendToServer
+            |> Cmd.OfFunc.result
 
           let editor =
             ConferenceInformation.State.init conference.Title (conference.AvailableSlotsForTalks |> string)
@@ -431,7 +443,8 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
 
           model
           |> withView ((editor, conference, Live) |> Edit)
-          |> withWsCmd command conference
+          |> withOpenTransaction transaction
+          |> withCommand command
 
       | _ ->
           model |> withoutCommands
@@ -467,3 +480,38 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
       model
       |> withoutNotification notification
       |> withoutCommands
+
+  | SendToServer _ ->
+      model |> withoutCommands
+
+
+let websocket source =
+  AsyncRx.msgChannel<Server.ServerTypes.Msg<Events.Event,Commands.Command, API.QueryParameter, API.QueryResult>>
+    "ws://localhost:8085/ws"
+    Server.ServerTypes.encodeMsg
+    Server.ServerTypes.decodeMsg
+    source
+
+let stream _ msgs =
+  let websocketStream =
+    msgs
+    |> AsyncRx.map (fun x -> printfn "msg before choose: %A" x; x)
+    |> AsyncRx.choose (function | SendToServer msg -> Some (ClientToServer msg) | _ -> None) // input into websockets only messages to the server
+    |> AsyncRx.map (fun x -> printfn "msg after choose: %A" x; x)
+    |> websocket
+    |> AsyncRx.map (fun x -> printfn "msg after websocket: %A" x; x)
+    |> AsyncRx.choose (function | ServerToClient msg -> Some (Received msg) | _ -> None) // output from websockets only messages from the server
+    |> AsyncRx.map (fun x -> printfn "msg after websocket choose: %A" x; x)
+    |> AsyncRx.toStream "websocket"
+
+    // todo choose not
+
+  Stream.batch
+    [
+      msgs
+      websocketStream
+    ]
+
+
+
+

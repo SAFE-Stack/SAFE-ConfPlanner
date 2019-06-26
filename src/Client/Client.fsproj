@@ -19,7 +19,6 @@
     <Compile Include="About/View.fs" />
     <Compile Include="Conference/ConferenceInformation.fs" />
     <Compile Include="Conference/Types.fs" />
-    <Compile Include="Conference/Ws.fs" />
     <Compile Include="Conference/State.fs" />
     <Compile Include="Conference/View.fs" />
     <Compile Include="Login/Types.fs" />
@@ -30,6 +29,9 @@
     <Compile Include="Navbar/View.fs" />
     <Compile Include="View.fs" />
     <Compile Include="App.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="*.fsproj; *.fs" PackagePath="fable\" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

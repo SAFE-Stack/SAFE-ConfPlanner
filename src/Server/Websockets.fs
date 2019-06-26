@@ -14,7 +14,6 @@ let eventObservable eventSourced =
     |> dispatcher.OnNextAsync
     |> Async.StartImmediate
 
-
   eventSourced.EventPublisher eventSubscriber
 
   observable
@@ -22,24 +21,25 @@ let eventObservable eventSourced =
 let stream (eventSourced : EventSourced<_,_,_,_>) eventObservable (connectionId: ConnectionId) (msgs: IAsyncObservable<Msg<_,_,_,_>*ConnectionId>) : IAsyncObservable<Msg<_,_,_,_>*ConnectionId> =
   let serverMsgs =
     eventObservable
-    |> AsyncRx.map (fun msg -> (msg |> Events |> ServerMsg, connectionId))
+    |> AsyncRx.map (fun msg -> (msg |> Events |> ServerToClient, connectionId))
 
   msgs
-  |> AsyncRx.filter (fun (_,id) -> connectionId = id)
+  |> AsyncRx.map (fun (msg,id) -> printfn "msg: %A, id: %A" msg id; (msg,id))
+  |> AsyncRx.filter (fun (_,id) -> printfn "connectionId: %A, id: %A" connectionId id; connectionId = id)
   |> AsyncRx.mapAsync(fun (msg,id) ->
       match msg with
-      | ClientMsg msg ->
+      | ClientToServer msg ->
           match msg with
           | Query query ->
               async {
                 let! result = eventSourced.QueryManager query
 
-                return (result |> QueryResponse |> ServerMsg,connectionId)
+                return (result |> QueryResponse |> ServerToClient,connectionId)
               }
 
           | Command command ->
               eventSourced.CommandHandler command
-              async { return (msg |> ClientMsg ,id) }
+              async { return (msg |> ClientToServer ,id) }
 
       | _ ->
          async { return (msg,id) }

@@ -35,7 +35,8 @@ type WhatIfMsg =
   | DecideNumberOfSlots of int
 
 type Msg =
-  | Received of ServerMsg<Domain.Events.Event,API.QueryResult>
+  | Received of ServerToClientMsg<Domain.Events.Event,API.QueryResult>
+  | SendToServer of ClientToServerMsg<Domain.Commands.Command, API.QueryParameter, API.QueryResult>
   | WhatIfMsg of WhatIfMsg
   | ToggleMode
   | MakeItSo

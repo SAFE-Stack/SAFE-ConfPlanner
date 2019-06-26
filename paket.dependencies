@@ -28,6 +28,7 @@ nuget Fable.Elmish.HMR
 nuget Fable.Elmish.React
 nuget Fable.Elmish.Browser
 nuget Fable.Elmish.Debugger
+nuget Fable.Elmish.Streams
 nuget Fable.FontAwesome
 nuget Fable.FontAwesome.Free
 nuget Fulma
