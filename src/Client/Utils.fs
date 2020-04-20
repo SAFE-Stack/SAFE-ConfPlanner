@@ -8,7 +8,7 @@ open Fable.React.Props
 let atob (str : string) : string = jsNative
 
 let decodeJwt (jwt : string) =
-  (jwt.Split ".").[1]
+  jwt.Split('.').[1]
   |> atob
 
 

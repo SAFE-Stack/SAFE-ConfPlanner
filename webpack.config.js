@@ -9,7 +9,7 @@ var CONFIG = {
     fsharpEntry:
         ["whatwg-fetch",
             "@babel/polyfill",
-            resolve("./Client.fsproj")
+            resolve("./src/Client/Client.fsproj")
         ],
     outputDir: resolve("./public"),
     devServerPort: undefined,
