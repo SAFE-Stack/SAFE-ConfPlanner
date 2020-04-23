@@ -3,8 +3,6 @@ module App.View
 open Fable.Core.JsInterop
 open App.Types
 
-importAll "./sass/main.sass"
-
 open Fable.React
 
 let view model dispatch =
