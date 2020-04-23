@@ -9,6 +9,7 @@ Debug
 obj
 bin
 .ionide/
+.paket/Paket.Restore.targets
 
 
 ### Linux ###
