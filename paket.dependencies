@@ -28,6 +28,7 @@ nuget Fulma
 nuget Fulma.Extensions.Wikiki.Switch
 nuget Thoth.Json prerelease
 nuget Thoth.Json.Net prerelease
+nuget Npgsql.FSharp
 
 nuget Suave
 nuget jose-jwt
