@@ -1,6 +1,9 @@
 module Server.WebServer
 
 open System.IO
+open Conference.Api.API
+open Domain.Commands
+open Domain.Events
 open Suave
 open Suave.Logging
 open System.Net
@@ -9,39 +12,64 @@ open Suave.Operators
 open Suave.RequestErrors
 
 open Suave.WebSocket
-
+open EventSourced.EventSourced
+open EventSourced
 open Infrastructure.EventSourced
 open Conference.Api
-
+open Domain
 open Websocket
 
-// let dummyWebsocket =
-//   let projection,queryHandler =
-//     toProjectionAndQueryHandler Dummy.projection Dummy.queryHandler
+//let conferenceWebsocket =
+//  let conferenceProjection,conferenceQueryHandler =
+//    toProjectionAndQueryHandler Conference.projection Conference.queryHandler
+//
+//  let conferencesProjection,conferencesQueryHandler =
+//    toProjectionAndQueryHandler Conferences.projection Conferences.queryHandler
+//
+//  let organizersProjection,organizersQueryHandler =
+//    toProjectionAndQueryHandler Organizers.projection Organizers.queryHandler
+//
+//  websocket <|
+//    eventSourced
+//      Domain.Behaviour.execute
+//      [conferenceProjection ; conferencesProjection ; organizersProjection]
+//      [conferenceQueryHandler ; conferencesQueryHandler ; organizersQueryHandler]
+//      @".\conference_eventstore.json"
 
-//   websocket <|
-//     eventSourced
-//       Dummy.behaviour
-//       [projection]
-//       [queryHandler]
-//       @".\dummy_eventstore.json"
 
-let conferenceWebsocket =
-  let conferenceProjection,conferenceQueryHandler =
-    toProjectionAndQueryHandler Conference.projection Conference.queryHandler
+let eventSourced : EventSourced<Command,Event,QueryParameter> =
+  {
+    EventStoreInit =
+      EventStore.initialize
 
-  let conferencesProjection,conferencesQueryHandler =
-    toProjectionAndQueryHandler Conferences.projection Conferences.queryHandler
+    EventStorageInit =
+      EventStorage.InMemoryStorage.initialize
 
-  let organizersProjection,organizersQueryHandler =
-    toProjectionAndQueryHandler Organizers.projection Organizers.queryHandler
+    CommandHandlerInit =
+      CommandHandler.initialize Behaviour.behaviour
 
-  websocket <|
-    eventSourced
-      Domain.Behaviour.execute
-      [conferenceProjection ; conferencesProjection ; organizersProjection]
-      [conferenceQueryHandler ; conferencesQueryHandler ; organizersQueryHandler]
-      @".\conference_eventstore.json"
+    QueryHandler =
+      QueryHandler.initialize
+        [
+//          QueryHandlers.flavours flavoursInStockReadmodel.State db_connection
+        ]
+
+    EventListenerInit =
+      EventListener.initialize
+
+    EventHandlers =
+      [
+//        flavoursInStockReadmodel.EventHandler
+//        PersistentReadmodels.flavourSoldHandler db_connection
+      ]
+  } |> EventSourced
+
+
+let conferenceWebSocket =
+  eventSourced
+  |> websocket
+
+
 
 
 let start clientPath port =
@@ -70,7 +98,7 @@ let start clientPath port =
 
             // path "/dummyWebsocket" >=> handShake dummyWebsocket
 
-            path Server.Urls.Conference  >=> websocketWithAuth handShake conferenceWebsocket
+            path Server.Urls.Conference  >=> websocketWithAuth handShake conferenceWebSocket
 
             NOT_FOUND "Page not found."
 

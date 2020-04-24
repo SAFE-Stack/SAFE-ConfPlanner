@@ -6,7 +6,7 @@ module Server.JsonWebToken
 
 open System.IO
 open System.Text
-open Infrastructure.FableJson
+open FableJson
 
 let private createPassPhrase() =
     let crypto = System.Security.Cryptography.RandomNumberGenerator.Create()
