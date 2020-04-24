@@ -1,11 +1,11 @@
 module Conference.Types
 
 open Global
-open Infrastructure.Types
 open Server.ServerTypes
 open Domain.Model
 open Domain.Events
 open Conference.Api
+open EventSourced
 
 type NotificationType =
   | Info
@@ -52,7 +52,7 @@ type Msg =
 type WhatIf =
   {
     Conference : Domain.Model.Conference
-    Commands : Command<Domain.Commands.Command> list
+    Commands : CommandEnvelope<Domain.Commands.Command> list
     Events : Domain.Events.Event list
   }
 
@@ -77,9 +77,9 @@ type Model =
     View : CurrentView
     Conferences : RemoteData<Conferences.Conferences>
     Organizers : RemoteData<Domain.Model.Organizers>
-    LastEvents : Domain.Events.Event list
+    LastEvents : EventSet<Domain.Events.Event> option
     Organizer : OrganizerId
-    OpenTransactions : TransactionId list
+    OpenTransactions : EventSourced.TransactionId list
     OpenNotifications : Notification list
   }
 

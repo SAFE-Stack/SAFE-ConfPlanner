@@ -1,10 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Infrastructure\Infrastructure.fsproj" />
     <ProjectReference Include="..\Domain\Domain.fsproj" />
+    <ProjectReference Include="..\EventSourced\EventSourced.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="API.fs" />

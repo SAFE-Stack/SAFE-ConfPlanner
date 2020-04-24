@@ -4,7 +4,6 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../Infrastructure/Infrastructure.fsproj" />
     <ProjectReference Include="../Domain/Domain.fsproj" />
   </ItemGroup>
   <ItemGroup>

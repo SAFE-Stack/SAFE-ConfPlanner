@@ -1,17 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <DefineConstants>FABLE_COMPILER</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../Domain/Domain.fsproj" />
     <ProjectReference Include="../Conference.Api/Conference.Api.fsproj" />
-    <ProjectReference Include="../Infrastructure/Infrastructure.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="index.html" />
     <None Include="paket.references" />
     <None Include="style.scss" />
+    <Compile Include="../EventSourced/Types.fs" />
     <Compile Include="../Server/Urls.fs" />
     <Compile Include="../Server/AuthTypes.fs" />
     <Compile Include="../Server/ServerTypes.fs" />

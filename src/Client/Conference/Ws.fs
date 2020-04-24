@@ -15,7 +15,7 @@ let inline private encode msg =
 let private websocketNotConnected =
   fun _ -> failwith "WebSocket not connected"
 
-let mutable private sendPerWebsocket : ClientMsg<Domain.Commands.Command,API.QueryParameter,API.QueryResult> -> unit =
+let mutable private sendPerWebsocket : ClientMsg<Domain.Commands.Command,API.QueryParameter> -> unit =
   websocketNotConnected
 
 let mutable closeWebsocket : unit -> unit =
@@ -35,7 +35,7 @@ let startWs token dispatch =
   let ws = WebSocket.Create("ws://127.0.0.1:8085" + Server.Urls.Conference + "?jwt=" + token)
 
   let send msg =
-    ws.send (Encode.Auto.toString<ClientMsg<Domain.Commands.Command,API.QueryParameter,API.QueryResult>>(0, msg))
+    ws.send (Encode.Auto.toString<ClientMsg<Domain.Commands.Command,API.QueryParameter>>(0, msg))
 
   ws.onopen <- (fun _ -> send Connect ; null)
   ws.onmessage <- onMsg
@@ -57,7 +57,7 @@ let wsCmd cmd =
   [fun _ -> sendPerWebsocket cmd]
 
 let transactionId() =
-  TransactionId <| System.Guid.NewGuid()
+  EventSourced.TransactionId <| System.Guid.NewGuid()
 
 let createQuery query =
   {

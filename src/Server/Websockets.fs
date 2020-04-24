@@ -1,21 +1,20 @@
-module Websocket
+module Server.Websocket
 
+open EventSourced
+open EventSourced.EventSourced
 open Suave
 open Suave.Sockets.Control
 open Suave.WebSocket
 
-open Server.ServerTypes
+open FableJson
+open ServerTypes
 
-
-open Infrastructure.FableJson
-open Infrastructure.Types
-
-type Msg<'CommandPayload,'Event,'QueryParameter,'QueryResult> =
+type Msg<'Command,'Event,'QueryParameter> =
   | Connected
   | Closed
-  | Received of ClientMsg<'CommandPayload,'QueryParameter,'QueryResult>
+  | Received of ClientMsg<'Command,'QueryParameter>
   | Events of EventSet<'Event>
-  | QueryResponse of QueryResponse<'QueryResult>
+  | QueryResponse of QueryResult
 
 let send (webSocket : WebSocket) (msg : ServerMsg<'Event,'QueryResult>) =
   let byteResponse =
@@ -32,13 +31,15 @@ let emptyResponse =
   [||] |> Suave.Sockets.ByteSegment
 
 let websocket
-  (eventSourced : EventSourced<'CommandPayload,'Event,'QueryParameter,'State,'QueryResult>)
+  (eventSourced : EventSourced<'Command,'Event,'Query>)
   (webSocket : WebSocket)
   (context: HttpContext) =
 
     let webSocketHandler =
       MailboxProcessor.Start(fun inbox ->
-        eventSourced.EventPublisher (Msg.Events >> inbox.Post)
+//        eventSourced.EventPublisher (Msg.Events >> inbox.Post)
+        // TODO Subscribe/Unsubscribe events
+
 
         let queryReplyChannel = Msg.QueryResponse >> inbox.Post
 
@@ -53,14 +54,19 @@ let websocket
 
             | Received clientMsg  ->
                 match clientMsg with
-                | Command (header,command as payload) ->
-                    printfn "handle incoming command with header %A..." header
-                    eventSourced.CommandHandler payload
+                | Command envelope ->
+                    printfn "handle incoming command with envelope %A..." envelope
+                    do! (eventSourced.HandleCommand envelope |> Async.Ignore) // TODO: think of result
                     return! loop()
 
                 | Query query ->
                     printfn "handle incoming query %A..." query
-                    eventSourced.QueryManager (query,queryReplyChannel)
+
+                    async {
+                      let! result = eventSourced.HandleQuery query
+                      queryReplyChannel result
+                    } |> Async.StartImmediate
+
                     return! loop()
 
                 | Connect ->
@@ -70,10 +76,10 @@ let websocket
 
                     return! loop()
 
-            | Events (header,events as payload) ->
-                printfn "events %A for header %A will be send to client..." events header
+            | Events (eventSet : EventSet<'Event>) ->
+                printfn "events %A will be send to client..." eventSet
                 let response =
-                  ServerMsg.Events payload
+                  ServerMsg.Events eventSet
                   |> send webSocket
 
                 return! loop()
@@ -105,7 +111,7 @@ let websocket
 
                 let deserialized =
                   str
-                  |> ofJson<ClientMsg<'CommandPayload,'QueryParameter,'QueryResult>>
+                  |> ofJson<ClientMsg<'Command,'Query>>
 
                 printfn "Received: %A" deserialized
                 webSocketHandler.Post (Msg.Received deserialized)

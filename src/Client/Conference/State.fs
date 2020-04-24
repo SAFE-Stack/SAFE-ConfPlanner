@@ -5,7 +5,7 @@ open Elmish.Helper
 open Global
 
 open Server.ServerTypes
-open Infrastructure.Types
+open EventSourced
 
 open Conference.Types
 open Conference.Ws
@@ -13,20 +13,14 @@ open Conference.Api
 open Domain
 open Domain.Model
 
+
+let private eventIsForConference (ConferenceId conferenceId) envelope =
+  envelope.Metadata.Source = conferenceId
+
 let private updateStateWithEvents conference events  =
-  events |> List.fold Domain.Projections.apply conference
+  events
+  |> List.fold Domain.Projections.apply conference
 
-let private makeStreamId (Model.ConferenceId id) =
-  id |> string |> StreamId
-
-let private makeConferenceId (StreamId id) =
-  id |> System.Guid.Parse |> Model.ConferenceId
-
-let private eventSetIsForCurrentConference ((_,streamId),_) conference =
-  streamId |> makeConferenceId = conference.Id
-
-let private commandHeader transaction id =
-  transaction, id |> makeStreamId
 
 let private queryConference conferenceId =
   conferenceId
@@ -52,7 +46,7 @@ let init (user : UserData)  =
     View = CurrentView.NotAsked
     Conferences = RemoteData.NotAsked
     Organizers = RemoteData.NotAsked
-    LastEvents = []
+    LastEvents = None
     Organizer = user.OrganizerId
     OpenTransactions = []
     OpenNotifications = []
@@ -74,17 +68,17 @@ let private withOpenTransactions transactions model =
   { model with OpenTransactions = List.concat [transactions ; model.OpenTransactions ] }
 
 let private withLastEvents events model =
-  { model with LastEvents = events }
+  { model with LastEvents = Some events }
 
-let withFinishedTransaction transaction events model =
-  if model.OpenTransactions |> List.exists (fun openTransaction -> transaction = openTransaction) then
+let withFinishedTransaction (eventSet : EventSet<_>) model =
+  if model.OpenTransactions |> List.exists (fun openTransaction ->eventSet.TransactionId = openTransaction) then
     let notifications =
-      events
-      |> List.map (fun event -> event,transaction,Entered)
+      eventSet.Events
+      |> List.map (fun envelope -> envelope.Event,eventSet.TransactionId,Entered)
 
     let model =
       { model with
-          OpenTransactions =  model.OpenTransactions |> List.filter (fun openTransaction -> transaction <> openTransaction)
+          OpenTransactions =  model.OpenTransactions |> List.filter (fun openTransaction -> eventSet.TransactionId <> openTransaction)
           OpenNotifications = model.OpenNotifications @ notifications
       }
 
@@ -121,7 +115,7 @@ let withoutNotification (notification,transaction,_) model =
 
   { model with OpenNotifications = newNotifications }
 
-let private updateWhatIfView editor conference whatif behaviour command =
+let private updateWhatIfView editor conference whatif (behaviour : Conference -> Domain.Events.Event list) command =
   let events =
       conference |> behaviour
 
@@ -131,8 +125,17 @@ let private updateWhatIfView editor conference whatif behaviour command =
   let transaction =
     transactionId()
 
+  let (ConferenceId eventSource) = conference.Id
+
+  let envelope =
+    {
+      Transaction = transaction
+      EventSource = eventSource
+      Command = command
+    }
+
   let commands =
-     (conference.Id |> commandHeader transaction, command) :: whatif.Commands
+     envelope :: whatif.Commands
 
   let whatif =
     WhatIf <|
@@ -223,23 +226,44 @@ let private withWsCmd command conference model =
   let transaction =
     transactionId()
 
+  let (ConferenceId eventSource) = conference.Id
+
+  let envelope =
+    {
+      Transaction = transaction
+      EventSource = eventSource
+      Command = command
+    }
+
   model
   |> withOpenTransaction transaction
-  |> withCommand (wsCmd <| ClientMsg.Command (conference.Id |> commandHeader transaction, command))
+  |> withCommand (wsCmd (ClientMsg.Command (envelope)))
 
 let withLiveUpdateCmd conference whatifMsg model =
   let transaction =
     transactionId()
 
+  let (ConferenceId eventSource) = conference.Id
+
+  let envelope =
+    {
+      Transaction = transaction
+      EventSource = eventSource
+      Command = liveUpdateCommand whatifMsg
+    }
+
   model
   |> withOpenTransaction transaction
-  |> withCommand (wsCmd <| ClientMsg.Command (conference.Id |> commandHeader transaction, liveUpdateCommand whatifMsg))
+  |> withCommand (wsCmd <| ClientMsg.Command envelope)
 
 let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
   match msg with
   | Received (ServerMsg.QueryResponse response) ->
-      match response.Result with
+      match response with
       | NotHandled ->
+          model |> withoutCommands
+
+      | QueryError -> // TODO give result
           model |> withoutCommands
 
       | Handled result ->
@@ -265,17 +289,17 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
 
   | Received (ServerMsg.Events eventSet) ->
       match model.View with
-      | Edit (editor, conference, Live) when eventSetIsForCurrentConference eventSet conference  ->
-          let transaction,events =
-            eventSet |> (fun ((transaction,_),events) -> transaction,events)
-
+      | Edit (editor, conference, Live) ->
           let newConference =
-            events |> updateStateWithEvents conference
+            eventSet.Events
+            |> List.filter (eventIsForConference conference.Id)
+            |> List.map (fun envelope -> envelope.Event)
+            |> updateStateWithEvents conference
 
           model
           |> withView ((editor,newConference,Live) |> Edit)
-          |> withLastEvents events
-          |> withFinishedTransaction transaction events
+          |> withLastEvents eventSet
+          |> withFinishedTransaction eventSet
 
       | _ ->
           model |> withoutCommands
@@ -296,15 +320,15 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
 
   | MakeItSo ->
       match model.View with
-      | Edit (editor, conference, WhatIf whatif)  ->
+      | Edit (editor, conference, WhatIf whatIf)  ->
           let commands =
-            whatif.Commands
+            whatIf.Commands
             |> List.rev
             |> List.collect (ClientMsg.Command >> wsCmd)
 
           model
-          |> withView ((editor,whatif.Conference,Live) |> Edit)
-          |> withOpenTransactions (whatif.Commands |> List.map messageAsTransactionId)
+          |> withView ((editor,whatIf.Conference,Live) |> Edit)
+          |> withOpenTransactions (whatIf.Commands |> List.map (fun envelope -> envelope.Transaction))
           |> withCommand (Cmd.batch [commands ; conference.Id |> queryConference])
 
       | _ ->

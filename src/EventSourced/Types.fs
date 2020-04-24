@@ -64,7 +64,7 @@ type QueryResult =
   | NotHandled
   | QueryError of string
 
-type  QueryHandler<'Query> =
+type QueryHandler<'Query> =
   {
     Handle : 'Query -> Async<QueryResult>
   }
