@@ -1,5 +1,5 @@
-namespace Infrastructure.EventStorage
-open Infrastructure
+namespace EventSourced.EventStorage
+open EventSourced
 
 module InMemoryStorage =
   open Agent

@@ -1,4 +1,6 @@
-namespace Infrastructure
+namespace EventSourced
+
+type TransactionId = TransactionId of System.Guid
 
 type EventSource = System.Guid
 
@@ -17,6 +19,12 @@ type EventEnvelope<'Event> =
     Event : 'Event
   }
 
+type EventSet<'Event> =
+  {
+    TransactionId : TransactionId
+    Events : EventEnvelope<'Event> list
+  }
+
 type EventHandler<'Event> =
   EventEnvelope<'Event> list -> Async<unit>
 
@@ -27,9 +35,9 @@ type EventStore<'Event> =
   {
     Get : unit -> Async<EventResult<'Event>>
     GetStream : EventSource -> Async<EventResult<'Event>>
-    Append : EventEnvelope<'Event> list -> Async<Result<unit, string>>
+    Append : EventSet<'Event> -> Async<Result<unit, string>>
     OnError : IEvent<exn>
-    OnEvents : IEvent<EventEnvelope<'Event> list>
+    OnEvents : IEvent<EventSet<'Event>>
   }
 
 type EventListener<'Event> =
@@ -42,7 +50,7 @@ type EventStorage<'Event> =
   {
     Get : unit -> Async<EventResult<'Event>>
     GetStream : EventSource -> Async<EventResult<'Event>>
-    Append : EventEnvelope<'Event> list -> Async<unit>
+    Append : EventSet<'Event> -> Async<unit>
   }
 
 type Projection<'State,'Event> =
@@ -67,9 +75,17 @@ type ReadModel<'Event, 'State> =
     State : unit -> Async<'State>
   }
 
+
+type CommandEnvelope<'Command> =
+  {
+    Transaction : TransactionId
+    EventSource : EventSource
+    Command : 'Command
+  }
+
 type CommandHandler<'Command> =
   {
-    Handle : EventSource -> 'Command -> Async<Result<unit,string>>
+    Handle : CommandEnvelope<'Command> -> Async<Result<unit,string>>
     OnError : IEvent<exn>
   }
 

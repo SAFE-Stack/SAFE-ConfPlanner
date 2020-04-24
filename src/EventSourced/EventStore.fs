@@ -1,4 +1,4 @@
-namespace Infrastructure
+namespace EventSourced
 
 module EventStore =
   open Agent
@@ -6,10 +6,10 @@ module EventStore =
   type Msg<'Event> =
     | Get of AsyncReplyChannel<EventResult<'Event>>
     | GetStream of EventSource * AsyncReplyChannel<EventResult<'Event>>
-    | Append of EventEnvelope<'Event> list * AsyncReplyChannel<Result<unit,string>>
+    | Append of EventSet<'Event> * AsyncReplyChannel<Result<unit,string>>
 
   let initialize (storage : EventStorage<_>) : EventStore<_> =
-    let eventsAppended = Event<EventEnvelope<_> list>()
+    let eventsAppended = Event<EventSet<_>>()
 
     let proc (inbox : Agent<Msg<_>>) =
       let rec loop () =
@@ -36,10 +36,10 @@ module EventStore =
 
               return! loop ()
 
-          | Append (events,reply) ->
+          | Append (eventSet,reply) ->
               try
-                do! events |> storage.Append
-                do eventsAppended.Trigger events
+                do! eventSet |> storage.Append
+                do eventsAppended.Trigger eventSet
                 do reply.Reply (Ok ())
               with exn ->
                 do inbox.Trigger(exn)

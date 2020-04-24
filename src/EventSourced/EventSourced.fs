@@ -1,13 +1,13 @@
-namespace Infrastructure
+namespace EventSourced
 
 module EventSourced =
-  open Infrastructure
+  open EventSourced
 
-  type EventSourcedConfig<'Comand,'Event,'Query> =
+  type EventSourcedConfig<'Command,'Event,'Query> =
     {
       EventStoreInit : EventStorage<'Event> -> EventStore<'Event>
       EventStorageInit : unit -> EventStorage<'Event>
-      CommandHandlerInit : EventStore<'Event> -> CommandHandler<'Comand>
+      CommandHandlerInit : EventStore<'Event> -> CommandHandler<'Command>
       QueryHandler : QueryHandler<'Query>
       EventListenerInit : unit -> EventListener<'Event>
       EventHandlers : EventHandler<'Event> list
@@ -31,8 +31,8 @@ module EventSourced =
       eventStore.OnEvents.Add eventListener.Notify
       configuration.EventHandlers |> List.iter eventListener.Subscribe
 
-    member __.HandleCommand eventSource command =
-      commandHandler.Handle eventSource command
+    member __.HandleCommand (envelope : CommandEnvelope<_>) =
+      commandHandler.Handle envelope
 
     member __.HandleQuery query =
       queryHandler.Handle query

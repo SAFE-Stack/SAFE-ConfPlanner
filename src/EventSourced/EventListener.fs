@@ -1,4 +1,4 @@
-namespace Infrastructure
+namespace EventSourced
 
 module EventListener =
   open Agent

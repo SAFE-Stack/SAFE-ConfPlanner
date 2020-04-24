@@ -1,4 +1,4 @@
-namespace Infrastructure
+namespace EventSourced
 
 module CommandHandler =
   open Agent
@@ -20,7 +20,7 @@ module CommandHandler =
     events |> List.map envelope
 
   type Msg<'Command> =
-    | Handle of EventSource * 'Command * AsyncReplyChannel<Result<unit,string>>
+    | Handle of CommandEnvelope<'Command> * AsyncReplyChannel<Result<unit,string>>
 
   let initialize (behaviour : Behaviour<_,_>) (eventStore : EventStore<_>) : CommandHandler<_> =
     let proc (inbox : Agent<Msg<_>>) =
@@ -29,16 +29,16 @@ module CommandHandler =
           let! msg = inbox.Receive()
 
           match msg with
-          | Handle (eventSource,command,reply) ->
-              let! stream = eventSource |> eventStore.GetStream
+          | Handle (envelope,reply) ->
+              let! stream = envelope.EventSource |> eventStore.GetStream
 
               let newEvents =
-                stream |> Result.map (asEvents >> behaviour command >> enveloped eventSource)
+                stream |> Result.map (asEvents >> behaviour envelope.Command >> enveloped envelope.EventSource)
 
               let! result =
                 newEvents
                 |> function
-                    | Ok events -> eventStore.Append events
+                    | Ok events -> eventStore.Append { TransactionId = envelope.Transaction ; Events = events }
                     | Error err -> async { return Error err }
 
               do reply.Reply result
@@ -51,6 +51,6 @@ module CommandHandler =
     let agent = Agent<Msg<_>>.Start(proc)
 
     {
-      Handle = fun source command -> agent.PostAndAsyncReply (fun reply -> Handle (source,command,reply))
+      Handle = fun command -> agent.PostAndAsyncReply (fun reply -> Handle (command,reply))
       OnError = agent.OnError
     }

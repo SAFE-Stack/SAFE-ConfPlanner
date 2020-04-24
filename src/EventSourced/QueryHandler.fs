@@ -1,4 +1,4 @@
-namespace Infrastructure
+namespace EventSourced
 
 module QueryHandler =
   let rec private choice (queryHandler : QueryHandler<_> list) query =

@@ -35,13 +35,13 @@ module Helper
     result
     |> runAsync
     |> function
-      | Infrastructure.QueryResult.Handled result ->
+      | EventSourced.QueryResult.Handled result ->
           printfn "\n%s: %A" header result
 
-      | Infrastructure.QueryResult.NotHandled ->
+      | EventSourced.QueryResult.NotHandled ->
           printfn "\n%s: NOT HANDLED" header
 
-      | Infrastructure.QueryResult.QueryError error ->
+      | EventSourced.QueryResult.QueryError error ->
           printError (sprintf "Query Error: %s" error) ""
 
     waitForAnyKey()
