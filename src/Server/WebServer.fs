@@ -17,7 +17,8 @@ open EventSourced
 
 open Domain
 open Websocket
-
+open Fable.Remoting.Server
+open Fable.Remoting.Suave
 open Application.API
 
 let conferenceReadmodel = Conference.readmodel()
@@ -33,11 +34,7 @@ let eventSourced : EventSourced<Command,Event,QueryParameter> =
     CommandHandlerInit =
       CommandHandler.initialize Behaviour.behaviour
 
-    QueryHandler =
-      QueryHandler.initialize
-        [
-          Conference.queryHandler conferenceReadmodel.State
-        ]
+    QueryHandler = QueryHandler.initialize []
 
     EventListenerInit =
       EventListener.initialize
@@ -52,6 +49,18 @@ let eventSourced : EventSourced<Command,Event,QueryParameter> =
 let conferenceWebSocket =
   eventSourced
   |> websocket
+
+
+let conferenceApi : WebPart =
+    Remoting.createApi()
+    |> Remoting.fromValue Application.Conference.api
+    |> Remoting.buildWebPart
+
+let organizerApi : WebPart =
+    Remoting.createApi()
+    |> Remoting.fromValue Application.Organizers.api
+    |> Remoting.buildWebPart
+
 
 
 let start clientPath port =
@@ -79,6 +88,9 @@ let start clientPath port =
             ]
 
             path Server.Urls.Conference  >=> websocketWithAuth handShake conferenceWebSocket
+
+            conferenceApi
+            organizerApi
 
             NOT_FOUND "Page not found."
 

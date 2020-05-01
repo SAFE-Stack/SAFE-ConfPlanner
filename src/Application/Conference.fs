@@ -41,46 +41,36 @@ module Conference =
 
     InMemoryReadmodel.readModel updateState Map.empty
 
-  let queryHandler conferences : QueryHandler<_> =
-    let handleQuery query =
-      match query with
-      | QueryParameter.Conference (ConferenceId conferenceId) ->
-          async {
-            let! state = conferences()
+  let conference conferenceReadModel (ConferenceId conferenceId) =
+    async {
+      let! state = conferenceReadModel()
 
-            return
-               match state |> Map.tryFind conferenceId with
-                | Some conference ->
-                    conference
-                    |> Conference
-                    |> box
-                    |> Handled
+      return
+         match state |> Map.tryFind conferenceId with
+          | Some conference ->
+              Ok conference
 
-                | None ->
-                    ConferenceNotFound
-                    |> box
-                    |> Handled
+          | None ->
+              Result.Error QueryError.ConferenceNotFound
+    }
 
-          }
+  let conferences conferenceReadModel () =
+    async {
+      let! state = conferenceReadModel()
 
-      | QueryParameter.Conferences ->
-          async {
-            let! state = conferences()
+      return
+        state
+        |> Map.toList
+        |> List.map (fun (_,conference) -> (conference.Id, conference.Title))
+        |> Ok
+    }
 
-            return
-              state
-              |> Map.toList
-              |> List.map (fun (_,conference) -> (conference.Id, conference.Title))
-              |> Conferences
-              |> box
-              |> Handled
-          }
 
-      | _ ->
-        async { return NotHandled }
-
-    { Handle = handleQuery }
-
+  let api conferenceReadModel =
+    {
+      conference = conference conferenceReadModel
+      conferences = conferences conferenceReadModel
+    }
 
 
 

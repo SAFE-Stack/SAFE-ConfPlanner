@@ -9,11 +9,18 @@ module API =
     | Organizers
     | Conferences
 
-
   type Conferences =
     (ConferenceId * string) list
-  type QueryResult =
-    | Conference of Conference
-    | Conferences of Conferences
-    | Organizers of Organizers
+
+  type QueryError =
     | ConferenceNotFound
+
+
+    type ConferenceApi = {
+      conference : ConferenceId -> Async<Result<Conference, QueryError>>
+      conferences : unit -> Async<Result<Conferences, QueryError>>
+    }
+
+    type OrganizerApi = {
+      organizers : unit -> Async<Result<Organizer list, QueryError>>
+    }

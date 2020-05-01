@@ -1,6 +1,8 @@
 source https://www.nuget.org/api/v2
 storage:none
 
+nuget Fable.Remoting.Client
+nuget Fable.Remoting.Suave
 nuget FSharp.Core
 
 nuget FsUnit

@@ -4,3 +4,4 @@ Microsoft.Extensions.Logging.Console
 System.Net.NetworkInformation
 Newtonsoft.Json
 jose-jwt
+Fable.Remoting.Suave

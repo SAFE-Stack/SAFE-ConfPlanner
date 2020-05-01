@@ -37,6 +37,11 @@ NUGET
       Fable.Browser.Event (>= 1.0) - restriction: >= netstandard2.0
       Fable.Core (>= 3.0) - restriction: >= netstandard2.0
       FSharp.Core (>= 4.5.2) - restriction: >= netstandard2.0
+    Fable.Browser.XMLHttpRequest (1.1) - restriction: >= netstandard2.0
+      Fable.Browser.Blob (>= 1.1) - restriction: >= netstandard2.0
+      Fable.Browser.Event (>= 1.0) - restriction: >= netstandard2.0
+      Fable.Core (>= 3.0) - restriction: >= netstandard2.0
+      FSharp.Core (>= 4.6.2) - restriction: >= netstandard2.0
     Fable.Core (3.1.5)
       FSharp.Core (>= 4.7) - restriction: >= netstandard2.0
     Fable.Elmish (3.0.6)
@@ -74,12 +79,35 @@ NUGET
       Fable.Core (>= 3.0) - restriction: >= netstandard2.0
       Fable.FontAwesome (>= 2.0) - restriction: >= netstandard2.0
       Fable.React (>= 5.1) - restriction: >= netstandard2.0
+    Fable.Parsimmon (4.1) - restriction: >= netstandard2.0
+      Fable.Core (>= 3.0) - restriction: >= netstandard2.0
+      FSharp.Core (>= 4.6.2) - restriction: >= netstandard2.0
     Fable.Promise (2.0)
       Fable.Core (>= 3.0) - restriction: >= netstandard2.0
       FSharp.Core (>= 4.5.2) - restriction: >= netstandard2.0
     Fable.React (5.3.6) - restriction: >= netstandard2.0
       Fable.Browser.Dom (>= 1.0) - restriction: >= netstandard2.0
       Fable.Core (>= 3.0) - restriction: >= netstandard2.0
+      FSharp.Core (>= 4.7) - restriction: >= netstandard2.0
+    Fable.Remoting.Client (5.10.2)
+      Fable.Browser.XMLHttpRequest (>= 1.0) - restriction: >= netstandard2.0
+      Fable.Core (>= 3.0) - restriction: >= netstandard2.0
+      Fable.SimpleJson (>= 3.8.2) - restriction: >= netstandard2.0
+      FSharp.Core (>= 4.7) - restriction: >= netstandard2.0
+    Fable.Remoting.Json (2.6) - restriction: || (>= net461) (>= netstandard2.0)
+      FSharp.Core (>= 4.6.2) - restriction: || (&& (>= net45) (< netstandard2.0)) (&& (< net45) (>= netstandard2.0)) (>= net461) (>= netcoreapp3.0)
+      Newtonsoft.Json (>= 12.0.2) - restriction: || (&& (>= net45) (< netstandard2.0)) (&& (< net45) (>= netstandard2.0)) (>= net461) (>= netcoreapp3.0)
+    Fable.Remoting.Server (4.10.2) - restriction: || (>= net461) (>= netstandard2.0)
+      Fable.Remoting.Json (>= 2.6) - restriction: || (>= net461) (>= netstandard2.0)
+      FSharp.Core (>= 4.6.2) - restriction: || (>= net461) (>= netstandard2.0)
+    Fable.Remoting.Suave (3.11.2)
+      Fable.Remoting.Json (>= 2.6) - restriction: || (>= net461) (>= netstandard2.0)
+      Fable.Remoting.Server (>= 4.10.2) - restriction: || (>= net461) (>= netstandard2.0)
+      FSharp.Core (>= 4.6.2) - restriction: || (>= net461) (>= netstandard2.0)
+      Suave (>= 2.5.5) - restriction: || (>= net461) (>= netstandard2.0)
+    Fable.SimpleJson (3.8.2) - restriction: >= netstandard2.0
+      Fable.Core (>= 3.0) - restriction: >= netstandard2.0
+      Fable.Parsimmon (>= 4.0) - restriction: >= netstandard2.0
       FSharp.Core (>= 4.7) - restriction: >= netstandard2.0
     FSharp.Compiler.Service (35.0) - restriction: >= netcoreapp2.0
       FSharp.Core (>= 4.6.2) - restriction: || (>= net461) (>= netstandard2.0)

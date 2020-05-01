@@ -20,13 +20,8 @@ module Organizers =
       sachse
     ]
 
-  let queryHandler (query : QueryParameter) : Async<QueryResult> =
-    match query with
-    | QueryParameter.Organizers ->
-        organizers
-        |> QueryResult.Organizers
-        |> box
-        |> Handled
 
-    | _ -> NotHandled
-    |> fun x -> async { return x }
+  let api =
+    {
+      organizers = fun () -> async { return Ok organizers }
+    }
