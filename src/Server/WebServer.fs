@@ -1,7 +1,7 @@
 module Server.WebServer
 
 open System.IO
-open Conference.Api.API
+open Application
 open Domain.Commands
 open Domain.Events
 open Suave
@@ -14,28 +14,13 @@ open Suave.RequestErrors
 open Suave.WebSocket
 open EventSourced.EventSourced
 open EventSourced
-open Infrastructure.EventSourced
-open Conference.Api
+
 open Domain
 open Websocket
 
-//let conferenceWebsocket =
-//  let conferenceProjection,conferenceQueryHandler =
-//    toProjectionAndQueryHandler Conference.projection Conference.queryHandler
-//
-//  let conferencesProjection,conferencesQueryHandler =
-//    toProjectionAndQueryHandler Conferences.projection Conferences.queryHandler
-//
-//  let organizersProjection,organizersQueryHandler =
-//    toProjectionAndQueryHandler Organizers.projection Organizers.queryHandler
-//
-//  websocket <|
-//    eventSourced
-//      Domain.Behaviour.execute
-//      [conferenceProjection ; conferencesProjection ; organizersProjection]
-//      [conferenceQueryHandler ; conferencesQueryHandler ; organizersQueryHandler]
-//      @".\conference_eventstore.json"
+open Application.API
 
+let conferenceReadmodel = Conference.readmodel()
 
 let eventSourced : EventSourced<Command,Event,QueryParameter> =
   {
@@ -51,7 +36,7 @@ let eventSourced : EventSourced<Command,Event,QueryParameter> =
     QueryHandler =
       QueryHandler.initialize
         [
-//          QueryHandlers.flavours flavoursInStockReadmodel.State db_connection
+          Conference.queryHandler conferenceReadmodel.State
         ]
 
     EventListenerInit =
@@ -59,8 +44,7 @@ let eventSourced : EventSourced<Command,Event,QueryParameter> =
 
     EventHandlers =
       [
-//        flavoursInStockReadmodel.EventHandler
-//        PersistentReadmodels.flavourSoldHandler db_connection
+        conferenceReadmodel.EventHandler
       ]
   } |> EventSourced
 
@@ -68,8 +52,6 @@ let eventSourced : EventSourced<Command,Event,QueryParameter> =
 let conferenceWebSocket =
   eventSourced
   |> websocket
-
-
 
 
 let start clientPath port =
@@ -95,8 +77,6 @@ let start clientPath port =
             POST >=> choose [
                 path Server.Urls.Login >=> Auth.login
             ]
-
-            // path "/dummyWebsocket" >=> handShake dummyWebsocket
 
             path Server.Urls.Conference  >=> websocketWithAuth handShake conferenceWebSocket
 
