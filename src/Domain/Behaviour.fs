@@ -1,9 +1,11 @@
 module Domain.Behaviour
 
+open Domain
 open Model
 open Commands
 open Events
 open Projections
+open EventSourced
 
 let (|OrganizerAlreadyInConference|_|) organizers organizer =
   match organizers |> List.contains organizer with
@@ -242,7 +244,7 @@ let private handleRemoveOrganizerFromConference organizer history =
   |> removeOrganizerFromConference organizer
 
 
-let behaviour (command : Command) =
+let behaviour (command : Command) : EventProducer<Event> =
   match command with
   | ScheduleConference conference ->
        handleScheduleConference conference
