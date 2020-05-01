@@ -2,7 +2,6 @@ module Conference.Ws
 
 open Conference.Types
 open Server.ServerTypes
-open Infrastructure.Types
 open Conference.Api
 open Browser.WebSocket
 open Browser.Types
@@ -60,7 +59,8 @@ let transactionId() =
   EventSourced.TransactionId <| System.Guid.NewGuid()
 
 let createQuery query =
-  {
-    Query.Id = QueryId <| System.Guid.NewGuid()
-    Query.Parameter = query
-  }
+//  { TODO think of QueryId
+//    Query.Id = QueryId <| System.Guid.NewGuid()
+//    Query.Parameter = query
+//  }
+  query

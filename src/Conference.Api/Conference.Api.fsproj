@@ -9,7 +9,6 @@
   <ItemGroup>
     <Compile Include="API.fs" />
     <Compile Include="Conference.fs" />
-    <Compile Include="Conferences.fs" />
     <Compile Include="Organizers.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

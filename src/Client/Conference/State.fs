@@ -19,7 +19,7 @@ let private eventIsForConference (ConferenceId conferenceId) envelope =
 
 let private updateStateWithEvents conference events  =
   events
-  |> List.fold Domain.Projections.apply conference
+  |> List.fold Domain.Projections.evolve conference
 
 
 let private queryConference conferenceId =
@@ -267,21 +267,21 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
           model |> withoutCommands
 
       | Handled result ->
-          match result with
-          | API.QueryResult.Conference conference ->
-              model
-              |> withView ((VotingPanel,conference,Live) |> Edit)
-              |> withoutCommands
-
-          | API.QueryResult.Conferences conferences ->
-              { model with Conferences = conferences |> RemoteData.Success }
-              |> withoutCommands
-
-          | API.QueryResult.Organizers organizers ->
-              { model with Organizers = organizers |> RemoteData.Success }
-              |> withoutCommands
-
-          | API.QueryResult.ConferenceNotFound ->
+//          match result with
+//          | API.QueryResult.Conference conference ->
+//              model
+//              |> withView ((VotingPanel,conference,Live) |> Edit)
+//              |> withoutCommands
+//
+//          | API.QueryResult.Conferences conferences ->
+//              { model with Conferences = conferences |> RemoteData.Success }
+//              |> withoutCommands
+//
+//          | API.QueryResult.Organizers organizers ->
+//              { model with Organizers = organizers |> RemoteData.Success }
+//              |> withoutCommands
+//
+//          | API.QueryResult.ConferenceNotFound ->
               model |> withoutCommands
 
   | Received (ServerMsg.Connected) ->

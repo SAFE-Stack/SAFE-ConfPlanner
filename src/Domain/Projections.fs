@@ -3,12 +3,14 @@ module Domain.Projections
 open System
 open Model
 open Events
+open EventSourced
+
 let updateAbstractStatus abstractId status (abstr: ConferenceAbstract) =
     match abstr.Id = abstractId with
     | true -> { abstr with Status = status }
     | false -> abstr
 
-let apply (conference : Conference) event : Conference =
+let evolve (conference : Conference) event : Conference =
   match event with
     | ConferenceScheduled conference ->
         conference
@@ -88,4 +90,11 @@ let private emptyConference : Conference =
 
 let conferenceState (givenHistory : Event list) =
     givenHistory
-    |> List.fold apply emptyConference
+    |> List.fold evolve emptyConference
+
+
+let conference : Projection<Conference, Event> =
+  {
+    Init = emptyConference
+    Update = evolve
+  }

@@ -9,5 +9,8 @@
     <Compile Include="Projections.fs" />
     <Compile Include="Behaviour.fs" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\EventSourced\EventSourced.fsproj" />
+  </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

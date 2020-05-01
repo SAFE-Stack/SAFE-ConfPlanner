@@ -65,7 +65,7 @@ type QueryHandler<'Query> =
     Handle : 'Query -> Async<QueryResult>
   }
 
-type ReadModel<'Event, 'State> =
+type InMemoryReadModel<'Event, 'State> =
   {
     EventHandler : EventHandler<'Event>
     State : unit -> Async<'State>

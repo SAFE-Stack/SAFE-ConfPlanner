@@ -1,9 +1,9 @@
 module Conference.Api.Organizers
 
 open API
-open Infrastructure.Types
 open Domain.Events
 open Domain.Model
+open EventSourced
 
 type OrganizersReadModel =
   Organizers
@@ -22,17 +22,13 @@ let organizers =
     sachse
   ]
 
-let projection : ProjectionDefinition<OrganizersReadModel, Event>=
-  {
-    InitialState = organizers
-    UpdateState = fun readmodel _ -> readmodel
-  }
-
-let queryHandler (query : Query<QueryParameter>) (readModel : OrganizersReadModel) : QueryHandled<QueryResult> =
-  match query.Parameter with
+let queryHandler (query : QueryParameter) : Async<QueryResult> =
+  match query with
   | QueryParameter.Organizers ->
-      readModel
+      organizers
       |> QueryResult.Organizers
+      |> box
       |> Handled
 
   | _ -> NotHandled
+  |> fun x -> async { return x }

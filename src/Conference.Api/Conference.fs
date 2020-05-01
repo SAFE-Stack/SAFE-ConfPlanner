@@ -1,50 +1,61 @@
 module Conference.Api.Conference
 
 open API
-open Infrastructure.Types
-open Domain.Events
-open Domain.Model
-open Domain.Projections
+open EventSourced
 
-type ConferenceReadModel =
-  Map<StreamId,Conference>
 
-let private evolveState state (streamId : StreamId ,events) : ConferenceReadModel =
-  let conference =
+let private projectIntoMap projection =
+  fun state eventEnvelope ->
     state
-    |> Map.tryFind streamId
-    |> Option.defaultValue (emptyConference())
+    |> Map.tryFind eventEnvelope.Metadata.Source
+    |> Option.defaultValue projection.Init
+    |> fun projectionState -> eventEnvelope.Event |> projection.Update projectionState
+    |> fun newState -> state |> Map.add eventEnvelope.Metadata.Source newState
 
-  state
-  |> Map.add streamId (events |> List.fold apply conference)
 
-let projection : ProjectionDefinition<ConferenceReadModel, Event>=
-  {
-    InitialState = Map.empty
-    UpdateState = evolveState
-  }
+let readmodel () : InMemoryReadModel<_,_> =
+  let updateState state eventEnvelopes =
+    eventEnvelopes
+    |> List.fold (projectIntoMap Domain.Projections.conference) state
 
-let queryHandler (query : Query<QueryParameter>) (readModel : ConferenceReadModel) : QueryHandled<QueryResult> =
-  match query.Parameter with
+  InMemoryReadmodel.readModel updateState Map.empty
+
+let queryHandler conferences (query : QueryParameter) : Async<QueryResult> =
+  match query with
   | QueryParameter.Conference conferenceId ->
-      let conference =
-        readModel
-        |> Map.tryPick (fun _ conference ->
-                          if conference.Id = conferenceId then
-                            conference |> Some
-                          else None)
+      async {
+        let! state = conferences()
 
-      match conference with
-      | Some conference ->
-          conference
-          |> Conference
+        return
+           match state |> Map.tryFind conferenceId with
+            | Some conference ->
+                conference
+                |> Conference
+                |> box
+                |> Handled
+
+            | None ->
+                ConferenceNotFound
+                |> box
+                |> Handled
+
+      }
+
+  | QueryParameter.Conferences ->
+      async {
+        let! state = conferences()
+
+        return
+          state
+          |> Map.toList
+          |> List.map (fun (id,conference) -> (id, conference.Title))
+          |> Conferences
+          |> box
           |> Handled
+      }
 
-      | None ->
-          ConferenceNotFound
-          |> Handled
-
-  | _ -> NotHandled
+  | _ ->
+    async { return NotHandled }
 
 
 
