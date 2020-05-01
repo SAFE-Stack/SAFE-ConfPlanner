@@ -6,10 +6,10 @@ module EventStore =
   type Msg<'Event> =
     | Get of AsyncReplyChannel<EventResult<'Event>>
     | GetStream of EventSource * AsyncReplyChannel<EventResult<'Event>>
-    | Append of EventSet<'Event> * AsyncReplyChannel<Result<unit,string>>
+    | Append of EventEnvelope<'Event> list * AsyncReplyChannel<Result<unit,string>>
 
   let initialize (storage : EventStorage<_>) : EventStore<_> =
-    let eventsAppended = Event<EventSet<_>>()
+    let eventsAppended = Event<EventEnvelope<'Event> list>()
 
     let proc (inbox : Agent<Msg<_>>) =
       let rec loop () =

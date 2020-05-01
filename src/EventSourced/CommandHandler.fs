@@ -38,7 +38,7 @@ module CommandHandler =
               let! result =
                 newEvents
                 |> function
-                    | Ok events -> eventStore.Append { TransactionId = envelope.Transaction ; Events = events }
+                    | Ok events -> eventStore.Append events
                     | Error err -> async { return Error err }
 
               do reply.Reply result

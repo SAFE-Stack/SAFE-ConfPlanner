@@ -20,8 +20,8 @@ module EventListener =
       let rec loop (eventHandlers : EventHandler<'Event> list) =
         async {
           match! inbox.Receive() with
-          | Notify events ->
-              do! eventHandlers |> notifyEventHandlers events
+          | Notify eventSet ->
+              do! eventHandlers |> notifyEventHandlers eventSet
 
               return! loop eventHandlers
 

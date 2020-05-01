@@ -16,6 +16,7 @@
     <Compile Include="EventListener.fs" />
     <Compile Include="QueryHandler.fs" />
     <Compile Include="CommandHandler.fs" />
+    <Compile Include="InMemoryReadmodel.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
