@@ -3,9 +3,8 @@ module Server.Auth
 
 open Suave
 open Suave.RequestErrors
-
-open Infrastructure.FableJson
 open Domain.Model
+open FableJson
 
 
 let rec private oneOf userprovider (username,password)  =

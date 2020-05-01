@@ -30,5 +30,5 @@ type ClientMsg<'Command,'Query> =
 // Server to Client
 type ServerMsg<'Event,'QueryResult> =
   | Connected
-  | Events of EventSet<'Event>
+  | Events of EventEnvelope<'Event> list
   | QueryResponse of QueryResult

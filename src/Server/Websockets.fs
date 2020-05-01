@@ -13,7 +13,7 @@ type Msg<'Command,'Event,'QueryParameter> =
   | Connected
   | Closed
   | Received of ClientMsg<'Command,'QueryParameter>
-  | Events of EventSet<'Event>
+  | Events of EventEnvelope<'Event> list
   | QueryResponse of QueryResult
 
 let send (webSocket : WebSocket) (msg : ServerMsg<'Event,'QueryResult>) =
@@ -76,10 +76,10 @@ let websocket
 
                     return! loop()
 
-            | Events (eventSet : EventSet<'Event>) ->
-                printfn "events %A will be send to client..." eventSet
+            | Events (events : EventEnvelope<'Event> list) ->
+                printfn "events %A will be send to client..." events
                 let response =
-                  ServerMsg.Events eventSet
+                  ServerMsg.Events events
                   |> send webSocket
 
                 return! loop()
