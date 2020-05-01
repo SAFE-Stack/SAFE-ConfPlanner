@@ -5,7 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../Domain/Domain.fsproj" />
-    <ProjectReference Include="../Conference.Api/Conference.Api.fsproj" />
+    <ProjectReference Include="..\Application\Application.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="index.html" />
