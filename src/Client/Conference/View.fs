@@ -247,11 +247,11 @@ let private viewOrganizersPanel dispatch conference organizers =
   | _ ->
       div [] [ "no organizers" |> str ]
 
-let footer currentView (lastEventSet : EventSet<_> option) =
+let footer currentView (lastEvents) =
   let lastEvents =
-    match lastEventSet with
-    | Some eventSet ->
-        eventSet.Events
+    match lastEvents with
+    | Some events ->
+        events
         |> List.map (fun envelope -> envelope.Event)
 
     | None ->

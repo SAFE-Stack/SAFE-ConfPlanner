@@ -2,11 +2,10 @@ module Conference.Ws
 
 open Conference.Types
 open Server.ServerTypes
-open Conference.Api
 open Browser.WebSocket
 open Browser.Types
 open Thoth.Json
-
+open Application
 
 let inline private encode msg =
   Encode.Auto.toString(0, msg)

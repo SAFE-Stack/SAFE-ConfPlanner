@@ -9,8 +9,11 @@ module API =
     | Organizers
     | Conferences
 
+
+  type Conferences =
+    (ConferenceId * string) list
   type QueryResult =
     | Conference of Conference
-    | Conferences of (ConferenceId * string) list
+    | Conferences of Conferences
     | Organizers of Organizers
     | ConferenceNotFound

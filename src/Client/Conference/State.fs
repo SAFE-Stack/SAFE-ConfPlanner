@@ -9,9 +9,9 @@ open EventSourced
 
 open Conference.Types
 open Conference.Ws
-open Conference.Api
 open Domain
 open Domain.Model
+open Application
 
 
 let private eventIsForConference (ConferenceId conferenceId) envelope =
@@ -70,25 +70,25 @@ let private withOpenTransactions transactions model =
 let private withLastEvents events model =
   { model with LastEvents = Some events }
 
-let withFinishedTransaction (eventSet : EventSet<_>) model =
-  if model.OpenTransactions |> List.exists (fun openTransaction ->eventSet.TransactionId = openTransaction) then
-    let notifications =
-      eventSet.Events
-      |> List.map (fun envelope -> envelope.Event,eventSet.TransactionId,Entered)
-
-    let model =
-      { model with
-          OpenTransactions =  model.OpenTransactions |> List.filter (fun openTransaction -> eventSet.TransactionId <> openTransaction)
-          OpenNotifications = model.OpenNotifications @ notifications
-      }
-
-    let commands =
-      notifications
-      |> List.map (RequestNotificationForRemoval>>(timeoutCmd 5000)>>Cmd.ofSub)
-      |> Cmd.batch
-
-    model |> withCommand commands
-  else
+let withFinishedTransaction (eventSet ) model =
+//  if model.OpenTransactions |> List.exists (fun openTransaction ->eventSet.TransactionId = openTransaction) then
+//    let notifications =
+//      eventSet.Events
+//      |> List.map (fun envelope -> envelope.Event,eventSet.TransactionId,Entered)
+//
+//    let model =
+//      { model with
+//          OpenTransactions =  model.OpenTransactions |> List.filter (fun openTransaction -> eventSet.TransactionId <> openTransaction)
+//          OpenNotifications = model.OpenNotifications @ notifications
+//      }
+//
+//    let commands =
+//      notifications
+//      |> List.map (RequestNotificationForRemoval>>(timeoutCmd 5000)>>Cmd.ofSub)
+//      |> Cmd.batch
+//
+//    model |> withCommand commands
+//  else
     model |> withoutCommands
 
 
@@ -287,19 +287,19 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
   | Received (ServerMsg.Connected) ->
       model, Cmd.batch [ queryConferences ; queryOrganizers ]
 
-  | Received (ServerMsg.Events eventSet) ->
+  | Received (ServerMsg.Events events) ->
       match model.View with
       | Edit (editor, conference, Live) ->
           let newConference =
-            eventSet.Events
+            events
             |> List.filter (eventIsForConference conference.Id)
             |> List.map (fun envelope -> envelope.Event)
             |> updateStateWithEvents conference
 
           model
           |> withView ((editor,newConference,Live) |> Edit)
-          |> withLastEvents eventSet
-          |> withFinishedTransaction eventSet
+          |> withLastEvents events
+          |> withFinishedTransaction events
 
       | _ ->
           model |> withoutCommands

@@ -4,8 +4,8 @@ open Global
 open Server.ServerTypes
 open Domain.Model
 open Domain.Events
-open Conference.Api
 open EventSourced
+open Application
 
 type NotificationType =
   | Info
@@ -75,9 +75,9 @@ type CurrentView =
 type Model =
   {
     View : CurrentView
-    Conferences : RemoteData<Conferences.Conferences>
+    Conferences : RemoteData<API.Conferences>
     Organizers : RemoteData<Domain.Model.Organizers>
-    LastEvents : EventSet<Domain.Events.Event> option
+    LastEvents : EventEnvelope<Domain.Events.Event> list option
     Organizer : OrganizerId
     OpenTransactions : EventSourced.TransactionId list
     OpenNotifications : Notification list
