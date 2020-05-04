@@ -22,13 +22,11 @@ type UserData =
 
 
 // Client to Server
-type ClientMsg<'Command,'Query> =
+type ClientMsg<'Command> =
   | Connect
   | Command of CommandEnvelope<'Command>
-  | Query of 'Query
 
 // Server to Client
-type ServerMsg<'Event,'QueryResult> =
+type ServerMsg<'Event> =
   | Connected
   | Events of EventEnvelope<'Event> list
-  | QueryResponse of QueryResult

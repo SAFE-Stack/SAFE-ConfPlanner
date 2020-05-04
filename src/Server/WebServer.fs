@@ -46,21 +46,23 @@ let eventSourced : EventSourced<Command,Event,QueryParameter> =
   } |> EventSourced
 
 
-let conferenceWebSocket =
+let conferenceWebSocket : WebSocket -> HttpContext -> Async<Choice<unit,Sockets.Error>>  =
   eventSourced
   |> websocket
 
 
-let conferenceApi : WebPart =
-    Remoting.createApi()
-    |> Remoting.fromValue Application.Conference.api
-    |> Remoting.buildWebPart
 
 let organizerApi : WebPart =
     Remoting.createApi()
+    |> Remoting.withRouteBuilder Application.API.organizerRouteBuilder
     |> Remoting.fromValue Application.Organizers.api
     |> Remoting.buildWebPart
 
+let conferenceApi : WebPart =
+    Remoting.createApi()
+    |> Remoting.withRouteBuilder Application.API.conferenceRouteBuilder
+    |> Remoting.fromValue (Application.Conference.api conferenceReadmodel.State)
+    |> Remoting.buildWebPart
 
 
 let start clientPath port =

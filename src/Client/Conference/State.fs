@@ -11,7 +11,7 @@ open Conference.Types
 open Conference.Ws
 open Domain
 open Domain.Model
-open Application
+open App.Server
 
 
 let private eventIsForConference (ConferenceId conferenceId) envelope =
@@ -23,23 +23,14 @@ let private updateStateWithEvents conference events  =
 
 
 let private queryConference conferenceId =
-  conferenceId
-  |> API.QueryParameter.Conference
-  |> createQuery
-  |> ClientMsg.Query
-  |> wsCmd
+  // TODO react to query Error
+  Cmd.OfAsync.perform conferenceApi.conference conferenceId ConferenceLoaded
 
 let private queryConferences =
-  API.QueryParameter.Conferences
-  |> createQuery
-  |> ClientMsg.Query
-  |> wsCmd
+  Cmd.OfAsync.perform conferenceApi.conferences () ConferencesLoaded
 
 let private queryOrganizers =
-  API.QueryParameter.Organizers
-  |> createQuery
-  |> ClientMsg.Query
-  |> wsCmd
+  Cmd.OfAsync.perform organizerApi.organizers () OrganizersLoaded
 
 let init (user : UserData)  =
   {
@@ -258,31 +249,18 @@ let withLiveUpdateCmd conference whatifMsg model =
 
 let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
   match msg with
-  | Received (ServerMsg.QueryResponse response) ->
-      match response with
-      | NotHandled ->
-          model |> withoutCommands
+  | OrganizersLoaded (Ok organizers) ->
+    { model with Organizers = organizers |> RemoteData.Success }
+    |> withoutCommands
 
-      | QueryError -> // TODO give result
-          model |> withoutCommands
+  | ConferencesLoaded (Ok conferences) ->
+    { model with Conferences = conferences |> RemoteData.Success }
+    |> withoutCommands
 
-      | Handled result ->
-//          match result with
-//          | API.QueryResult.Conference conference ->
-//              model
-//              |> withView ((VotingPanel,conference,Live) |> Edit)
-//              |> withoutCommands
-//
-//          | API.QueryResult.Conferences conferences ->
-//              { model with Conferences = conferences |> RemoteData.Success }
-//              |> withoutCommands
-//
-//          | API.QueryResult.Organizers organizers ->
-//              { model with Organizers = organizers |> RemoteData.Success }
-//              |> withoutCommands
-//
-//          | API.QueryResult.ConferenceNotFound ->
-              model |> withoutCommands
+  | ConferenceLoaded (Ok conference) ->
+    model
+    |> withView ((VotingPanel,conference,Live) |> Edit)
+    |> withoutCommands
 
   | Received (ServerMsg.Connected) ->
       model, Cmd.batch [ queryConferences ; queryOrganizers ]

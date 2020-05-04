@@ -1,5 +1,6 @@
 module Conference.Types
 
+open Application.API
 open Global
 open Server.ServerTypes
 open Domain.Model
@@ -35,7 +36,7 @@ type WhatIfMsg =
   | DecideNumberOfSlots of int
 
 type Msg =
-  | Received of ServerMsg<Domain.Events.Event,API.QueryResult>
+  | Received of ServerMsg<Domain.Events.Event>
   | WhatIfMsg of WhatIfMsg
   | ToggleMode
   | MakeItSo
@@ -48,6 +49,9 @@ type Msg =
   | ConferenceInformationMsg of ConferenceInformation.Types.Msg
   | RequestNotificationForRemoval of Notification
   | RemoveNotification of Notification
+  | ConferenceLoaded of Result<Conference, QueryError>
+  | ConferencesLoaded of Result<Conferences, QueryError>
+  | OrganizersLoaded of Result<Organizer list, QueryError>
 
 type WhatIf =
   {

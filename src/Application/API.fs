@@ -16,11 +16,17 @@ module API =
     | ConferenceNotFound
 
 
-    type ConferenceApi = {
-      conference : ConferenceId -> Async<Result<Conference, QueryError>>
-      conferences : unit -> Async<Result<Conferences, QueryError>>
-    }
 
-    type OrganizerApi = {
-      organizers : unit -> Async<Result<Organizer list, QueryError>>
-    }
+  type ConferenceApi = {
+    conference : ConferenceId -> Async<Result<Conference, QueryError>>
+    conferences : unit -> Async<Result<Conferences, QueryError>>
+  }
+
+  type OrganizerApi = {
+    organizers : unit -> Async<Result<Organizer list, QueryError>>
+  }
+
+
+  let conferenceRouteBuilder _ m = sprintf "/api/conference/%s" m
+  let organizerRouteBuilder _ m = sprintf "/api/organizer/%s" m
+

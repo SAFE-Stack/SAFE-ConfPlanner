@@ -12,11 +12,10 @@ open ServerTypes
 type Msg<'Command,'Event,'QueryParameter> =
   | Connected
   | Closed
-  | Received of ClientMsg<'Command,'QueryParameter>
+  | Received of ClientMsg<'Command>
   | Events of EventEnvelope<'Event> list
-  | QueryResponse of QueryResult
 
-let send (webSocket : WebSocket) (msg : ServerMsg<'Event,'QueryResult>) =
+let send (webSocket : WebSocket) (msg : ServerMsg<'Event>) =
   let byteResponse =
     msg
     |> toJson
@@ -41,8 +40,6 @@ let websocket
         // TODO Subscribe/Unsubscribe events
 
 
-        let queryReplyChannel = Msg.QueryResponse >> inbox.Post
-
         let rec loop() =
           async {
             let! msg = inbox.Receive()
@@ -59,16 +56,6 @@ let websocket
                     do! (eventSourced.HandleCommand envelope |> Async.Ignore) // TODO: think of result
                     return! loop()
 
-                | Query query ->
-                    printfn "handle incoming query %A..." query
-
-                    async {
-                      let! result = eventSourced.HandleQuery query
-                      queryReplyChannel result
-                    } |> Async.StartImmediate
-
-                    return! loop()
-
                 | Connect ->
                     printfn "ClientMsg.Connect"
                     ServerMsg.Connected
@@ -80,14 +67,6 @@ let websocket
                 printfn "events %A will be send to client..." events
                 let response =
                   ServerMsg.Events events
-                  |> send webSocket
-
-                return! loop()
-
-            | Msg.QueryResponse response ->
-                printfn "query response %A will be send to client..." response
-                let response =
-                  ServerMsg.QueryResponse response
                   |> send webSocket
 
                 return! loop()
@@ -111,7 +90,7 @@ let websocket
 
                 let deserialized =
                   str
-                  |> ofJson<ClientMsg<'Command,'Query>>
+                  |> ofJson<ClientMsg<'Command>>
 
                 printfn "Received: %A" deserialized
                 webSocketHandler.Post (Msg.Received deserialized)

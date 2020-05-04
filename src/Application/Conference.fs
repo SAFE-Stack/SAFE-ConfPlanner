@@ -41,6 +41,7 @@ module Conference =
 
     InMemoryReadmodel.readModel updateState Map.empty
 
+
   let conference conferenceReadModel (ConferenceId conferenceId) =
     async {
       let! state = conferenceReadModel()
