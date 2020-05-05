@@ -1,7 +1,4 @@
-﻿open Support
-
-//let readEvents,appendEvents =
-//  eventStore @"..\Server\conference_eventstore.json"
+﻿module Program
 
 [<EntryPoint>]
 let main _ =

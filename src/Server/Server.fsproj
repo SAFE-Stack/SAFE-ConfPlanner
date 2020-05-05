@@ -9,6 +9,7 @@
     <ProjectReference Include="..\Domain\Domain.fsproj" />
     <ProjectReference Include="..\EventSourced\EventSourced.fsproj" />
     <ProjectReference Include="..\Application\Application.fsproj" />
+    <ProjectReference Include="..\Support\Support.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FableJson.fs" />

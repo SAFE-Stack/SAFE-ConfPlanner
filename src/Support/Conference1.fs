@@ -3,12 +3,13 @@ module Support.Conference1
 open System
 open Domain.Events
 open Domain.Model
-
 open Support.Helper
+
+let conferenceId = ConferenceId <| System.Guid.Parse "37b5252a-8887-43bb-87a0-62fbf8d21799"
 
 let private conference =
   emptyConference()
-  |> (fun conf -> { conf with Id = ConferenceId <| System.Guid.Parse "37b5252a-8887-43bb-87a0-62fbf8d21799" })
+  |> (fun conf -> { conf with Id = conferenceId })
   |> (fun conf -> { conf with Title = "Kandddinsky" })
 
 let private heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.Parse "311b9fbd-98a2-401e-b9e9-bab15897dad4" }
@@ -19,7 +20,7 @@ let private talk1 = proposedTalk "Event Storming ftw" "Alberto" "Brandolino"
 let private talk2 = proposedTalk "F# ftw" "Don" "Syme"
 let private talk3 = proposedTalk "DDD ftw" "Eric" "Evans"
 
-let private events =
+let events =
   [
     ConferenceScheduled conference
     OrganizerAddedToConference heimeshoff
@@ -43,7 +44,3 @@ let private events =
     VotingWasIssued (voteZero talk1 fellien)
     VotingWasIssued (voteZero talk1 poepke)
   ]
-
-let eventSets () =
-  events
-  |> makeEventSets (makeStreamId conference.Id)

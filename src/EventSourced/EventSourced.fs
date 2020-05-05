@@ -42,3 +42,6 @@ module EventSourced =
 
     member __.GetStream eventSource =
       eventStore.GetStream eventSource
+
+    member __.Append events =
+      eventStore.Append events

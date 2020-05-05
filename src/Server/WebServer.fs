@@ -45,11 +45,13 @@ let eventSourced : EventSourced<Command,Event,QueryParameter> =
       ]
   } |> EventSourced
 
+// Run fixtures
+Support.Run.run eventSourced
+
 
 let conferenceWebSocket : WebSocket -> HttpContext -> Async<Choice<unit,Sockets.Error>>  =
   eventSourced
   |> websocket
-
 
 
 let organizerApi : WebPart =

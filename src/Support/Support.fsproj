@@ -10,6 +10,7 @@
     <Compile Include="Helper.fs" />
     <Compile Include="Conference1.fs" />
     <Compile Include="Conference2.fs" />
+    <Compile Include="Run.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
