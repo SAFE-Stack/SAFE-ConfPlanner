@@ -20,14 +20,14 @@ let send (webSocket : WebSocket) (msg : ServerMsg<'Event>) =
     msg
     |> toJson
     |> System.Text.Encoding.ASCII.GetBytes
-    |> Suave.Sockets.ByteSegment
+    |> Sockets.ByteSegment
 
   webSocket.send Text byteResponse true
     |> Async.Ignore
     |> Async.Start
 
 let emptyResponse =
-  [||] |> Suave.Sockets.ByteSegment
+  [||] |> Sockets.ByteSegment
 
 let websocket
   (eventSourced : EventSourced<'Command,'Event,'Query>)
@@ -36,8 +36,7 @@ let websocket
 
     let webSocketHandler =
       MailboxProcessor.Start(fun inbox ->
-        // TODO Unsubscribe events
-        eventSourced.SubscribeToEvents (Msg.Events >> inbox.Post >> fun () -> async { return () })
+        let subscription = eventSourced.SubscribeToEvents (Msg.Events >> inbox.Post >> fun () -> async { return () })
 
         let rec loop() =
           async {
@@ -45,25 +44,25 @@ let websocket
 
             match msg with
             | Connected ->
-                printfn "webSocketHandler connected"
+                // printfn "webSocketHandler connected"
                 return! loop()
 
             | Received clientMsg  ->
                 match clientMsg with
                 | Command envelope ->
-                    printfn "handle incoming command with envelope %A..." envelope
+                    // printfn "handle incoming command with envelope %A..." envelope
                     do! (eventSourced.HandleCommand envelope |> Async.Ignore) // TODO: think of result
                     return! loop()
 
                 | Connect ->
-                    printfn "ClientMsg.Connect"
+                    // printfn "ClientMsg.Connect"
                     ServerMsg.Connected
                     |> send webSocket
 
                     return! loop()
 
             | Events (events : EventEnvelope<'Event> list) ->
-                printfn "events %A will be send to client..." events
+                // printfn "events %A will be send to client..." events
                 let response =
                   ServerMsg.Events events
                   |> send webSocket
@@ -71,7 +70,8 @@ let websocket
                 return! loop()
 
             | Closed ->
-                 printfn "Client closed connection"
+                eventSourced.UnsubscribeFromEvents subscription
+                // printfn "Client closed connection"
           }
 
         loop()
@@ -91,7 +91,7 @@ let websocket
                   str
                   |> ofJson<ClientMsg<'Command>>
 
-                printfn "Received: %A" deserialized
+                // printfn "Received: %A" deserialized
                 webSocketHandler.Post (Msg.Received deserialized)
 
             | (Ping, _, _) ->

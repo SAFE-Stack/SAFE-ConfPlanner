@@ -38,7 +38,8 @@ type EventStore<'Event> =
 
 type EventListener<'Event> =
   {
-    Subscribe : EventHandler<'Event> -> unit
+    Subscribe : EventHandler<'Event> -> System.Guid
+    Unsubscribe : System.Guid -> unit
     Notify : EventEnvelope<'Event> list -> unit
   }
 

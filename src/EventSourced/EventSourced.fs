@@ -29,7 +29,7 @@ module EventSourced =
       eventStore.OnError.Add(fun exn -> Helper.printError (sprintf "EventStore Error: %s" exn.Message) exn)
       commandHandler.OnError.Add(fun exn -> Helper.printError (sprintf "CommandHandler Error: %s" exn.Message) exn)
       eventStore.OnEvents.Add eventListener.Notify
-      configuration.EventHandlers |> List.iter eventListener.Subscribe
+      configuration.EventHandlers |> List.iter (eventListener.Subscribe >> ignore)
 
     member __.HandleCommand (envelope : CommandEnvelope<_>) =
       commandHandler.Handle envelope
@@ -49,3 +49,6 @@ module EventSourced =
 
     member __.SubscribeToEvents eventHandler =
       eventListener.Subscribe eventHandler
+
+    member __.UnsubscribeFromEvents id =
+      eventListener.Unsubscribe id
