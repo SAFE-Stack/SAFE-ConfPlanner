@@ -16,7 +16,6 @@
     <Compile Include="Urls.fs" />
     <Compile Include="AuthTypes.fs" />
     <Compile Include="ServerTypes.fs" />
-    <Compile Include="FableJson.fs" />
     <Compile Include="JsonWebToken.fs" />
     <Compile Include="Auth.fs" />
     <!-- <Compile Include="Dummy.fs" /> -->

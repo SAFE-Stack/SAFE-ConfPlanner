@@ -36,9 +36,8 @@ let websocket
 
     let webSocketHandler =
       MailboxProcessor.Start(fun inbox ->
-//        eventSourced.EventPublisher (Msg.Events >> inbox.Post)
-        // TODO Subscribe/Unsubscribe events
-
+        // TODO Unsubscribe events
+        eventSourced.SubscribeToEvents (Msg.Events >> inbox.Post >> fun () -> async { return () })
 
         let rec loop() =
           async {
