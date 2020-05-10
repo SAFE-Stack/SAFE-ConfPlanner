@@ -11,6 +11,7 @@ let private enveloped (ConferenceId source) events =
     {
       Source = source
       RecordedAtUtc = DateTime.Now
+      Transaction = TransactionId <| Guid.NewGuid()
     }
 
   events

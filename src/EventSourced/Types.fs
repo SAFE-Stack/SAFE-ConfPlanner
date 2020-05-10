@@ -11,6 +11,7 @@ type EventMetadata =
   {
     Source : EventSource
     RecordedAtUtc : System.DateTime
+    Transaction : TransactionId
   }
 
 type EventEnvelope<'Event> =

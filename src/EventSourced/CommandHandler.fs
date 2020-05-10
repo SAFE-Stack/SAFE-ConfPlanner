@@ -6,13 +6,14 @@ module CommandHandler =
   let private asEvents eventEnvelopes =
     eventEnvelopes |> List.map (fun envelope -> envelope.Event)
 
-  let private enveloped source events =
+  let private enveloped source transaction events =
     let now = System.DateTime.UtcNow
     let envelope event =
       {
           Metadata = {
             Source = source
             RecordedAtUtc = now
+            Transaction = transaction
           }
           Event = event
       }
@@ -33,7 +34,7 @@ module CommandHandler =
               let! stream = envelope.EventSource |> eventStore.GetStream
 
               let newEvents =
-                stream |> Result.map (asEvents >> behaviour envelope.Command >> enveloped envelope.EventSource)
+                stream |> Result.map (asEvents >> behaviour envelope.Command >> enveloped envelope.EventSource envelope.Transaction)
 
               let! result =
                 newEvents

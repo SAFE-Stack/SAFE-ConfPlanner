@@ -61,26 +61,38 @@ let private withOpenTransactions transactions model =
 let private withLastEvents events model =
   { model with LastEvents = Some events }
 
-let withFinishedTransaction (eventSet ) model =
-//  if model.OpenTransactions |> List.exists (fun openTransaction ->eventSet.TransactionId = openTransaction) then
-//    let notifications =
-//      eventSet.Events
-//      |> List.map (fun envelope -> envelope.Event,eventSet.TransactionId,Entered)
-//
-//    let model =
-//      { model with
-//          OpenTransactions =  model.OpenTransactions |> List.filter (fun openTransaction -> eventSet.TransactionId <> openTransaction)
-//          OpenNotifications = model.OpenNotifications @ notifications
-//      }
-//
-//    let commands =
-//      notifications
-//      |> List.map (RequestNotificationForRemoval>>(timeoutCmd 5000)>>Cmd.ofSub)
-//      |> Cmd.batch
-//
-//    model |> withCommand commands
-//  else
-    model |> withoutCommands
+let private withFinishedTransaction eventEnvelopes model =
+  let groupedByTransaction =
+    eventEnvelopes
+    |> List.groupBy (fun envelope -> envelope.Metadata.Transaction)
+
+  let notifications =
+    groupedByTransaction
+    |> List.collect (fun (transaction,events) ->
+        if model.OpenTransactions |> List.contains transaction
+        then events |> List.map (fun envelope -> envelope.Event,transaction,Entered)
+        else [])
+
+  let transactions =
+    groupedByTransaction |> List.map fst
+
+  let openTransactions =
+    model.OpenTransactions
+    |> List.filter (fun tx -> transactions |> List.contains tx |> not)
+
+  let model =
+    { model with
+        OpenTransactions =  openTransactions
+        OpenNotifications = model.OpenNotifications @ notifications
+    }
+
+  let commands =
+    notifications
+    |> List.map (RequestNotificationForRemoval>>(timeoutCmd 5000)>>Cmd.ofSub)
+    |> Cmd.batch
+
+  model |> withCommand commands
+
 
 
 let withRequestedForRemovalNotification (notification,transaction,_) model =
