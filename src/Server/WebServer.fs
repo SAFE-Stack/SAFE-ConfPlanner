@@ -53,7 +53,6 @@ let conferenceWebSocket : WebSocket -> HttpContext -> Async<Choice<unit,Sockets.
   eventSourced
   |> websocket
 
-
 let organizerApi : WebPart =
     Remoting.createApi()
     |> Remoting.withRouteBuilder Application.API.organizerRouteBuilder
@@ -64,6 +63,12 @@ let conferenceApi : WebPart =
     Remoting.createApi()
     |> Remoting.withRouteBuilder Application.API.conferenceRouteBuilder
     |> Remoting.fromValue (Application.Conference.api conferenceReadmodel.State)
+    |> Remoting.buildWebPart
+
+let conferenceCommandApi : WebPart =
+    Remoting.createApi()
+    |> Remoting.withRouteBuilder API.ConferenceCommandApi.RouteBuilder
+    |> Remoting.fromValue (Conference.Command.api eventSourced.HandleCommand)
     |> Remoting.buildWebPart
 
 
@@ -95,6 +100,7 @@ let start clientPath port =
 
             conferenceApi
             organizerApi
+            conferenceCommandApi
 
             NOT_FOUND "Page not found."
 

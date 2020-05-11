@@ -1,6 +1,10 @@
 namespace EventSourced
 
-type TransactionId = TransactionId of System.Guid
+type TransactionId =
+  | TransactionId of System.Guid
+  with
+    static member New () =
+      TransactionId <| System.Guid.NewGuid()
 
 type EventSource = System.Guid
 

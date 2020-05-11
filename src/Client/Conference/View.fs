@@ -263,12 +263,8 @@ let footer currentView (lastEvents) =
         let window =
           match mode with
           | WhatIf whatIf ->
-              let commands =
-                whatIf.Commands |> List.map (fun envelope -> envelope.Command)
-
               div []
                 [
-                  messageWindow "Potential Commands" commands NotificationType.Info
                   messageWindow "Potential Events" whatIf.Events <| messageWindowType whatIf.Events
                 ]
 

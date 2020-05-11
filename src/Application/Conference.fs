@@ -73,5 +73,30 @@ module Conference =
       conferences = conferences conferenceReadModel
     }
 
+  module Command =
+    open Domain
+
+    let private execute commandHandler (ConferenceId eventSource) command =
+      let envelope =
+        {
+          Transaction = TransactionId.New()
+          EventSource = eventSource
+          Command = command
+        }
+
+      commandHandler envelope
 
 
+    let api commandHandler : ConferenceCommandApi =
+      {
+        ScheduleConference = fun conference conferenceId -> execute commandHandler conferenceId (Commands.ScheduleConference conference)
+        ChangeTitle = fun title conferenceId -> execute commandHandler conferenceId (Commands.ChangeTitle title)
+        DecideNumberOfSlots = fun title conferenceId -> execute commandHandler conferenceId (Commands.DecideNumberOfSlots title)
+        AddOrganizerToConference = fun organizer conferenceId -> execute commandHandler conferenceId (Commands.AddOrganizerToConference organizer)
+        RemoveOrganizerFromConference = fun organizer conferenceId -> execute commandHandler conferenceId (Commands.RemoveOrganizerFromConference organizer)
+        Vote = fun voting conferenceId -> execute commandHandler conferenceId (Commands.Vote voting)
+        RevokeVoting = fun voting conferenceId -> execute commandHandler conferenceId (Commands.RevokeVoting voting)
+        FinishVotingPeriod = fun conferenceId -> execute commandHandler conferenceId Commands.FinishVotingPeriod
+        ReopenVotingPeriod = fun conferenceId -> execute commandHandler conferenceId Commands.ReopenVotingPeriod
+        ProposeAbstract = fun conferenceAbstract conferenceId -> execute commandHandler conferenceId (Commands.ProposeAbstract conferenceAbstract)
+      }

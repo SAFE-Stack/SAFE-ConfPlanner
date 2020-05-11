@@ -52,11 +52,12 @@ type Msg =
   | ConferenceLoaded of Result<Conference, QueryError>
   | ConferencesLoaded of Result<Conferences, QueryError>
   | OrganizersLoaded of Result<Organizer list, QueryError>
+  | CommandEingereiht of Result<unit, string>
 
 type WhatIf =
   {
     Conference : Domain.Model.Conference
-    Commands : CommandEnvelope<Domain.Commands.Command> list
+    Commands : (unit -> Async<Result<unit,string>>) list
     Events : Domain.Events.Event list
   }
 
