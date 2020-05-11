@@ -1,11 +1,12 @@
 module Conference.Types
 
+open Application.API
 open Global
-open Infrastructure.Types
 open Server.ServerTypes
 open Domain.Model
 open Domain.Events
-open Conference.Api
+open EventSourced
+open Application
 
 type NotificationType =
   | Info
@@ -35,7 +36,7 @@ type WhatIfMsg =
   | DecideNumberOfSlots of int
 
 type Msg =
-  | Received of ServerMsg<Domain.Events.Event,API.QueryResult>
+  | Received of ServerMsg<Domain.Events.Event>
   | WhatIfMsg of WhatIfMsg
   | ToggleMode
   | MakeItSo
@@ -48,11 +49,14 @@ type Msg =
   | ConferenceInformationMsg of ConferenceInformation.Types.Msg
   | RequestNotificationForRemoval of Notification
   | RemoveNotification of Notification
+  | ConferenceLoaded of Result<Conference, QueryError>
+  | ConferencesLoaded of Result<Conferences, QueryError>
+  | OrganizersLoaded of Result<Organizer list, QueryError>
 
 type WhatIf =
   {
     Conference : Domain.Model.Conference
-    Commands : Command<Domain.Commands.Command> list
+    Commands : CommandEnvelope<Domain.Commands.Command> list
     Events : Domain.Events.Event list
   }
 
@@ -75,11 +79,11 @@ type CurrentView =
 type Model =
   {
     View : CurrentView
-    Conferences : RemoteData<Conferences.Conferences>
+    Conferences : RemoteData<API.Conferences>
     Organizers : RemoteData<Domain.Model.Organizers>
-    LastEvents : Domain.Events.Event list
+    LastEvents : EventEnvelope<Domain.Events.Event> list option
     Organizer : OrganizerId
-    OpenTransactions : TransactionId list
+    OpenTransactions : EventSourced.TransactionId list
     OpenNotifications : Notification list
   }
 

@@ -1,20 +1,7 @@
 module Support.Helper
 
 open System
-open Infrastructure.Types
-open Domain.Events
 open Domain.Model
-
-
-let transactionId () =
-  TransactionId <| Guid.NewGuid()
-
-let makeEventSets streamId events : EventSet<Event> list =
-  events
-  |> List.map (fun event -> (transactionId(), streamId), [event])
-
-let makeStreamId (ConferenceId id) =
-  id |> string |> StreamId
 
 let voteTwo (abstr: ConferenceAbstract) (organizer: Organizer) =
    Voting.Voting (abstr.Id,organizer.Id, Two)

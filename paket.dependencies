@@ -1,6 +1,8 @@
 source https://www.nuget.org/api/v2
 storage:none
 
+nuget Fable.Remoting.Client
+nuget Fable.Remoting.Suave
 nuget FSharp.Core
 
 nuget FsUnit
@@ -28,6 +30,7 @@ nuget Fulma
 nuget Fulma.Extensions.Wikiki.Switch
 nuget Thoth.Json prerelease
 nuget Thoth.Json.Net prerelease
+nuget Npgsql.FSharp
 
 nuget Suave
 nuget jose-jwt

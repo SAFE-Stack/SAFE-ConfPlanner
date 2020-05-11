@@ -1,46 +1,42 @@
-module Websocket
+module Server.Websocket
 
+open EventSourced
+open EventSourced.EventSourced
 open Suave
 open Suave.Sockets.Control
 open Suave.WebSocket
 
-open Server.ServerTypes
+open FableJson
+open ServerTypes
 
-
-open Infrastructure.FableJson
-open Infrastructure.Types
-
-type Msg<'CommandPayload,'Event,'QueryParameter,'QueryResult> =
+type Msg<'Command,'Event,'QueryParameter> =
   | Connected
   | Closed
-  | Received of ClientMsg<'CommandPayload,'QueryParameter,'QueryResult>
-  | Events of EventSet<'Event>
-  | QueryResponse of QueryResponse<'QueryResult>
+  | Received of ClientMsg<'Command>
+  | Events of EventEnvelope<'Event> list
 
-let send (webSocket : WebSocket) (msg : ServerMsg<'Event,'QueryResult>) =
+let send (webSocket : WebSocket) (msg : ServerMsg<'Event>) =
   let byteResponse =
     msg
     |> toJson
     |> System.Text.Encoding.ASCII.GetBytes
-    |> Suave.Sockets.ByteSegment
+    |> Sockets.ByteSegment
 
   webSocket.send Text byteResponse true
     |> Async.Ignore
     |> Async.Start
 
 let emptyResponse =
-  [||] |> Suave.Sockets.ByteSegment
+  [||] |> Sockets.ByteSegment
 
 let websocket
-  (eventSourced : EventSourced<'CommandPayload,'Event,'QueryParameter,'State,'QueryResult>)
+  (eventSourced : EventSourced<'Command,'Event,'Query>)
   (webSocket : WebSocket)
   (context: HttpContext) =
 
     let webSocketHandler =
       MailboxProcessor.Start(fun inbox ->
-        eventSourced.EventPublisher (Msg.Events >> inbox.Post)
-
-        let queryReplyChannel = Msg.QueryResponse >> inbox.Post
+        let subscription = eventSourced.SubscribeToEvents (Msg.Events >> inbox.Post >> fun () -> async { return () })
 
         let rec loop() =
           async {
@@ -48,46 +44,34 @@ let websocket
 
             match msg with
             | Connected ->
-                printfn "webSocketHandler connected"
+                // printfn "webSocketHandler connected"
                 return! loop()
 
             | Received clientMsg  ->
                 match clientMsg with
-                | Command (header,command as payload) ->
-                    printfn "handle incoming command with header %A..." header
-                    eventSourced.CommandHandler payload
-                    return! loop()
-
-                | Query query ->
-                    printfn "handle incoming query %A..." query
-                    eventSourced.QueryManager (query,queryReplyChannel)
+                | Command envelope ->
+                    // printfn "handle incoming command with envelope %A..." envelope
+                    do! (eventSourced.HandleCommand envelope |> Async.Ignore) // TODO: think of result
                     return! loop()
 
                 | Connect ->
-                    printfn "ClientMsg.Connect"
+                    // printfn "ClientMsg.Connect"
                     ServerMsg.Connected
                     |> send webSocket
 
                     return! loop()
 
-            | Events (header,events as payload) ->
-                printfn "events %A for header %A will be send to client..." events header
+            | Events (events : EventEnvelope<'Event> list) ->
+                // printfn "events %A will be send to client..." events
                 let response =
-                  ServerMsg.Events payload
-                  |> send webSocket
-
-                return! loop()
-
-            | Msg.QueryResponse response ->
-                printfn "query response %A will be send to client..." response
-                let response =
-                  ServerMsg.QueryResponse response
+                  ServerMsg.Events events
                   |> send webSocket
 
                 return! loop()
 
             | Closed ->
-                 printfn "Client closed connection"
+                eventSourced.UnsubscribeFromEvents subscription
+                // printfn "Client closed connection"
           }
 
         loop()
@@ -105,9 +89,9 @@ let websocket
 
                 let deserialized =
                   str
-                  |> ofJson<ClientMsg<'CommandPayload,'QueryParameter,'QueryResult>>
+                  |> ofJson<ClientMsg<'Command>>
 
-                printfn "Received: %A" deserialized
+                // printfn "Received: %A" deserialized
                 webSocketHandler.Post (Msg.Received deserialized)
 
             | (Ping, _, _) ->

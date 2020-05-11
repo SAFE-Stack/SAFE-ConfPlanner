@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Model.fs" />
@@ -8,6 +8,9 @@
     <Compile Include="Commands.fs" />
     <Compile Include="Projections.fs" />
     <Compile Include="Behaviour.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\EventSourced\EventSourced.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

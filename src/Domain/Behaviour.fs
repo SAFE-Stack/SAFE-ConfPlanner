@@ -1,9 +1,11 @@
 module Domain.Behaviour
 
+open Domain
 open Model
 open Commands
 open Events
 open Projections
+open EventSourced
 
 let (|OrganizerAlreadyInConference|_|) organizers organizer =
   match organizers |> List.contains organizer with
@@ -55,8 +57,8 @@ let numberOfVotesExceeded votingResults getVote (voting : Voting) max =
   | true -> Some voting
   | false -> None
 
-let handleProposeAbstract givenHistory proposed =
-  match (conferenceState givenHistory).CallForPapers with
+let handleProposeAbstract proposed history =
+  match (conferenceState history).CallForPapers with
   | Open ->
       [AbstractWasProposed proposed]
 
@@ -136,8 +138,8 @@ let finishVotingPeriod conference =
 
   | _,_ -> [FinishingDenied "Call For Papers Not Closed" |> Error]
 
-let handleFinishVotingPeriod givenHistory =
-  givenHistory
+let handleFinishVotingPeriod history =
+  history
   |> conferenceState
   |> finishVotingPeriod
 
@@ -149,8 +151,8 @@ let reopenVotingPeriod conference =
   | _,_ ->
     [FinishingDenied "Call For Papers Not Closed" |> Error]
 
-let handleReopenVotingPeriod givenHistory =
-  givenHistory
+let handleReopenVotingPeriod history =
+  history
   |> conferenceState
   |> reopenVotingPeriod
 
@@ -167,8 +169,8 @@ let vote voting conference =
       | _ -> [VotingWasIssued voting]
 
 
-let handleVote givenHistory voting =
-  givenHistory
+let handleVote voting history =
+  history
   |> conferenceState
   |> vote voting
 
@@ -187,26 +189,26 @@ let revokeVoting voting conference =
 let changeTitle title _ =
   [ TitleChanged title ]
 
-let handleChangeTitle givenHistory title =
-  givenHistory
+let handleChangeTitle title history =
+  history
   |> conferenceState
   |> changeTitle title
 
 let decideNumberOfSlots number _ =
   [ NumberOfSlotsDecided number ]
 
-let handleDecideNumberOfSlots givenHistory number =
-  givenHistory
+let handleDecideNumberOfSlots number history =
+  history
   |> conferenceState
   |> decideNumberOfSlots number
 
-let handleRevokeVoting givenHistory voting =
-  givenHistory
+let handleRevokeVoting voting history =
+  history
   |> conferenceState
   |> revokeVoting voting
 
-let handleScheduleConference givenHistory conference =
-  if givenHistory |> List.isEmpty then
+let handleScheduleConference conference history =
+  if history |> List.isEmpty then
     [ConferenceScheduled conference]
   else
     [ConferenceAlreadyScheduled |> Error]
@@ -218,8 +220,8 @@ let addOrganizerToConference organizer conference =
 
   | _ -> [OrganizerAddedToConference organizer]
 
-let private handleAddOrganizerToConference givenHistory organizer =
-  givenHistory
+let private handleAddOrganizerToConference organizer history =
+  history
   |> conferenceState
   |> addOrganizerToConference organizer
 
@@ -236,43 +238,45 @@ let removeOrganizerFromConference organizer conference =
 
     [OrganizerRemovedFromConference organizer] @ revocations
 
-let private handleRemoveOrganizerFromConference givenHistory organizer =
-  givenHistory
+let private handleRemoveOrganizerFromConference organizer history =
+  history
   |> conferenceState
   |> removeOrganizerFromConference organizer
 
-let execute (givenHistory : Event list) (command : Command) : Event list =
+
+let behaviour (command : Command) : EventProducer<Event> =
   match command with
   | ScheduleConference conference ->
-      conference |> handleScheduleConference givenHistory
+       handleScheduleConference conference
 
   | ChangeTitle title ->
-      handleChangeTitle givenHistory title
+      handleChangeTitle title
 
   | DecideNumberOfSlots number ->
-      handleDecideNumberOfSlots givenHistory number
+      handleDecideNumberOfSlots number
 
   | AddOrganizerToConference organizer ->
-      handleAddOrganizerToConference givenHistory organizer
+      handleAddOrganizerToConference organizer
 
   | RemoveOrganizerFromConference organizer ->
-      handleRemoveOrganizerFromConference givenHistory organizer
+      handleRemoveOrganizerFromConference organizer
 
   | ProposeAbstract proposed ->
-      handleProposeAbstract givenHistory proposed
+      handleProposeAbstract proposed
 
   | FinishVotingPeriod ->
-      handleFinishVotingPeriod givenHistory
+      handleFinishVotingPeriod
 
   | ReopenVotingPeriod ->
-      handleReopenVotingPeriod givenHistory
+      handleReopenVotingPeriod
 
   | Vote voting ->
-      handleVote givenHistory voting
+      handleVote voting
 
   | RevokeVoting voting  ->
-      handleRevokeVoting givenHistory voting
+      handleRevokeVoting voting
 
   | AcceptAbstract(_) -> failwith "Not Implemented"
   | RejectAbstract(_) -> failwith "Not Implemented"
+
 

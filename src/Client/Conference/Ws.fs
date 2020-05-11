@@ -2,12 +2,10 @@ module Conference.Ws
 
 open Conference.Types
 open Server.ServerTypes
-open Infrastructure.Types
-open Conference.Api
 open Browser.WebSocket
 open Browser.Types
 open Thoth.Json
-
+open Application
 
 let inline private encode msg =
   Encode.Auto.toString(0, msg)
@@ -15,7 +13,7 @@ let inline private encode msg =
 let private websocketNotConnected =
   fun _ -> failwith "WebSocket not connected"
 
-let mutable private sendPerWebsocket : ClientMsg<Domain.Commands.Command,API.QueryParameter,API.QueryResult> -> unit =
+let mutable private sendPerWebsocket : ClientMsg<Domain.Commands.Command> -> unit =
   websocketNotConnected
 
 let mutable closeWebsocket : unit -> unit =
@@ -25,7 +23,7 @@ let startWs token dispatch =
   let onMsg : MessageEvent -> obj =
     (fun (wsMsg : MessageEvent) ->
       let msg =
-        Decode.Auto.unsafeFromString<ServerMsg<Domain.Events.Event,API.QueryResult>> <| unbox wsMsg.data
+        Decode.Auto.unsafeFromString<ServerMsg<Domain.Events.Event>> <| unbox wsMsg.data
 
       Received msg |> dispatch
 
@@ -35,7 +33,7 @@ let startWs token dispatch =
   let ws = WebSocket.Create("ws://127.0.0.1:8085" + Server.Urls.Conference + "?jwt=" + token)
 
   let send msg =
-    ws.send (Encode.Auto.toString<ClientMsg<Domain.Commands.Command,API.QueryParameter,API.QueryResult>>(0, msg))
+    ws.send (Encode.Auto.toString<ClientMsg<Domain.Commands.Command>>(0, msg))
 
   ws.onopen <- (fun _ -> send Connect ; null)
   ws.onmessage <- onMsg
@@ -57,10 +55,11 @@ let wsCmd cmd =
   [fun _ -> sendPerWebsocket cmd]
 
 let transactionId() =
-  TransactionId <| System.Guid.NewGuid()
+  EventSourced.TransactionId <| System.Guid.NewGuid()
 
 let createQuery query =
-  {
-    Query.Id = QueryId <| System.Guid.NewGuid()
-    Query.Parameter = query
-  }
+//  { TODO think of QueryId
+//    Query.Id = QueryId <| System.Guid.NewGuid()
+//    Query.Parameter = query
+//  }
+  query

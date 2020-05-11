@@ -6,8 +6,12 @@ open Domain.Model
 
 open Support.Helper
 
+
+let conferenceId = ConferenceId <| System.Guid.Parse "23A7C9C6-C25E-4955-A60A-58C8074EDEA2"
+
 let private conference =
   emptyConference()
+  |> (fun conf -> { conf with Id = conferenceId })
   |> (fun conf -> { conf with Title = "Be Sharps" })
 
 let private heimeshoff = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.Parse "311b9fbd-98a2-401e-b9e9-bab15897dad4" }
@@ -18,7 +22,7 @@ let private talk1 = proposedTalk "Elmish with React Native" "Steffen" "Forkmann"
 let private talk2 = proposedTalk "Everything Fable" "Maxime" "Mangel"
 let private talk3 = proposedTalk "Azure and everything" "Isaac" "Abraham"
 
-let private events =
+let events =
   [
     ConferenceScheduled conference
     OrganizerAddedToConference heimeshoff
@@ -42,7 +46,3 @@ let private events =
     VotingWasIssued (voteZero talk1 sachse)
     VotingWasIssued (voteZero talk1 helmig)
   ]
-
-let eventSets () =
-  events
-  |> makeEventSets (makeStreamId conference.Id)

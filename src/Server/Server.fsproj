@@ -6,11 +6,13 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../Infrastructure/Infrastructure.fsproj" />
-    <ProjectReference Include="../Domain/Domain.fsproj" />
-    <ProjectReference Include="../Conference.Api/Conference.Api.fsproj" />
+    <ProjectReference Include="..\Domain\Domain.fsproj" />
+    <ProjectReference Include="..\EventSourced\EventSourced.fsproj" />
+    <ProjectReference Include="..\Application\Application.fsproj" />
+    <ProjectReference Include="..\Support\Support.fsproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FableJson.fs" />
     <Compile Include="Urls.fs" />
     <Compile Include="AuthTypes.fs" />
     <Compile Include="ServerTypes.fs" />

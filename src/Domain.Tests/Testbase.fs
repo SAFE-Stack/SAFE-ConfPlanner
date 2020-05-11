@@ -11,7 +11,7 @@ open Domain.Events
 let Given (events : Event list) = events
 
 let When command history =
-  match execute history command with
+  match behaviour command history with
   | [] -> None
   | events -> Some events
 

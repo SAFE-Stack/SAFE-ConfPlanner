@@ -2,6 +2,7 @@ module Conference.View
 
 open Conference.Types
 
+open EventSourced
 open Fable.React
 open Fable.React.Props
 open Fable.FontAwesome
@@ -29,9 +30,7 @@ let private messageWindow name content messageType =
   article [ ClassName <| "message " + renderMessageType messageType ]
     [
       div  [ ClassName "message-header" ]
-        [
-          name |> str
-        ]
+        [ name |> str ]
       div [ ClassName "message-body" ]
         [
           ul []
@@ -248,32 +247,37 @@ let private viewOrganizersPanel dispatch conference organizers =
   | _ ->
       div [] [ "no organizers" |> str ]
 
-let footer currentView lastEvents =
+let footer currentView (lastEvents) =
+  let lastEvents =
+    match lastEvents with
+    | Some events ->
+        events
+        |> List.map (fun envelope -> envelope.Event)
+
+    | None ->
+        []
+
   let content =
     match currentView with
     | Edit (_,_,mode) ->
         let window =
           match mode with
-          | WhatIf whatif ->
+          | WhatIf whatIf ->
               let commands =
-                whatif.Commands |> List.map (fun (_,commands) -> commands)
+                whatIf.Commands |> List.map (fun envelope -> envelope.Command)
 
-              [
-                messageWindow "Potential Commands" commands NotificationType.Info
-                messageWindow "Potential Events" whatif.Events <| messageWindowType whatif.Events
-              ]
-              |> div []
+              div []
+                [
+                  messageWindow "Potential Commands" commands NotificationType.Info
+                  messageWindow "Potential Events" whatIf.Events <| messageWindowType whatIf.Events
+                ]
+
 
           | Live ->
-              [
-                messageWindow "Last Events" lastEvents <| messageWindowType lastEvents
-              ]
-              |> div []
+              div []
+                [ messageWindow "Last Events" lastEvents <| messageWindowType lastEvents ]
 
-        [
-          window
-        ]
-        |> div []
+        div [] [ window ]
 
 
     | _ ->
@@ -603,9 +607,9 @@ let viewCurrentView dispatch user currentView organizers =
 
 let view dispatch model =
   [
-    yield viewNotifications dispatch model.OpenNotifications
-    yield viewHeader dispatch model.View model.Conferences |> List.singleton |> Section.section []
-    yield viewCurrentView dispatch model.Organizer model.View model.Organizers |> List.singleton |> Section.section []
-    yield footer model.View model.LastEvents |> List.singleton |> Footer.footer []
+    viewNotifications dispatch model.OpenNotifications
+    viewHeader dispatch model.View model.Conferences |> List.singleton |> Section.section []
+    viewCurrentView dispatch model.Organizer model.View model.Organizers |> List.singleton |> Section.section []
+    footer model.View model.LastEvents |> List.singleton |> Footer.footer []
   ]
   |> div []

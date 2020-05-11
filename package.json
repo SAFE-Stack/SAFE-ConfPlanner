@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Client for ConfPlanner",
   "scripts": {
+    "watch" : "webpack-dev-server",
     "prebuildServer": "dotnet restore src/Server/Server.fsproj",
     "buildServer": "dotnet build src/Server/Server.fsproj",
     "prebuildServerTest": "dotnet restore test/ServerTests/ServerTests.fsproj",

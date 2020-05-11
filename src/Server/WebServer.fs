@@ -1,6 +1,9 @@
 module Server.WebServer
 
 open System.IO
+open Application
+open Domain.Commands
+open Domain.Events
 open Suave
 open Suave.Logging
 open System.Net
@@ -9,39 +12,59 @@ open Suave.Operators
 open Suave.RequestErrors
 
 open Suave.WebSocket
+open EventSourced.EventSourced
+open EventSourced
 
-open Infrastructure.EventSourced
-open Conference.Api
-
+open Domain
 open Websocket
+open Fable.Remoting.Server
+open Fable.Remoting.Suave
+open Application.API
 
-// let dummyWebsocket =
-//   let projection,queryHandler =
-//     toProjectionAndQueryHandler Dummy.projection Dummy.queryHandler
+let conferenceReadmodel = Conference.readmodel()
 
-//   websocket <|
-//     eventSourced
-//       Dummy.behaviour
-//       [projection]
-//       [queryHandler]
-//       @".\dummy_eventstore.json"
+let eventSourced : EventSourced<Command,Event,QueryParameter> =
+  {
+    EventStoreInit =
+      EventStore.initialize
 
-let conferenceWebsocket =
-  let conferenceProjection,conferenceQueryHandler =
-    toProjectionAndQueryHandler Conference.projection Conference.queryHandler
+    EventStorageInit =
+      EventStorage.InMemoryStorage.initialize
 
-  let conferencesProjection,conferencesQueryHandler =
-    toProjectionAndQueryHandler Conferences.projection Conferences.queryHandler
+    CommandHandlerInit =
+      CommandHandler.initialize Behaviour.behaviour
 
-  let organizersProjection,organizersQueryHandler =
-    toProjectionAndQueryHandler Organizers.projection Organizers.queryHandler
+    QueryHandler = QueryHandler.initialize []
 
-  websocket <|
-    eventSourced
-      Domain.Behaviour.execute
-      [conferenceProjection ; conferencesProjection ; organizersProjection]
-      [conferenceQueryHandler ; conferencesQueryHandler ; organizersQueryHandler]
-      @".\conference_eventstore.json"
+    EventListenerInit =
+      EventListener.initialize
+
+    EventHandlers =
+      [
+        conferenceReadmodel.EventHandler
+      ]
+  } |> EventSourced
+
+// Run fixtures
+Support.Run.run eventSourced
+
+
+let conferenceWebSocket : WebSocket -> HttpContext -> Async<Choice<unit,Sockets.Error>>  =
+  eventSourced
+  |> websocket
+
+
+let organizerApi : WebPart =
+    Remoting.createApi()
+    |> Remoting.withRouteBuilder Application.API.organizerRouteBuilder
+    |> Remoting.fromValue Application.Organizers.api
+    |> Remoting.buildWebPart
+
+let conferenceApi : WebPart =
+    Remoting.createApi()
+    |> Remoting.withRouteBuilder Application.API.conferenceRouteBuilder
+    |> Remoting.fromValue (Application.Conference.api conferenceReadmodel.State)
+    |> Remoting.buildWebPart
 
 
 let start clientPath port =
@@ -68,9 +91,10 @@ let start clientPath port =
                 path Server.Urls.Login >=> Auth.login
             ]
 
-            // path "/dummyWebsocket" >=> handShake dummyWebsocket
+            path Server.Urls.Conference  >=> websocketWithAuth handShake conferenceWebSocket
 
-            path Server.Urls.Conference  >=> websocketWithAuth handShake conferenceWebsocket
+            conferenceApi
+            organizerApi
 
             NOT_FOUND "Page not found."
 

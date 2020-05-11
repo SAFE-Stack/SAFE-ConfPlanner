@@ -1,7 +1,7 @@
 /// Module of server domain types.
 module Server.ServerTypes
 
-open Infrastructure.Types
+open EventSourced
 open Domain.Model
 open Server.AuthTypes
 
@@ -22,13 +22,11 @@ type UserData =
 
 
 // Client to Server
-type ClientMsg<'CommandPayload,'QueryParameter,'QueryResult> =
+type ClientMsg<'Command> =
   | Connect
-  | Command of Command<'CommandPayload>
-  | Query of Query<'QueryParameter>
+  | Command of CommandEnvelope<'Command>
 
 // Server to Client
-type ServerMsg<'Event,'QueryResult> =
+type ServerMsg<'Event> =
   | Connected
-  | Events of EventSet<'Event>
-  | QueryResponse of QueryResponse<'QueryResult>
+  | Events of EventEnvelope<'Event> list

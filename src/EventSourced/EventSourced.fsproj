@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Utils/List.fs" />
+    <Compile Include="Types.fs" />
+    <Compile Include="Utils/Helper.fs" />
+    <Compile Include="Agent.fs" />
+    <Compile Include="EventSourced.fs" />
+    <Compile Include="EventStorage/InMemoryStorage.fs" />
+    <Compile Include="EventStorage/FileStorage.fs" />
+<!--    <Compile Include="EventStorage/PostgresStorage.fs" />-->
+    <Compile Include="EventStore.fs" />
+    <Compile Include="EventListener.fs" />
+    <Compile Include="QueryHandler.fs" />
+    <Compile Include="CommandHandler.fs" />
+    <Compile Include="InMemoryReadmodel.fs" />
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>
