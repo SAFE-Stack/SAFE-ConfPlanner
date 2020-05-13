@@ -46,7 +46,6 @@ module EventSourced =
     member __.Append events =
       eventStore.Append events
 
-
     member __.SubscribeToEvents eventHandler =
       eventListener.Subscribe eventHandler
 

@@ -5,6 +5,7 @@ open Global
 open Server.ServerTypes
 open Domain.Model
 open Domain.Events
+open Domain.Commands
 open EventSourced
 open Application
 
@@ -52,12 +53,12 @@ type Msg =
   | ConferenceLoaded of Result<Conference, QueryError>
   | ConferencesLoaded of Result<Conferences, QueryError>
   | OrganizersLoaded of Result<Organizer list, QueryError>
-  | CommandEingereiht of Result<unit, string>
+  | CommandEnvelopeWasSent of Result<unit, string>
 
 type WhatIf =
   {
     Conference : Domain.Model.Conference
-    Commands : (unit -> Async<Result<unit,string>>) list
+    Commands : CommandEnvelope<Command> list
     Events : Domain.Events.Event list
   }
 
@@ -84,7 +85,7 @@ type Model =
     Organizers : RemoteData<Domain.Model.Organizers>
     LastEvents : EventEnvelope<Domain.Events.Event> list option
     Organizer : OrganizerId
-    OpenTransactions : EventSourced.TransactionId list
+    TransactionSubscriptions : EventSourced.TransactionId list
     OpenNotifications : Notification list
   }
 

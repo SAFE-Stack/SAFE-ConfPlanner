@@ -2,8 +2,10 @@ namespace Application
 
 open Domain.Model
 open EventSourced
+open Domain.Commands
 
 module API =
+
   type QueryParameter =
     | Conference of ConferenceId
     | Organizers
@@ -16,32 +18,68 @@ module API =
     | ConferenceNotFound
 
 
+  type CommandApi<'Command> = {
+    Handle : CommandEnvelope<'Command> -> Async<Result<unit,string>>
+  }
+  with
+    static member RouteBuilder _ m = sprintf "/api/command/%s" m
+
   type ConferenceQueryApi = {
     conference : ConferenceId -> Async<Result<Conference, QueryError>>
     conferences : unit -> Async<Result<Conferences, QueryError>>
   }
+  with
+    static member RouteBuilder _ m = sprintf "/api/conference/query%s" m
 
 
-  type OrganizerApi = {
+  type OrganizerQueryApi = {
     organizers : unit -> Async<Result<Organizer list, QueryError>>
   }
+  with
+    static member RouteBuilder _ m = sprintf "/api/organizer/query%s" m
+
 
   type ConferenceCommandApi = {
-    // TODO return transactionid
-    ScheduleConference : Conference -> ConferenceId -> Async<Result<unit,string>>
-    ChangeTitle : string -> ConferenceId -> Async<Result<unit,string>>
-    DecideNumberOfSlots : int -> ConferenceId -> Async<Result<unit,string>>
-    AddOrganizerToConference : Organizer -> ConferenceId -> Async<Result<unit,string>>
-    RemoveOrganizerFromConference : Organizer -> ConferenceId -> Async<Result<unit,string>>
-    Vote : Voting -> ConferenceId -> Async<Result<unit,string>>
-    RevokeVoting : Voting -> ConferenceId -> Async<Result<unit,string>>
-    FinishVotingPeriod : ConferenceId -> Async<Result<unit,string>>
-    ReopenVotingPeriod : ConferenceId -> Async<Result<unit,string>>
-    ProposeAbstract : ConferenceAbstract -> ConferenceId -> Async<Result<unit,string>>
+    ScheduleConference : Conference -> ConferenceId -> CommandEnvelope<Command>
+    ChangeTitle : string -> ConferenceId -> CommandEnvelope<Command>
+    DecideNumberOfSlots : int -> ConferenceId -> CommandEnvelope<Command>
+    AddOrganizerToConference : Organizer -> ConferenceId -> CommandEnvelope<Command>
+    RemoveOrganizerFromConference : Organizer -> ConferenceId -> CommandEnvelope<Command>
+    Vote : Voting -> ConferenceId -> CommandEnvelope<Command>
+    RevokeVoting : Voting -> ConferenceId -> CommandEnvelope<Command>
+    FinishVotingPeriod : ConferenceId -> CommandEnvelope<Command>
+    ReopenVotingPeriod : ConferenceId -> CommandEnvelope<Command>
+    ProposeAbstract : ConferenceAbstract -> ConferenceId -> CommandEnvelope<Command>
   }
-  with
-    static member RouteBuilder _ m = sprintf "/api/conference/command/%s" m
+
+  module Command =
+    let private envelope (ConferenceId eventSource) command =
+      {
+        Transaction = TransactionId.New()
+        EventSource = eventSource
+        Command = command
+      }
+
+    let conferenceApi : ConferenceCommandApi =
+      {
+        ScheduleConference = fun conference conferenceId -> envelope conferenceId (ScheduleConference conference)
+        ChangeTitle = fun title conferenceId -> envelope conferenceId (ChangeTitle title)
+        DecideNumberOfSlots = fun title conferenceId -> envelope conferenceId (DecideNumberOfSlots title)
+        AddOrganizerToConference = fun organizer conferenceId -> envelope conferenceId (AddOrganizerToConference organizer)
+        RemoveOrganizerFromConference = fun organizer conferenceId -> envelope conferenceId (RemoveOrganizerFromConference organizer)
+        Vote = fun voting conferenceId -> envelope conferenceId (Vote voting)
+        RevokeVoting = fun voting conferenceId -> envelope conferenceId (RevokeVoting voting)
+        FinishVotingPeriod = fun conferenceId -> envelope conferenceId FinishVotingPeriod
+        ReopenVotingPeriod = fun conferenceId -> envelope conferenceId ReopenVotingPeriod
+        ProposeAbstract = fun conferenceAbstract conferenceId -> envelope conferenceId (ProposeAbstract conferenceAbstract)
+      }
 
 
-  let conferenceRouteBuilder _ m = sprintf "/api/conference/query%s" m
-  let organizerRouteBuilder _ m = sprintf "/api/organizer/query%s" m
+module CQN =
+  open API
+
+  let commandPort commandHandler: CommandApi<_> =
+    {
+      Handle = fun commandEnvelope -> commandHandler commandEnvelope
+    }
+

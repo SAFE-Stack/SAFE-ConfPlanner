@@ -21,7 +21,7 @@ open Fable.Remoting.Server
 open Fable.Remoting.Suave
 open Application.API
 
-let conferenceReadmodel = Conference.readmodel()
+let conferenceReadmodel = Conference.Query.readmodel()
 
 let eventSourced : EventSourced<Command,Event,QueryParameter> =
   {
@@ -55,20 +55,21 @@ let conferenceWebSocket : WebSocket -> HttpContext -> Async<Choice<unit,Sockets.
 
 let organizerApi : WebPart =
     Remoting.createApi()
-    |> Remoting.withRouteBuilder Application.API.organizerRouteBuilder
+    |> Remoting.withRouteBuilder Application.API.OrganizerQueryApi.RouteBuilder
     |> Remoting.fromValue Application.Organizers.api
     |> Remoting.buildWebPart
 
-let conferenceApi : WebPart =
+let conferenceQueryApi : WebPart =
     Remoting.createApi()
-    |> Remoting.withRouteBuilder Application.API.conferenceRouteBuilder
-    |> Remoting.fromValue (Application.Conference.api conferenceReadmodel.State)
+    |> Remoting.withRouteBuilder Application.API.ConferenceQueryApi.RouteBuilder
+    |> Remoting.fromValue (Application.Conference.Query.port conferenceReadmodel.State)
     |> Remoting.buildWebPart
 
-let conferenceCommandApi : WebPart =
+
+let commandApi : WebPart =
     Remoting.createApi()
-    |> Remoting.withRouteBuilder API.ConferenceCommandApi.RouteBuilder
-    |> Remoting.fromValue (Conference.Command.api eventSourced.HandleCommand)
+    |> Remoting.withRouteBuilder API.CommandApi<_>.RouteBuilder
+    |> Remoting.fromValue (Application.CQN.commandPort eventSourced.HandleCommand)
     |> Remoting.buildWebPart
 
 
@@ -98,9 +99,9 @@ let start clientPath port =
 
             path Server.Urls.Conference  >=> websocketWithAuth handShake conferenceWebSocket
 
-            conferenceApi
+            conferenceQueryApi
             organizerApi
-            conferenceCommandApi
+            commandApi
 
             NOT_FOUND "Page not found."
 

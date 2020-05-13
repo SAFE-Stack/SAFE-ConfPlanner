@@ -24,8 +24,6 @@ type EventEnvelope<'Event> =
     Event : 'Event
   }
 
-
-
 type EventHandler<'Event> =
   EventEnvelope<'Event> list -> Async<unit>
 
@@ -77,11 +75,10 @@ type InMemoryReadModel<'Event, 'State> =
     State : unit -> Async<'State>
   }
 
-
 type CommandEnvelope<'Command> =
   {
-    Transaction : TransactionId
     EventSource : EventSource
+    Transaction : TransactionId
     Command : 'Command
   }
 
