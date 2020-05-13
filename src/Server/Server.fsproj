@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -18,7 +17,6 @@
     <Compile Include="ServerTypes.fs" />
     <Compile Include="JsonWebToken.fs" />
     <Compile Include="Auth.fs" />
-    <!-- <Compile Include="Dummy.fs" /> -->
     <Compile Include="Websockets.fs" />
     <Compile Include="WebServer.fs" />
     <Compile Include="Program.fs" />
