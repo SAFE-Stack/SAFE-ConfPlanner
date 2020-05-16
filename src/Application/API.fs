@@ -18,8 +18,8 @@ module API =
     | ConferenceNotFound
 
 
-  type CommandApi<'Command> = {
-    Handle : CommandEnvelope<'Command> -> Async<Result<unit,string>>
+  type CommandApi<'Command,'Event> = {
+    Handle : CommandEnvelope<'Command> -> Async<Result<EventEnvelope<'Event> list,string>>
   }
   with
     static member RouteBuilder _ m = sprintf "/api/command/%s" m
@@ -78,7 +78,7 @@ module API =
 module CQN =
   open API
 
-  let commandPort commandHandler: CommandApi<_> =
+  let commandPort commandHandler: CommandApi<_,_> =
     {
       Handle = fun commandEnvelope -> commandHandler commandEnvelope
     }

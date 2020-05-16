@@ -211,7 +211,7 @@ let private withWsCmd command conference model =
 
 
 let sendCommandEnvelope commandEnvelope =
-  Cmd.OfAsync.perform (fun () -> commandPort.Handle commandEnvelope)  () CommandEnvelopeWasSent
+  Cmd.OfAsync.perform (fun () -> commandPort.Handle commandEnvelope)  () CommandResponse
 
 let withLiveUpdateCmd conference msg model =
   let commandEnvelope =
@@ -452,6 +452,6 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
       |> withoutNotification notification
       |> withoutCommands
 
-  | CommandEnvelopeWasSent _ ->
+  | CommandResponse _ ->
       // TODO: damit umgehen
       model |> withoutCommands

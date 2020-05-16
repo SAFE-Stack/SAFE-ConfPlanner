@@ -53,7 +53,7 @@ type Msg =
   | ConferenceLoaded of Result<Conference, QueryError>
   | ConferencesLoaded of Result<Conferences, QueryError>
   | OrganizersLoaded of Result<Organizer list, QueryError>
-  | CommandEnvelopeWasSent of Result<unit, string>
+  | CommandResponse of Result<EventEnvelope<Event> list, string>
 
 type WhatIf =
   {

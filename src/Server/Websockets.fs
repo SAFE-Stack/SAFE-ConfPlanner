@@ -36,7 +36,7 @@ let websocket
 
     let webSocketHandler =
       MailboxProcessor.Start(fun inbox ->
-        let subscription = eventSourced.SubscribeToEvents (Msg.Events >> inbox.Post >> fun () -> async { return () })
+        let eventSubscription = eventSourced.SubscribeToEvents (Msg.Events >> inbox.Post >> fun () -> async { return () })
 
         let rec loop() =
           async {
@@ -70,7 +70,7 @@ let websocket
                 return! loop()
 
             | Closed ->
-                eventSourced.UnsubscribeFromEvents subscription
+                eventSourced.UnsubscribeFromEvents eventSubscription
                 // printfn "Client closed connection"
           }
 

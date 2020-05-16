@@ -2,6 +2,7 @@ module App.Server
 
 open Fable.Remoting.Client
 open Domain.Commands
+open Domain.Events
 
 let conferenceApi =
   Remoting.createApi()
@@ -15,5 +16,5 @@ let organizerApi =
 
 let commandPort =
   Remoting.createApi()
-  |> Remoting.withRouteBuilder Application.API.CommandApi<_>.RouteBuilder
-  |> Remoting.buildProxy<Application.API.CommandApi<Command>>
+  |> Remoting.withRouteBuilder Application.API.CommandApi<_,_>.RouteBuilder
+  |> Remoting.buildProxy<Application.API.CommandApi<Command,Event>>
