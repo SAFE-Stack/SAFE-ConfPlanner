@@ -28,6 +28,7 @@ nuget Fable.FontAwesome
 nuget Fable.FontAwesome.Free
 nuget Fulma
 nuget Fulma.Extensions.Wikiki.Switch
+nuget Thoth.Elmish.Toast
 nuget Thoth.Json prerelease
 nuget Thoth.Json.Net prerelease
 nuget Npgsql.FSharp

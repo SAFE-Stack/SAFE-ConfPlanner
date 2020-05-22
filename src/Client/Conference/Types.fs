@@ -15,13 +15,6 @@ type NotificationType =
   | Success
   | Error
 
-type Animation =
-  | Entered
-  | Leaving
-
-type Notification =
-  Event * TransactionId * Animation
-
 type AvailableEditor =
   | VotingPanel
   | Organizers
@@ -49,8 +42,6 @@ type Msg =
   | ScheduleNewConference
   | UpdateConferenceInformation
   | ConferenceInformationMsg of ConferenceInformation.Types.Msg
-  | RequestNotificationForRemoval of Notification
-  | RemoveNotification of Notification
   | ConferenceLoaded of Result<Conference, QueryError>
   | ConferencesLoaded of Result<Conferences, QueryError>
   | OrganizersLoaded of Result<Organizer list, QueryError>
@@ -87,7 +78,6 @@ type Model =
     LastEvents : EventEnvelope<Domain.Events.Event> list
     Organizer : OrganizerId
     OpenTransactions : Map<TransactionId, Deferred<unit>>
-    OpenNotifications : Notification list
   }
 
 let matchEditorWithAvailableEditor editor =

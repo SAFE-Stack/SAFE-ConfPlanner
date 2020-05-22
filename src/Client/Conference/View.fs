@@ -395,67 +395,6 @@ let private viewModeControls dispatch currentView =
   | _ ->
       []
 
-let private notificationType notification =
-  match notification with
-  | Events.Error _ ->
-      Notification.Color IsDanger
-
-  | _ ->
-      Notification.Color IsSuccess
-
-let private viewNotification dispatch (notification,transaction,animation) =
-  let closeMsg _ =
-    (notification,transaction,animation) |> RequestNotificationForRemoval |> dispatch
-
-  let itemStyle : CSSProp list =
-    [
-      MaxHeight "100px"
-      Margin "1em 1em 0 1em"
-      Transition "max-height 0.6s, margin-top 0.6s"
-    ]
-
-  let leavingItemStyle : CSSProp list =
-    itemStyle @
-      [
-        MaxHeight 0
-        MarginTop 0
-      ]
-
-  Notification.notification
-    [
-      match animation with
-      | Entered ->
-          Notification.CustomClass "animated bounceInRight"
-          Notification.Props [ Style itemStyle ]
-
-      | Leaving ->
-          Notification.CustomClass "animated fadeOutRightBig"
-          Notification.Props [ Style leavingItemStyle ]
-
-      notification |> notificationType
-    ]
-    [
-      Notification.delete
-        [ Props [ OnClick closeMsg ] ] []
-      notification |> Events.toString |> str
-    ]
-
-let private viewNotifications dispatch notifications =
-  let containerStyle : CSSProp list =
-    [
-      Position PositionOptions.Fixed
-      Top 60
-      Right 0
-      Width "100%"
-      MaxWidth "300px"
-      Padding 0
-      Margin 0
-      ZIndex 10.
-    ]
-
-  notifications |> List.map (viewNotification dispatch)
-  |> div [ Style containerStyle ]
-
 let private viewHeaderLine dispatch currentView conferences =
   let modeButtons =
     viewModeControls dispatch currentView
@@ -598,7 +537,6 @@ let viewCurrentView dispatch user currentView organizers =
 let view dispatch model =
   div []
     [
-      viewNotifications dispatch model.OpenNotifications
       Section.section [] [ viewHeader dispatch model.View model.Conferences ]
       Section.section [] [ viewCurrentView dispatch model.Organizer model.View model.Organizers ]
       Footer.footer [] [ footer model ]

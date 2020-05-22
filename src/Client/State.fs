@@ -77,6 +77,7 @@ let init result =
   urlUpdate result model
 
 let update msg model =
+  printfn "%A" msg
   match msg, model.CurrentPage with
   | ConferenceMsg msg, CurrentPage.Conference submodel->
       let (conference, conferenceCmd) = Conference.State.update msg submodel

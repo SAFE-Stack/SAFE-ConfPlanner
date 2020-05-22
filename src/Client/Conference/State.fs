@@ -3,8 +3,7 @@ module Conference.State
 open Elmish
 open Utils
 open Utils.Elmish
-
-open Config
+open Thoth.Elmish
 
 open Server.ServerTypes
 open EventSourced
@@ -28,31 +27,6 @@ let private withReceivedEvents eventEnvelopes model =
   { model with LastEvents = eventEnvelopes }
   |> withoutCmds
 
-let withAdditionalOpenNotifications notifications model =
-  { model with  OpenNotifications = model.OpenNotifications @ notifications }
-
-let withRequestedForRemovalNotification (event,transaction,_) model =
-  let mapper ((ev,tx,_) as notification) =
-    if event = ev && transaction = tx then
-      (event,tx,Leaving)
-    else
-      notification
-
-  let cmd =
-    (event,transaction,Leaving)
-    |> RemoveNotification
-    |> messageSendAfterMilliseconds 2000
-
-  { model with OpenNotifications = model.OpenNotifications |> List.map mapper }
-  |> withCommand cmd
-
-let private withoutNotification (notification,transaction,_) model =
-  let newNotifications =
-     model.OpenNotifications
-     |> List.filter (fun (event,tx,_) -> (event = notification && tx = transaction) |> not )
-
-  { model with OpenNotifications = newNotifications }
-
 let private updateWhatIfView editor conference whatif command (behaviour : Conference -> Domain.Events.Event list) =
   let events =
     conference |> behaviour
@@ -69,9 +43,6 @@ let private updateWhatIfView editor conference whatif command (behaviour : Confe
       }
 
   Edit (editor, newConference, whatif)
-
-let private eventEnvelopeAsNewNotification eventEnvelope =
-  eventEnvelope.Event,eventEnvelope.Metadata.Transaction,Entered
 
 let private addedToOpenTransactions model transaction =
   { model with OpenTransactions = model.OpenTransactions |> Map.add transaction Deferred.InProgress }
@@ -107,7 +78,6 @@ let init (user : UserData)  =
     LastEvents = []
     Organizer = user.OrganizerId
     OpenTransactions = Map.empty
-    OpenNotifications = []
   }, Cmd.ofSub <| startWs user.Token
 
 let dispose () =
@@ -337,31 +307,17 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
       | _ ->
           model |> withoutCmds
 
-  | RequestNotificationForRemoval notification ->
-      model
-      |> withRequestedForRemovalNotification notification
-
-  | RemoveNotification notification ->
-      model
-      |> withoutNotification notification
-      |> withoutCmds
-
   | CommandResponse (transaction, Ok eventEnvelopes) ->
       let notifications =
         eventEnvelopes
-        |> List.map eventEnvelopeAsNewNotification
-
-      let cmds =
-        notifications
-        |> List.map (RequestNotificationForRemoval >> (messageSendAfterMilliseconds 5000))
+        |> List.map Notifications.fromEventEnvelopes
         |> Cmd.batch
 
       model
-      |> withAdditionalOpenNotifications notifications
       |> withoutTransaction transaction
-      |> withCommand cmds
+      |> withCommand notifications
 
     | CommandResponse (transaction, Result.Error error) ->
-          model |> withoutCmds
-          // TODO: damit umgehen
+        model |> withoutCmds
+        // TODO: damit umgehen
 

@@ -22,6 +22,7 @@
     <Compile Include="Conference/Types.fs" />
     <Compile Include="Conference/Api.fs" />
     <Compile Include="Conference/Ws.fs" />
+    <Compile Include="Conference/Notifications.fs" />
     <Compile Include="Conference/State.fs" />
     <Compile Include="Conference/View.fs" />
     <Compile Include="Login/Types.fs" />
