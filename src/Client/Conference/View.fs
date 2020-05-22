@@ -268,7 +268,6 @@ let footer currentView (lastEvents) =
                   messageWindow "Potential Events" whatIf.Events <| messageWindowType whatIf.Events
                 ]
 
-
           | Live ->
               div []
                 [ messageWindow "Last Events" lastEvents <| messageWindowType lastEvents ]

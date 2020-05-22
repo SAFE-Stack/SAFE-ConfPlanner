@@ -46,7 +46,3 @@ let startWs token dispatch =
 
 let stopWs _ =
   closeWebsocket ()
-
-
-let transactionId() =
-  EventSourced.TransactionId <| System.Guid.NewGuid()

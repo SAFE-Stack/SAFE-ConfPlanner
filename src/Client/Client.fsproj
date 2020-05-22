@@ -18,11 +18,11 @@
     <Compile Include="Global.fs" />
     <Compile Include="ElmishHelper.fs" />
     <Compile Include="Utils.fs" />
-    <Compile Include="Server.fs" />
     <Compile Include="LocalStorage.fs" />
     <Compile Include="About/View.fs" />
     <Compile Include="Conference/ConferenceInformation.fs" />
     <Compile Include="Conference/Types.fs" />
+    <Compile Include="Conference/Api.fs" />
     <Compile Include="Conference/Ws.fs" />
     <Compile Include="Conference/State.fs" />
     <Compile Include="Conference/View.fs" />
