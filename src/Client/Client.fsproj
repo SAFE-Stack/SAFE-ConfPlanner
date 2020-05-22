@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <DefineConstants>FABLE_COMPILER</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../Domain/Domain.fsproj" />
@@ -15,8 +14,7 @@
     <Compile Include="../Server/Urls.fs" />
     <Compile Include="../Server/AuthTypes.fs" />
     <Compile Include="../Server/ServerTypes.fs" />
-    <Compile Include="Global.fs" />
-    <Compile Include="ElmishHelper.fs" />
+    <Compile Include="Config.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="LocalStorage.fs" />
     <Compile Include="About/View.fs" />

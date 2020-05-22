@@ -7,7 +7,7 @@ open Fable.React
 open Fable.React.Props
 open Fable.FontAwesome
 
-open Global
+open Utils.Elmish
 open Domain
 open Domain.Model
 
@@ -229,7 +229,7 @@ let private viewOrganizers dispatch conference organizers =
 
 let private viewOrganizersPanel dispatch conference organizers =
   match organizers with
-  | RemoteData.Success organizers ->
+  | Resolved organizers ->
       Columns.columns []
         [
           Column.column
@@ -290,24 +290,24 @@ let viewConferenceDropdownItem dispatch (conferenceId, title) =
 
 let private viewActiveConference currentView =
   match currentView with
-  | CurrentView.Edit (_, conference, _) ->
+  | Edit (_, conference, _) ->
       conference.Title
 
-  |  CurrentView.NotAsked ->
+  |  NotAsked ->
       pleaseSelectAConference
 
-  | CurrentView.ScheduleNewConference _ ->
+  | ScheduleNewConference _ ->
       "New Conference"
 
-  | CurrentView.Loading ->
+  | Loading ->
       "Loading..."
 
-  | CurrentView.Error _ ->
+  | Error _ ->
       "Error loading conference"
 
 let private viewConferenceList dispatch currentView conferences =
   match conferences with
-  | RemoteData.Success conferences ->
+  | Resolved conferences ->
       [
         div []
           [

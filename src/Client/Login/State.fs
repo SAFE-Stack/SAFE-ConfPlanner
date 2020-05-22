@@ -1,13 +1,12 @@
 module Login.State
 
 open Elmish
-open Elmish.Helper
+open Utils.Elmish
+open Utils
 open System
 open Fable.Core.JsInterop
 open Server.AuthTypes
 open Login.Types
-open Global
-open Client
 open Server.ServerTypes
 open Thoth.Json
 open Fetch.Types
@@ -36,7 +35,7 @@ let private authUser (login:Login) =
 
         let userRights =
           data
-          |> Utils.decodeJwt
+          |> JS.decodeJwt
           |> Decode.Auto.unsafeFromString<UserRights>
 
         return

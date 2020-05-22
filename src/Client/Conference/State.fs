@@ -1,8 +1,10 @@
 module Conference.State
 
 open Elmish
-open Elmish.Helper
-open Global
+open Utils
+open Utils.Elmish
+
+open Config
 
 open Server.ServerTypes
 open EventSourced
@@ -100,8 +102,8 @@ let private makeItSo commandEnvelopes model =
 let init (user : UserData)  =
   {
     View = NotAsked
-    Conferences = RemoteData.NotAsked
-    Organizers = RemoteData.NotAsked
+    Conferences = HasNotStartedYet
+    Organizers = HasNotStartedYet
     LastEvents = []
     Organizer = user.OrganizerId
     OpenTransactions = Map.empty
@@ -114,14 +116,14 @@ let dispose () =
 let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
   match msg with
   | OrganizersLoaded (Ok organizers) ->
-      { model with Organizers = organizers |> RemoteData.Success }
+      { model with Organizers = Resolved organizers }
       |> withoutCmds
 
   | OrganizersLoaded (Result.Error _) ->
       model |> withoutCmds
 
   | ConferencesLoaded (Ok conferences) ->
-      { model with Conferences = conferences |> RemoteData.Success }
+      { model with Conferences = Resolved conferences }
       |> withoutCmds
 
   | ConferencesLoaded (Result.Error _) ->

@@ -1,14 +1,14 @@
 module Conference.Types
 
 open Application.API
-open Global
+open Config
 open Server.ServerTypes
 open Domain.Model
 open Domain.Events
 open Domain.Commands
 open EventSourced
 open Application
-open Elmish.Helper
+open Utils.Elmish
 
 type NotificationType =
   | Info
@@ -82,8 +82,8 @@ type CurrentView =
 type Model =
   {
     View : CurrentView
-    Conferences : RemoteData<API.Conferences>
-    Organizers : RemoteData<Domain.Model.Organizers>
+    Conferences : Deferred<API.Conferences>
+    Organizers : Deferred<Domain.Model.Organizers>
     LastEvents : EventEnvelope<Domain.Events.Event> list
     Organizer : OrganizerId
     OpenTransactions : Map<TransactionId, Deferred<unit>>
@@ -92,11 +92,11 @@ type Model =
 
 let matchEditorWithAvailableEditor editor =
   match editor with
-  | Editor.VotingPanel ->
+  | VotingPanel ->
       AvailableEditor.VotingPanel
 
-  | Editor.Organizers ->
+  | Organizers ->
       AvailableEditor.Organizers
 
-  | Editor.ConferenceInformation _ ->
+  | ConferenceInformation _ ->
       AvailableEditor.ConferenceInformation

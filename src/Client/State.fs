@@ -2,9 +2,10 @@ module App.State
 
 open Elmish
 open Elmish.Navigation
-open Elmish.Helper
+open Utils.Elmish
+open Utils.Navigation
 open Fable.Import
-open Global
+open Config
 open Types
 
 open Thoth.Json
