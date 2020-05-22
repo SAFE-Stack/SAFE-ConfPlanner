@@ -26,6 +26,7 @@ let private commandPort =
 
 let sendCommand commandEnvelope : Async<Msg> =
   async {
+    do! Async.Sleep 500
     match! commandPort.Handle commandEnvelope with
     | Ok eventEnvelopes ->
         return CommandResponse (commandEnvelope.Transaction, Ok eventEnvelopes)
@@ -99,7 +100,6 @@ module Local =
 
     | DecideNumberOfSlots number ->
         Domain.Behaviour.decideNumberOfSlots number
-
 
   let evolve conference events  =
     events |> List.fold Domain.Projections.evolve conference

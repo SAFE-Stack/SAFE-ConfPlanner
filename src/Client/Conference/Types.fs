@@ -84,7 +84,7 @@ type Model =
     View : CurrentView
     Conferences : RemoteData<API.Conferences>
     Organizers : RemoteData<Domain.Model.Organizers>
-    LastEvents : EventEnvelope<Domain.Events.Event> list option
+    LastEvents : EventEnvelope<Domain.Events.Event> list
     Organizer : OrganizerId
     OpenTransactions : Map<TransactionId, Deferred<unit>>
     OpenNotifications : Notification list

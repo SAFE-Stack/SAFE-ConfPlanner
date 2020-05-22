@@ -9,7 +9,6 @@ open EventSourced
 
 open Conference.Types
 open Conference.Ws
-open Domain
 open Domain.Model
 open Application
 
@@ -24,7 +23,7 @@ let private withView view model =
   { model with View = view }
 
 let private withReceivedEvents eventEnvelopes model =
-  { model with LastEvents = Some eventEnvelopes }
+  { model with LastEvents = eventEnvelopes }
   |> withoutCmds
 
 let withAdditionalOpenNotifications notifications model =
@@ -64,7 +63,7 @@ let private updateWhatIfView editor conference whatif command (behaviour : Confe
       {
         whatif with
           Events = events
-          Commands = command :: whatif.Commands
+          Commands = whatif.Commands @ [ command ]
       }
 
   Edit (editor, newConference, whatif)
@@ -90,7 +89,6 @@ let private withoutTransaction transaction model =
 let private makeItSo commandEnvelopes model =
   let cmds =
     commandEnvelopes
-    |> List.rev
     |> List.collect (Api.sendCommand >> Cmd.fromAsync)
 
   let model =
@@ -104,7 +102,7 @@ let init (user : UserData)  =
     View = NotAsked
     Conferences = RemoteData.NotAsked
     Organizers = RemoteData.NotAsked
-    LastEvents = None
+    LastEvents = []
     Organizer = user.OrganizerId
     OpenTransactions = Map.empty
     OpenNotifications = []
