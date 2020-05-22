@@ -7,7 +7,7 @@ open Fable.React
 open Fable.React.Props
 open Fable.FontAwesome
 
-open Global
+open Utils.Elmish
 open Domain
 open Domain.Model
 
@@ -52,32 +52,31 @@ let private renderSpeakers (speakers : Speaker list) =
 
 let private viewVotingButton voteMsg revokeVotingMsg isActive btnType label =
   let clickMsg =
-    if isActive then
-      revokeVotingMsg
-    else
-      voteMsg
+    if isActive
+    then revokeVotingMsg
+    else voteMsg
 
   Button.a
     [
-      yield Button.Props [ OnClick clickMsg ]
+      Button.Props [ OnClick clickMsg ]
       if isActive then
-        yield Button.Color btnType
+        Button.Color btnType
     ]
     [ label |> str ]
 
-let private viewVotingButtons dispatch user vote (talk : Domain.Model.ConferenceAbstract) =
+let private viewVotingButtons dispatch user vote (talk : Model.ConferenceAbstract) =
   let possibleVotings =
     [
-      Voting.Voting (talk.Id, user, Two), IsPrimary, "2"
-      Voting.Voting (talk.Id, user, One), IsPrimary, "1"
-      Voting.Voting (talk.Id, user, Zero), IsPrimary, "0"
-      Voting.Voting (talk.Id, user, Veto), IsDanger, "Veto"
+      Voting (talk.Id, user, Two), IsPrimary, "2"
+      Voting (talk.Id, user, One), IsPrimary, "1"
+      Voting (talk.Id, user, Zero), IsPrimary, "0"
+      Voting (talk.Id, user, Veto), IsDanger, "Veto"
     ]
 
   let buttonMapper (voting,btnType,label) =
     viewVotingButton
-      (fun _ -> voting |> WhatIfMsg.Vote |> WhatIfMsg |> dispatch)
-      (fun _ -> voting |> WhatIfMsg.RevokeVoting |> WhatIfMsg |> dispatch)
+      (fun _ -> voting |> Vote |> WhatIfMsg |> dispatch)
+      (fun _ -> voting |> RevokeVoting |> WhatIfMsg |> dispatch)
       (vote = Some voting)
       btnType
       label
@@ -168,28 +167,28 @@ let private viewVotingPanelHeader header =
   |> Column.column []
 
 let private viewVotingPanel dispatch user conference =
-  [
-    Columns.columns []
-      [
-        match conference.VotingPeriod with
-        | InProgress ->
-            yield simpleButton "Finish Votingperiod" (WhatIfMsg>>dispatch) FinishVotingperiod
-        | Finished ->
-            yield simpleButton "Reopen Votingperiod" (WhatIfMsg>>dispatch) ReopenVotingperiod
-      ]
+  div []
+    [
+      Columns.columns []
+        [
+          match conference.VotingPeriod with
+          | InProgress ->
+              yield simpleButton "Finish Votingperiod" (WhatIfMsg>>dispatch) FinishVotingperiod
+          | Finished ->
+              yield simpleButton "Reopen Votingperiod" (WhatIfMsg>>dispatch) ReopenVotingperiod
+        ]
 
-    [ "Proposed"; "Accepted" ; "Rejected"]
-    |> List.map viewVotingPanelHeader
-    |> Columns.columns []
+      [ "Proposed"; "Accepted" ; "Rejected"]
+      |> List.map viewVotingPanelHeader
+      |> Columns.columns []
 
-    Columns.columns []
-      [
-        conference |> proposedColumn dispatch user
-        conference |> acceptedColumn dispatch user
-        conference |> rejectedColumn dispatch user
-      ]
-  ]
-  |> div []
+      Columns.columns []
+        [
+          conference |> proposedColumn dispatch user
+          conference |> acceptedColumn dispatch user
+          conference |> rejectedColumn dispatch user
+        ]
+    ]
 
 let private viewOrganizer dispatch conference (organizer : Organizer) =
   let isAddedToConference =
@@ -197,10 +196,9 @@ let private viewOrganizer dispatch conference (organizer : Organizer) =
     |> List.exists (fun o -> organizer.Id = o.Id)
 
   let changeMsg =
-    if isAddedToConference then
-      RemoveOrganizerFromConference
-    else
-      AddOrganizerToConference
+    if isAddedToConference
+    then RemoveOrganizerFromConference
+    else AddOrganizerToConference
 
   let switch =
     Switch.switch
@@ -220,7 +218,7 @@ let private viewOrganizer dispatch conference (organizer : Organizer) =
 let private viewOrganizers dispatch conference organizers =
   div []
     [
-      yield Columns.columns []
+      Columns.columns []
         [
           Column.column [] [ Heading.h1 [ Heading.Is4 ]  [ str "Name" ] ]
           Column.column [] [ Heading.h1 [ Heading.Is4 ]  [ str "Added" ] ]
@@ -231,7 +229,7 @@ let private viewOrganizers dispatch conference organizers =
 
 let private viewOrganizersPanel dispatch conference organizers =
   match organizers with
-  | RemoteData.Success organizers ->
+  | Resolved organizers ->
       Columns.columns []
         [
           Column.column
@@ -247,38 +245,36 @@ let private viewOrganizersPanel dispatch conference organizers =
   | _ ->
       div [] [ "no organizers" |> str ]
 
-let footer currentView (lastEvents) =
-  let lastEvents =
-    match lastEvents with
-    | Some events ->
-        events
-        |> List.map (fun envelope -> envelope.Event)
-
-    | None ->
-        []
-
+let footer (model : Model) =
   let content =
-    match currentView with
+    match model.View with
     | Edit (_,_,mode) ->
         let window =
           match mode with
           | WhatIf whatIf ->
               let commands =
-                whatIf.Commands |> List.map (fun envelope -> envelope.Command)
+                whatIf.Commands |> List.map (fun commandEnvelope -> commandEnvelope.Command)
 
               div []
                 [
                   messageWindow "Potential Commands" commands NotificationType.Info
-                  messageWindow "Potential Events" whatIf.Events <| messageWindowType whatIf.Events
+                  messageWindow "Potential Events" whatIf.Events (messageWindowType whatIf.Events)
                 ]
 
-
           | Live ->
+              let events =
+                model.LastEvents |> List.map (fun ee -> ee.Event)
+
+              let commands =
+                model.OpenTransactions |> Map.toList
+
               div []
-                [ messageWindow "Last Events" lastEvents <| messageWindowType lastEvents ]
+                [
+                  messageWindow "Running Commands" commands NotificationType.Info
+                  messageWindow "Last Events" events (messageWindowType events)
+                ]
 
         div [] [ window ]
-
 
     | _ ->
       str "No conference loaded"
@@ -289,31 +285,29 @@ let footer currentView (lastEvents) =
 
 let viewConferenceDropdownItem dispatch (conferenceId, title) =
   Dropdown.Item.a
-    [
-      Dropdown.Item.Props [ OnClick (fun _ -> conferenceId |> SwitchToConference |> dispatch) ]
-    ]
+    [ Dropdown.Item.Props [ OnClick (fun _ -> conferenceId |> SwitchToConference |> dispatch) ] ]
     [ str title ]
 
 let private viewActiveConference currentView =
   match currentView with
-  | CurrentView.Edit (_, conference, _) ->
+  | Edit (_, conference, _) ->
       conference.Title
 
-  |  CurrentView.NotAsked ->
+  |  NotAsked ->
       pleaseSelectAConference
 
-  | CurrentView.ScheduleNewConference _ ->
+  | ScheduleNewConference _ ->
       "New Conference"
 
-  | CurrentView.Loading ->
+  | Loading ->
       "Loading..."
 
-  | CurrentView.Error _ ->
+  | Error _ ->
       "Error loading conference"
 
 let private viewConferenceList dispatch currentView conferences =
   match conferences with
-  | RemoteData.Success conferences ->
+  | Resolved conferences ->
       [
         div []
           [
@@ -383,7 +377,6 @@ let private viewMakeItSo dispatch =
       Button.Props [ OnClick (fun _ -> MakeItSo |> dispatch) ]
     ]
     [
-
       Icon.icon [ Icon.Size IsSmall ] [ Fa.i [ Fa.Solid.CheckSquare ] [] ]
       span [] [ "Make It So" |> str ]
     ]
@@ -397,9 +390,7 @@ let private viewModeControls dispatch currentView =
       ]
 
   | Edit (_,_,Live) ->
-      [
-        viewWhatIfSwitch dispatch false
-      ]
+      [ viewWhatIfSwitch dispatch false ]
 
   | _ ->
       []
@@ -434,15 +425,14 @@ let private viewNotification dispatch (notification,transaction,animation) =
     [
       match animation with
       | Entered ->
-          yield Notification.CustomClass "animated bounceInRight"
-          yield Notification.Props [ Style itemStyle ]
+          Notification.CustomClass "animated bounceInRight"
+          Notification.Props [ Style itemStyle ]
 
       | Leaving ->
-          yield Notification.CustomClass "animated fadeOutRightBig"
-          yield Notification.Props [ Style leavingItemStyle ]
+          Notification.CustomClass "animated fadeOutRightBig"
+          Notification.Props [ Style leavingItemStyle ]
 
-      yield notification |> notificationType
-
+      notification |> notificationType
     ]
     [
       Notification.delete
@@ -510,11 +500,12 @@ let private viewHeaderLine dispatch currentView conferences =
     ]
 
 let private viewHeader dispatch currentView conferences =
-  [
-    yield viewHeaderLine dispatch currentView conferences
-    yield viewTabs currentView (SwitchToEditor>>dispatch)
-  ]
-  |> Container.container [ Container.IsFluid ]
+  Container.container [ Container.IsFluid ]
+    [
+      viewHeaderLine dispatch currentView conferences
+      viewTabs currentView (SwitchToEditor>>dispatch)
+    ]
+
 
 let private viewConferenceInformation dispatch submodel confirmMsg resetMsg confirmLabel =
   let conferenceInformation =
@@ -526,7 +517,6 @@ let private viewConferenceInformation dispatch submodel confirmMsg resetMsg conf
         Button.OnClick (fun _ -> confirmMsg |> dispatch )
         Button.Color IsPrimary
         Button.Disabled (submodel |> ConferenceInformation.Types.isValid |> not)
-
       ]
       [ str confirmLabel ]
 
@@ -580,36 +570,36 @@ let viewConferenceInformationPanel dispatch submodel =
     submodel
     UpdateConferenceInformation
     ResetConferenceInformation
-    "Save"
+    "Edit"
 
 let viewCurrentView dispatch user currentView organizers =
-  match currentView with
-  | Edit (VotingPanel, conference, _) ->
-      viewVotingPanel dispatch user conference
+  Container.container [ Container.IsFluid ]
+    [
+      match currentView with
+      | Edit (VotingPanel, conference, _) ->
+          viewVotingPanel dispatch user conference
 
-  | Edit (Organizers, conference, _) ->
-      viewOrganizersPanel dispatch conference organizers
+      | Edit (Organizers, conference, _) ->
+          viewOrganizersPanel dispatch conference organizers
 
-  | Edit (ConferenceInformation submodel, _, _) ->
-      viewConferenceInformationPanel dispatch submodel
+      | Edit (ConferenceInformation submodel, _, _) ->
+          viewConferenceInformationPanel dispatch submodel
 
-  | ScheduleNewConference submodel  ->
-      viewNewConferencePanel dispatch submodel
+      | ScheduleNewConference submodel  ->
+          viewNewConferencePanel dispatch submodel
 
-  | _ ->
-      [
-        div [ ClassName "column"] [ "Conference Not Loaded" |> str ]
-      ]
-      |> div [ ClassName "columns" ]
-
-  |> List.singleton
-  |> Container.container [ Container.IsFluid ]
+      | _ ->
+          div [ ClassName "columns" ]
+            [
+              div [ ClassName "column"] [ "Conference Not Loaded" |> str ]
+            ]
+    ]
 
 let view dispatch model =
-  [
-    viewNotifications dispatch model.OpenNotifications
-    viewHeader dispatch model.View model.Conferences |> List.singleton |> Section.section []
-    viewCurrentView dispatch model.Organizer model.View model.Organizers |> List.singleton |> Section.section []
-    footer model.View model.LastEvents |> List.singleton |> Footer.footer []
-  ]
-  |> div []
+  div []
+    [
+      viewNotifications dispatch model.OpenNotifications
+      Section.section [] [ viewHeader dispatch model.View model.Conferences ]
+      Section.section [] [ viewCurrentView dispatch model.Organizer model.View model.Organizers ]
+      Footer.footer [] [ footer model ]
+    ]

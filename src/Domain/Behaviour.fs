@@ -276,7 +276,3 @@ let behaviour (command : Command) : EventProducer<Event> =
   | RevokeVoting voting  ->
       handleRevokeVoting voting
 
-  | AcceptAbstract(_) -> failwith "Not Implemented"
-  | RejectAbstract(_) -> failwith "Not Implemented"
-
-

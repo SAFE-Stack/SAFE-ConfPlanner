@@ -36,10 +36,10 @@ module EventStore =
 
               return! loop ()
 
-          | Append (eventSet,reply) ->
+          | Append (events,reply) ->
               try
-                do! eventSet |> storage.Append
-                do eventsAppended.Trigger eventSet
+                do! events |> storage.Append
+                do eventsAppended.Trigger events
                 do reply.Reply (Ok ())
               with exn ->
                 do inbox.Trigger(exn)

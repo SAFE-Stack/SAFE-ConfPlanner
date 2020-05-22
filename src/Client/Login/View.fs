@@ -71,7 +71,7 @@ let private viewForm dispatch model =
         "Username (use: test)"
         [
           AutoFocus true
-          Client.Utils.onEnter dispatch ClickLogIn
+          Utils.JS.onEnter dispatch ClickLogIn
         ]
 
       viewFormField
@@ -80,7 +80,7 @@ let private viewForm dispatch model =
         model.Login.Password
         model.ErrorMsg
         "Password (use: test)"
-        [ Client.Utils.onEnter dispatch ClickLogIn ]
+        [ Utils.JS.onEnter dispatch ClickLogIn ]
     ]
 
 let private viewLoginRow content =

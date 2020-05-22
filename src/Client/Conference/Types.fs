@@ -1,12 +1,14 @@
 module Conference.Types
 
 open Application.API
-open Global
+open Config
 open Server.ServerTypes
 open Domain.Model
 open Domain.Events
+open Domain.Commands
 open EventSourced
 open Application
+open Utils.Elmish
 
 type NotificationType =
   | Info
@@ -52,11 +54,12 @@ type Msg =
   | ConferenceLoaded of Result<Conference, QueryError>
   | ConferencesLoaded of Result<Conferences, QueryError>
   | OrganizersLoaded of Result<Organizer list, QueryError>
+  | CommandResponse of TransactionId * Result<EventEnvelope<Event> list, string>
 
 type WhatIf =
   {
     Conference : Domain.Model.Conference
-    Commands : CommandEnvelope<Domain.Commands.Command> list
+    Commands : CommandEnvelope<Command> list
     Events : Domain.Events.Event list
   }
 
@@ -79,21 +82,21 @@ type CurrentView =
 type Model =
   {
     View : CurrentView
-    Conferences : RemoteData<API.Conferences>
-    Organizers : RemoteData<Domain.Model.Organizers>
-    LastEvents : EventEnvelope<Domain.Events.Event> list option
+    Conferences : Deferred<API.Conferences>
+    Organizers : Deferred<Domain.Model.Organizers>
+    LastEvents : EventEnvelope<Domain.Events.Event> list
     Organizer : OrganizerId
-    OpenTransactions : EventSourced.TransactionId list
+    OpenTransactions : Map<TransactionId, Deferred<unit>>
     OpenNotifications : Notification list
   }
 
 let matchEditorWithAvailableEditor editor =
   match editor with
-  | Editor.VotingPanel ->
+  | VotingPanel ->
       AvailableEditor.VotingPanel
 
-  | Editor.Organizers ->
+  | Organizers ->
       AvailableEditor.Organizers
 
-  | Editor.ConferenceInformation _ ->
+  | ConferenceInformation _ ->
       AvailableEditor.ConferenceInformation

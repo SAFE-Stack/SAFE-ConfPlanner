@@ -2,9 +2,10 @@ module App.State
 
 open Elmish
 open Elmish.Navigation
-open Elmish.Helper
+open Utils.Elmish
+open Utils.Navigation
 open Fable.Import
-open Global
+open Config
 open Types
 
 open Thoth.Json
@@ -50,7 +51,7 @@ let urlUpdate (result : Page option) model =
 
   | Some Page.About ->
       { model with CurrentPage = CurrentPage.About }
-      |> withoutCommands
+      |> withoutCmds
 
   |> withAdditionalCommand (disposeCmd model.CurrentPage)
 
@@ -107,10 +108,10 @@ let update msg model =
 
   | StorageFailure error, _ ->
       printfn "Unable to access local storage: %A" error
-      model |> withoutCommands
+      model |> withoutCmds
 
   | Logout, _ ->
       model |> withCommand deleteUserCmd
 
   | _ , _ ->
-      model |> withoutCommands
+      model |> withoutCmds

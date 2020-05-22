@@ -36,7 +36,7 @@ let websocket
 
     let webSocketHandler =
       MailboxProcessor.Start(fun inbox ->
-        let subscription = eventSourced.SubscribeToEvents (Msg.Events >> inbox.Post >> fun () -> async { return () })
+        let eventSubscription = eventSourced.SubscribeToEvents (Msg.Events >> inbox.Post >> fun () -> async { return () })
 
         let rec loop() =
           async {
@@ -47,19 +47,12 @@ let websocket
                 // printfn "webSocketHandler connected"
                 return! loop()
 
-            | Received clientMsg  ->
-                match clientMsg with
-                | Command envelope ->
-                    // printfn "handle incoming command with envelope %A..." envelope
-                    do! (eventSourced.HandleCommand envelope |> Async.Ignore) // TODO: think of result
-                    return! loop()
+            | Received Connect  ->
+                // printfn "ClientMsg.Connect"
+                ServerMsg.Connected
+                |> send webSocket
 
-                | Connect ->
-                    // printfn "ClientMsg.Connect"
-                    ServerMsg.Connected
-                    |> send webSocket
-
-                    return! loop()
+                return! loop()
 
             | Events (events : EventEnvelope<'Event> list) ->
                 // printfn "events %A will be send to client..." events
@@ -70,7 +63,7 @@ let websocket
                 return! loop()
 
             | Closed ->
-                eventSourced.UnsubscribeFromEvents subscription
+                eventSourced.UnsubscribeFromEvents eventSubscription
                 // printfn "Client closed connection"
           }
 

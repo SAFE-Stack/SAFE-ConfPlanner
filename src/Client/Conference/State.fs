@@ -1,328 +1,195 @@
 module Conference.State
 
 open Elmish
-open Elmish.Helper
-open Global
+open Utils
+open Utils.Elmish
+
+open Config
 
 open Server.ServerTypes
 open EventSourced
 
 open Conference.Types
 open Conference.Ws
-open Domain
 open Domain.Model
-open App.Server
-
+open Application
 
 let private eventIsForConference (ConferenceId conferenceId) envelope =
   envelope.Metadata.Source = conferenceId
 
-let private updateStateWithEvents conference events  =
-  events
-  |> List.fold Domain.Projections.evolve conference
-
-
-let private queryConference conferenceId =
-  // TODO react to query Error
-  Cmd.OfAsync.perform conferenceApi.conference conferenceId ConferenceLoaded
-
-let private queryConferences =
-  Cmd.OfAsync.perform conferenceApi.conferences () ConferencesLoaded
-
-let private queryOrganizers =
-  Cmd.OfAsync.perform organizerApi.organizers () OrganizersLoaded
-
-let init (user : UserData)  =
-  {
-    View = CurrentView.NotAsked
-    Conferences = RemoteData.NotAsked
-    Organizers = RemoteData.NotAsked
-    LastEvents = None
-    Organizer = user.OrganizerId
-    OpenTransactions = []
-    OpenNotifications = []
-  }, Cmd.ofSub <| startWs user.Token
-
-let dispose () =
-  Cmd.ofSub stopWs
-
-let private timeoutCmd timeout msg dispatch =
-  Browser.Dom.window.setTimeout((fun _ -> msg |> dispatch), timeout) |> ignore
+let private messageSendAfterMilliseconds timeout msg  =
+  fun dispatch -> Browser.Dom.window.setTimeout((fun _ -> msg |> dispatch), timeout) |> ignore
+  |> Cmd.ofSub
 
 let private withView view model =
   { model with View = view }
 
-let private withOpenTransaction transaction model =
-   { model with OpenTransactions = transaction :: model.OpenTransactions}
+let private withReceivedEvents eventEnvelopes model =
+  { model with LastEvents = eventEnvelopes }
+  |> withoutCmds
 
-let private withOpenTransactions transactions model =
-  { model with OpenTransactions = List.concat [transactions ; model.OpenTransactions ] }
+let withAdditionalOpenNotifications notifications model =
+  { model with  OpenNotifications = model.OpenNotifications @ notifications }
 
-let private withLastEvents events model =
-  { model with LastEvents = Some events }
-
-let private withFinishedTransaction eventEnvelopes model =
-  let groupedByTransaction =
-    eventEnvelopes
-    |> List.groupBy (fun envelope -> envelope.Metadata.Transaction)
-
-  let notifications =
-    groupedByTransaction
-    |> List.collect (fun (transaction,events) ->
-        if model.OpenTransactions |> List.contains transaction
-        then events |> List.map (fun envelope -> envelope.Event,transaction,Entered)
-        else [])
-
-  let transactions =
-    groupedByTransaction |> List.map fst
-
-  let openTransactions =
-    model.OpenTransactions
-    |> List.filter (fun tx -> transactions |> List.contains tx |> not)
-
-  let model =
-    { model with
-        OpenTransactions =  openTransactions
-        OpenNotifications = model.OpenNotifications @ notifications
-    }
-
-  let commands =
-    notifications
-    |> List.map (RequestNotificationForRemoval>>(timeoutCmd 5000)>>Cmd.ofSub)
-    |> Cmd.batch
-
-  model |> withCommand commands
-
-
-
-let withRequestedForRemovalNotification (notification,transaction,_) model =
-  let mapper (event,tx,animation) =
-    if event = notification && tx = transaction then
+let withRequestedForRemovalNotification (event,transaction,_) model =
+  let mapper ((ev,tx,_) as notification) =
+    if event = ev && transaction = tx then
       (event,tx,Leaving)
     else
-      (event,tx,animation)
+      notification
 
   let cmd =
-    (notification,transaction,Leaving)
+    (event,transaction,Leaving)
     |> RemoveNotification
-    |> timeoutCmd 2000
-    |> Cmd.ofSub
+    |> messageSendAfterMilliseconds 2000
 
   { model with OpenNotifications = model.OpenNotifications |> List.map mapper }
   |> withCommand cmd
 
-let withoutNotification (notification,transaction,_) model =
+let private withoutNotification (notification,transaction,_) model =
   let newNotifications =
      model.OpenNotifications
      |> List.filter (fun (event,tx,_) -> (event = notification && tx = transaction) |> not )
 
   { model with OpenNotifications = newNotifications }
 
-let private updateWhatIfView editor conference whatif (behaviour : Conference -> Domain.Events.Event list) command =
+let private updateWhatIfView editor conference whatif command (behaviour : Conference -> Domain.Events.Event list) =
   let events =
-      conference |> behaviour
+    conference |> behaviour
 
   let newConference =
-    events |> updateStateWithEvents conference
-
-  let transaction =
-    transactionId()
-
-  let (ConferenceId eventSource) = conference.Id
-
-  let envelope =
-    {
-      Transaction = transaction
-      EventSource = eventSource
-      Command = command
-    }
-
-  let commands =
-     envelope :: whatif.Commands
+    events |> Api.Local.evolve conference
 
   let whatif =
-    WhatIf <|
+    WhatIf
       {
         whatif with
           Events = events
-          Commands = commands
+          Commands = whatif.Commands @ [ command ]
       }
 
-  (editor, newConference, whatif) |> Edit
+  Edit (editor, newConference, whatif)
 
-let private updateWhatIf msg editor conference whatif =
-  let updateWhatIfView =
-    updateWhatIfView
-      editor
-      conference
-      whatif
+let private eventEnvelopeAsNewNotification eventEnvelope =
+  eventEnvelope.Event,eventEnvelope.Metadata.Transaction,Entered
 
-  match msg with
-  | Vote voting ->
-      updateWhatIfView
-        (voting |> Behaviour.vote)
-        (voting |> Commands.Vote)
+let private addedToOpenTransactions model transaction =
+  { model with OpenTransactions = model.OpenTransactions |> Map.add transaction Deferred.InProgress }
 
-  | RevokeVoting voting ->
-      updateWhatIfView
-        (voting |> Behaviour.vote)
-        (voting |> Commands.Vote)
+let private withApiCommand commandEnvelope model =
+  commandEnvelope.Transaction
+  |> addedToOpenTransactions model
+  |> withCommand (Cmd.fromAsync (Api.sendCommand commandEnvelope))
 
-  | FinishVotingperiod ->
-      updateWhatIfView
-        Behaviour.finishVotingPeriod
-        Commands.FinishVotingPeriod
+let private withOpenCommands transactions model =
+  transactions
+  |> List.fold addedToOpenTransactions model
 
-  | ReopenVotingperiod ->
-      updateWhatIfView
-        Behaviour.reopenVotingPeriod
-        Commands.ReopenVotingPeriod
+let private withoutTransaction transaction model =
+  { model with OpenTransactions = model.OpenTransactions |> Map.remove transaction }
 
-  | AddOrganizerToConference organizer ->
-      updateWhatIfView
-        (organizer |> Behaviour.addOrganizerToConference)
-        (organizer |> Commands.AddOrganizerToConference)
+let private makeItSo commandEnvelopes model =
+  let cmds =
+    commandEnvelopes
+    |> List.collect (Api.sendCommand >> Cmd.fromAsync)
 
-  | RemoveOrganizerFromConference organizer ->
-      updateWhatIfView
-        (organizer |> Behaviour.removeOrganizerFromConference)
-        (organizer |> Commands.RemoveOrganizerFromConference)
+  let model =
+    model
+    |> withOpenCommands (commandEnvelopes |> List.map (fun ee -> ee.Transaction))
 
-  | ChangeTitle title ->
-      updateWhatIfView
-        (title |> Behaviour.changeTitle)
-        (title |> Commands.ChangeTitle)
+  model,cmds
 
+let init (user : UserData)  =
+  {
+    View = NotAsked
+    Conferences = HasNotStartedYet
+    Organizers = HasNotStartedYet
+    LastEvents = []
+    Organizer = user.OrganizerId
+    OpenTransactions = Map.empty
+    OpenNotifications = []
+  }, Cmd.ofSub <| startWs user.Token
 
-  | DecideNumberOfSlots number ->
-      updateWhatIfView
-        (number |> Behaviour.decideNumberOfSlots)
-        (number |> Commands.DecideNumberOfSlots)
-
-let private liveUpdateCommand msg =
-  match msg with
-  | Vote voting ->
-      voting |> Commands.Vote
-
-  | RevokeVoting voting ->
-      voting |> Commands.RevokeVoting
-
-  | FinishVotingperiod ->
-     Commands.FinishVotingPeriod
-
-  | ReopenVotingperiod ->
-     Commands.ReopenVotingPeriod
-
-  | AddOrganizerToConference organizer ->
-      organizer |> Commands.AddOrganizerToConference
-
-  | RemoveOrganizerFromConference organizer ->
-      organizer |> Commands.RemoveOrganizerFromConference
-
-  | ChangeTitle title ->
-      title |> Commands.ChangeTitle
-
-  | DecideNumberOfSlots number ->
-      number |> Commands.DecideNumberOfSlots
-
-let private withWsCmd command conference model =
-  let transaction =
-    transactionId()
-
-  let (ConferenceId eventSource) = conference.Id
-
-  let envelope =
-    {
-      Transaction = transaction
-      EventSource = eventSource
-      Command = command
-    }
-
-  model
-  |> withOpenTransaction transaction
-  |> withCommand (wsCmd (ClientMsg.Command (envelope)))
-
-let withLiveUpdateCmd conference whatifMsg model =
-  let transaction =
-    transactionId()
-
-  let (ConferenceId eventSource) = conference.Id
-
-  let envelope =
-    {
-      Transaction = transaction
-      EventSource = eventSource
-      Command = liveUpdateCommand whatifMsg
-    }
-
-  model
-  |> withOpenTransaction transaction
-  |> withCommand (wsCmd <| ClientMsg.Command envelope)
+let dispose () =
+  Cmd.ofSub stopWs
 
 let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
   match msg with
   | OrganizersLoaded (Ok organizers) ->
-    { model with Organizers = organizers |> RemoteData.Success }
-    |> withoutCommands
+      { model with Organizers = Resolved organizers }
+      |> withoutCmds
+
+  | OrganizersLoaded (Result.Error _) ->
+      model |> withoutCmds
 
   | ConferencesLoaded (Ok conferences) ->
-    { model with Conferences = conferences |> RemoteData.Success }
-    |> withoutCommands
+      { model with Conferences = Resolved conferences }
+      |> withoutCmds
+
+  | ConferencesLoaded (Result.Error _) ->
+      model |> withoutCmds
 
   | ConferenceLoaded (Ok conference) ->
-    model
-    |> withView ((VotingPanel,conference,Live) |> Edit)
-    |> withoutCommands
+      model
+      |> withView ((VotingPanel,conference,Live) |> Edit)
+      |> withoutCmds
 
-  | Received (ServerMsg.Connected) ->
-      model, Cmd.batch [ queryConferences ; queryOrganizers ]
+  | ConferenceLoaded (Result.Error _) ->
+      model |> withoutCmds
 
-  | Received (ServerMsg.Events events) ->
+  | Received (Connected) ->
+      model, Cmd.batch [ Api.queryConferences ; Api.queryOrganizers ]
+
+  | Received (Events events) ->
       match model.View with
       | Edit (editor, conference, Live) ->
           let newConference =
             events
             |> List.filter (eventIsForConference conference.Id)
             |> List.map (fun envelope -> envelope.Event)
-            |> updateStateWithEvents conference
+            |> Api.Local.evolve conference
 
           model
           |> withView ((editor,newConference,Live) |> Edit)
-          |> withLastEvents events
-          |> withFinishedTransaction events
+          |> withReceivedEvents events
 
       | _ ->
-          model |> withoutCommands
+          model |> withoutCmds
 
-  | WhatIfMsg whatifMsg ->
+  | WhatIfMsg msg ->
       match model.View with
       | Edit (_, conference, Live) ->
           model
-          |> withLiveUpdateCmd conference whatifMsg
+          |> withApiCommand (Api.commandEnvelopeForMsg conference.Id msg)
 
       | Edit (editor, conference, WhatIf whatif) ->
+          let whatIfView =
+            updateWhatIfView
+              editor
+              conference
+              whatif
+              (Api.commandEnvelopeForMsg conference.Id msg)
+              (Api.Local.behaviourFor msg)
+
           model
-          |> withView (updateWhatIf whatifMsg editor conference whatif)
-          |> withoutCommands
+          |> withView whatIfView
+          |> withoutCmds
 
       | _ ->
-           model |> withoutCommands
+           model |> withoutCmds
 
   | MakeItSo ->
       match model.View with
       | Edit (editor, conference, WhatIf whatIf)  ->
-          let commands =
-            whatIf.Commands
-            |> List.rev
-            |> List.collect (ClientMsg.Command >> wsCmd)
+          let model,cmds =
+            makeItSo whatIf.Commands model
 
           model
-          |> withView ((editor,whatIf.Conference,Live) |> Edit)
-          |> withOpenTransactions (whatIf.Commands |> List.map (fun envelope -> envelope.Transaction))
-          |> withCommand (Cmd.batch [commands ; conference.Id |> queryConference])
+          |> withView (Edit (editor,whatIf.Conference,Live))
+          |> withCommand (Cmd.batch [cmds ; Api.queryConference conference.Id])
 
       | _ ->
-          model |> withoutCommands
+          model |> withoutCmds
 
   | ToggleMode ->
       match model.View with
@@ -336,17 +203,17 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
 
           model
           |> withView ((editor, conference, whatif |> WhatIf) |> Edit)
-          |> withoutCommands
+          |> withoutCmds
 
       | Edit (editor, conference, WhatIf _) ->
           { model with View = (editor, conference, Live) |> Edit },
-          conference.Id |> queryConference
+          conference.Id |> Api.queryConference
 
       | _ ->
-          model |> withoutCommands
+          model |> withoutCmds
 
   | SwitchToConference conferenceId ->
-      model, conferenceId |> queryConference
+      model, conferenceId |> Api.queryConference
 
   | SwitchToEditor target ->
       match model.View with
@@ -355,39 +222,39 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
             match target with
             | AvailableEditor.ConferenceInformation ->
                 ConferenceInformation.State.init conference.Title (conference.AvailableSlotsForTalks |> string)
-                |> Editor.ConferenceInformation
+                |> ConferenceInformation
 
             | AvailableEditor.VotingPanel ->
-                Editor.VotingPanel
+                VotingPanel
 
             | AvailableEditor.Organizers ->
-                Editor.Organizers
+                Organizers
 
           model
           |> withView ((editor, conference, mode) |> Edit)
-          |> withoutCommands
+          |> withoutCmds
 
       | _ ->
-          model |> withoutCommands
+          model |> withoutCmds
 
   | SwitchToNewConference ->
       model
-      |> withView (ConferenceInformation.State.init "" "" |> CurrentView.ScheduleNewConference)
-      |> withoutCommands
+      |> withView (ConferenceInformation.State.init "" "" |> ScheduleNewConference)
+      |> withoutCmds
 
   | ResetConferenceInformation ->
       match model.View with
       | Edit (ConferenceInformation _, conference, mode) ->
           let editor =
             ConferenceInformation.State.init conference.Title (conference.AvailableSlotsForTalks |> string)
-            |> Editor.ConferenceInformation
+            |> ConferenceInformation
 
           model
           |> withView ((editor, conference, mode) |> Edit)
-          |> withoutCommands
+          |> withoutCmds
 
       | _ ->
-          model |> withoutCommands
+          model |> withoutCmds
 
   | UpdateConferenceInformation ->
       match model.View with
@@ -420,35 +287,32 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
           |> withCommand (Cmd.batch [ titleCmd ; availableSlotsForTalksCmd ])
 
       | _ ->
-          model |> withoutCommands
+          model |> withoutCmds
 
   | Msg.ScheduleNewConference ->
       match model.View with
       | ScheduleNewConference submodel when submodel |> ConferenceInformation.Types.isValid ->
           let title =
-            submodel |> ConferenceInformation.Types.title
+            ConferenceInformation.Types.title submodel
 
           let availableSlotsForTalks =
-            submodel |> ConferenceInformation.Types.availableSlotsForTalks
+            ConferenceInformation.Types.availableSlotsForTalks submodel
 
           let conference =
             emptyConference()
             |> withTitle title
             |> withAvailableSlotsForTalks availableSlotsForTalks
 
-          let command =
-            conference |> Commands.ScheduleConference
-
           let editor =
             ConferenceInformation.State.init conference.Title (conference.AvailableSlotsForTalks |> string)
-            |> Editor.ConferenceInformation
+            |> ConferenceInformation
 
           model
           |> withView ((editor, conference, Live) |> Edit)
-          |> withWsCmd command conference
+          |> withApiCommand (API.Command.conferenceApi.ScheduleConference conference conference.Id)
 
       | _ ->
-          model |> withoutCommands
+          model |> withoutCmds
 
   | ConferenceInformationMsg msg ->
       match model.View with
@@ -458,7 +322,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
 
           model
           |> withView ((ConferenceInformation newSubmodel, conference, mode) |> Edit)
-          |> withoutCommands
+          |> withoutCmds
 
       | ScheduleNewConference submodel ->
           let view =
@@ -468,10 +332,10 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
 
           model
           |> withView view
-          |> withoutCommands
+          |> withoutCmds
 
       | _ ->
-          model |> withoutCommands
+          model |> withoutCmds
 
   | RequestNotificationForRemoval notification ->
       model
@@ -480,4 +344,24 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
   | RemoveNotification notification ->
       model
       |> withoutNotification notification
-      |> withoutCommands
+      |> withoutCmds
+
+  | CommandResponse (transaction, Ok eventEnvelopes) ->
+      let notifications =
+        eventEnvelopes
+        |> List.map eventEnvelopeAsNewNotification
+
+      let cmds =
+        notifications
+        |> List.map (RequestNotificationForRemoval >> (messageSendAfterMilliseconds 5000))
+        |> Cmd.batch
+
+      model
+      |> withAdditionalOpenNotifications notifications
+      |> withoutTransaction transaction
+      |> withCommand cmds
+
+    | CommandResponse (transaction, Result.Error error) ->
+          model |> withoutCmds
+          // TODO: damit umgehen
+

@@ -1,6 +1,10 @@
 namespace EventSourced
 
-type TransactionId = TransactionId of System.Guid
+type TransactionId =
+  | TransactionId of System.Guid
+  with
+    static member New () =
+      TransactionId <| System.Guid.NewGuid()
 
 type EventSource = System.Guid
 
@@ -19,8 +23,6 @@ type EventEnvelope<'Event> =
     Metadata : EventMetadata
     Event : 'Event
   }
-
-
 
 type EventHandler<'Event> =
   EventEnvelope<'Event> list -> Async<unit>
@@ -73,17 +75,16 @@ type InMemoryReadModel<'Event, 'State> =
     State : unit -> Async<'State>
   }
 
-
 type CommandEnvelope<'Command> =
   {
-    Transaction : TransactionId
     EventSource : EventSource
+    Transaction : TransactionId
     Command : 'Command
   }
 
-type CommandHandler<'Command> =
+type CommandHandler<'Command, 'Event> =
   {
-    Handle : CommandEnvelope<'Command> -> Async<Result<unit,string>>
+    Handle : CommandEnvelope<'Command> -> Async<Result<EventEnvelope<'Event> list,string>>
     OnError : IEvent<exn>
   }
 

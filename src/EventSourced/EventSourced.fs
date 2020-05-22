@@ -7,7 +7,7 @@ module EventSourced =
     {
       EventStoreInit : EventStorage<'Event> -> EventStore<'Event>
       EventStorageInit : unit -> EventStorage<'Event>
-      CommandHandlerInit : EventStore<'Event> -> CommandHandler<'Command>
+      CommandHandlerInit : EventStore<'Event> -> CommandHandler<'Command,'Event>
       QueryHandler : QueryHandler<'Query>
       EventListenerInit : unit -> EventListener<'Event>
       EventHandlers : EventHandler<'Event> list
@@ -45,7 +45,6 @@ module EventSourced =
 
     member __.Append events =
       eventStore.Append events
-
 
     member __.SubscribeToEvents eventHandler =
       eventListener.Subscribe eventHandler

@@ -13,5 +13,3 @@ type Command =
   | FinishVotingPeriod
   | ReopenVotingPeriod
   | ProposeAbstract of ConferenceAbstract
-  | AcceptAbstract of ConferenceAbstract
-  | RejectAbstract of ConferenceAbstract

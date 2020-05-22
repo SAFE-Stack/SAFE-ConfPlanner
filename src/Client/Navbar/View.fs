@@ -3,7 +3,7 @@ module Navbar.View
 open Fable.React
 open Fable.React.Props
 open Fable.FontAwesome
-open Global
+open Utils.Navigation
 open Server.ServerTypes
 open App.Types
 open Fulma

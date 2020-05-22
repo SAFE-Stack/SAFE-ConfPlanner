@@ -21,7 +21,7 @@ open Fable.Remoting.Server
 open Fable.Remoting.Suave
 open Application.API
 
-let conferenceReadmodel = Conference.readmodel()
+let conferenceReadmodel = Conference.Query.readmodel()
 
 let eventSourced : EventSourced<Command,Event,QueryParameter> =
   {
@@ -53,51 +53,58 @@ let conferenceWebSocket : WebSocket -> HttpContext -> Async<Choice<unit,Sockets.
   eventSourced
   |> websocket
 
-
 let organizerApi : WebPart =
-    Remoting.createApi()
-    |> Remoting.withRouteBuilder Application.API.organizerRouteBuilder
-    |> Remoting.fromValue Application.Organizers.api
-    |> Remoting.buildWebPart
+  Remoting.createApi()
+  |> Remoting.withRouteBuilder Application.API.OrganizerQueryApi.RouteBuilder
+  |> Remoting.fromValue Application.Organizers.api
+  |> Remoting.buildWebPart
 
-let conferenceApi : WebPart =
-    Remoting.createApi()
-    |> Remoting.withRouteBuilder Application.API.conferenceRouteBuilder
-    |> Remoting.fromValue (Application.Conference.api conferenceReadmodel.State)
-    |> Remoting.buildWebPart
+let conferenceQueryApi : WebPart =
+  Remoting.createApi()
+  |> Remoting.withRouteBuilder Application.API.ConferenceQueryApi.RouteBuilder
+  |> Remoting.fromValue (Application.Conference.Query.port conferenceReadmodel.State)
+  |> Remoting.buildWebPart
+
+
+let commandApi : WebPart =
+  Remoting.createApi()
+  |> Remoting.withRouteBuilder API.CommandApi<_,_>.RouteBuilder
+  |> Remoting.fromValue (Application.CQN.commandPort eventSourced.HandleCommand)
+  |> Remoting.buildWebPart
 
 
 let start clientPath port =
-    printfn "Client-HomePath: %A" clientPath
-    if not (Directory.Exists clientPath) then
-        failwithf "Client-HomePath '%s' doesn't exist." clientPath
+  printfn "Client-HomePath: %A" clientPath
+  if not (Directory.Exists clientPath) then
+      failwithf "Client-HomePath '%s' doesn't exist." clientPath
 
-    let logger = Logging.Targets.create Logging.Info [| "Suave" |]
-    let serverConfig =
-        { defaultConfig with
-            logger = Targets.create LogLevel.Debug [|"Server"; "Server" |]
-            homeFolder = Some clientPath
-            bindings = [ HttpBinding.create HTTP (IPAddress.Parse "0.0.0.0") port] }
+  let logger = Logging.Targets.create Logging.Info [| "Suave" |]
+  let serverConfig =
+      { defaultConfig with
+          logger = Targets.create LogLevel.Debug [|"Server"; "Server" |]
+          homeFolder = Some clientPath
+          bindings = [ HttpBinding.create HTTP (IPAddress.Parse "0.0.0.0") port] }
 
-    let app =
-        choose [
-            GET >=> choose
-              [
-                path "/" >=> Files.browseFileHome "index.html"
-                pathRegex @"/(public|js|css|Images)/(.*)\.(css|png|gif|jpg|js|map)" >=> Files.browseHome
-              ]
-
-            POST >=> choose [
-                path Server.Urls.Login >=> Auth.login
+  let app =
+      choose [
+          GET >=> choose
+            [
+              path "/" >=> Files.browseFileHome "index.html"
+              pathRegex @"/(public|js|css|Images)/(.*)\.(css|png|gif|jpg|js|map)" >=> Files.browseHome
             ]
 
-            path Server.Urls.Conference  >=> websocketWithAuth handShake conferenceWebSocket
+          POST >=> choose [
+              path Server.Urls.Login >=> Auth.login
+          ]
 
-            conferenceApi
-            organizerApi
+          path Server.Urls.Conference  >=> websocketWithAuth handShake conferenceWebSocket
 
-            NOT_FOUND "Page not found."
+          conferenceQueryApi
+          organizerApi
+          commandApi
 
-        ] >=> logWithLevelStructured Logging.Info logger logFormatStructured
+          NOT_FOUND "Page not found."
 
-    startWebServer serverConfig app
+      ] >=> logWithLevelStructured Logging.Info logger logFormatStructured
+
+  startWebServer serverConfig app
