@@ -8,6 +8,7 @@ open Domain.Events
 open Domain.Commands
 open EventSourced
 open Application
+open Elmish.Helper
 
 type NotificationType =
   | Info
@@ -53,7 +54,7 @@ type Msg =
   | ConferenceLoaded of Result<Conference, QueryError>
   | ConferencesLoaded of Result<Conferences, QueryError>
   | OrganizersLoaded of Result<Organizer list, QueryError>
-  | CommandResponse of Result<EventEnvelope<Event> list, string>
+  | CommandResponse of TransactionId * Result<EventEnvelope<Event> list, string>
 
 type WhatIf =
   {
@@ -85,7 +86,7 @@ type Model =
     Organizers : RemoteData<Domain.Model.Organizers>
     LastEvents : EventEnvelope<Domain.Events.Event> list option
     Organizer : OrganizerId
-    TransactionSubscriptions : EventSourced.TransactionId list
+    OpenTransactions : Map<TransactionId, Deferred<unit>>
     OpenNotifications : Notification list
   }
 

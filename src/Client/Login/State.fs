@@ -65,12 +65,12 @@ let init (user : UserData option) =
 
   match user with
   | None ->
-     model |> withoutCommands
+     model |> withoutCmds
 
   | Some user ->
       model
       |> withStateLoggedIn user
-      |> withoutCommands
+      |> withoutCmds
 
 let private withLogin login model =
   { model with Login = login }
@@ -92,13 +92,13 @@ let update f onSuccess (msg:Msg) model : Model*Cmd<'a> =
       model
       |> withLogin { model.Login with UserName = name; Password = ""; PasswordId = Guid.NewGuid() }
       |> withoutError
-      |> withoutCommands
+      |> withoutCmds
 
   | SetPassword pw ->
       model
       |> withoutError
       |> withLogin { model.Login with Password = pw }
-      |> withoutCommands
+      |> withoutCmds
 
   | ClickLogIn ->
       model
@@ -108,4 +108,4 @@ let update f onSuccess (msg:Msg) model : Model*Cmd<'a> =
   | AuthError exn ->
       model
       |> withError (exn.Message |> string)
-      |> withoutCommands
+      |> withoutCmds

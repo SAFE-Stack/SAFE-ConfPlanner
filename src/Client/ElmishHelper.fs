@@ -9,7 +9,29 @@ let withAdditionalCommand cmd (model, cmds) =
 let withCommand (cmds : Cmd<'a>) model =
   model, cmds
 
-let withoutCommands model =
+let withoutCmds model =
   model, Cmd.none
 
 
+
+type Deferred<'t> =
+  | HasNotStartedYet
+  | InProgress
+  | Resolved of 't
+
+
+type AsyncOperationStatus<'t> =
+  | Started
+  | Finished of 't
+
+module Cmd =
+  let fromAsync (operation: Async<'msg>) : Cmd<'msg> =
+    let delayedCmd (dispatch: 'msg -> unit) : unit =
+      let delayedDispatch = async {
+          let! msg = operation
+          dispatch msg
+      }
+
+      Async.StartImmediate delayedDispatch
+
+    Cmd.ofSub delayedCmd
