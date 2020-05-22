@@ -5,7 +5,6 @@ open Server.ServerTypes
 open Browser.WebSocket
 open Browser.Types
 open Thoth.Json
-open Application
 
 let inline private encode msg =
   Encode.Auto.toString(0, msg)
@@ -48,18 +47,6 @@ let startWs token dispatch =
 let stopWs _ =
   closeWebsocket ()
 
-  ()
-
-
-let wsCmd cmd =
-  [fun _ -> sendPerWebsocket cmd]
 
 let transactionId() =
   EventSourced.TransactionId <| System.Guid.NewGuid()
-
-let createQuery query =
-//  { TODO think of QueryId
-//    Query.Id = QueryId <| System.Guid.NewGuid()
-//    Query.Parameter = query
-//  }
-  query

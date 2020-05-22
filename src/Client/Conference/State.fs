@@ -28,8 +28,7 @@ let private eventIsForConference (ConferenceId conferenceId) envelope =
   envelope.Metadata.Source = conferenceId
 
 let private updateStateWithEvents conference events  =
-  events
-  |> List.fold Domain.Projections.evolve conference
+  events |> List.fold Projections.evolve conference
 
 
 let private queryConference conferenceId =
@@ -44,7 +43,7 @@ let private queryOrganizers =
 
 let init (user : UserData)  =
   {
-    View = CurrentView.NotAsked
+    View = NotAsked
     Conferences = RemoteData.NotAsked
     Organizers = RemoteData.NotAsked
     LastEvents = None
@@ -109,7 +108,7 @@ let private updateWhatIfView editor conference whatif command (behaviour : Confe
 
   Edit (editor, newConference, whatif)
 
-let commandEnvelopeForMessage conferenceId msg =
+let commandEnvelopeForMsg conferenceId msg =
   match msg with
   | Vote voting ->
       API.Command.conferenceApi.Vote voting conferenceId
@@ -135,7 +134,7 @@ let commandEnvelopeForMessage conferenceId msg =
   | DecideNumberOfSlots number ->
      API.Command.conferenceApi.DecideNumberOfSlots number conferenceId
 
-let eventsForMessage msg =
+let private producedEventsFor msg =
   match msg with
   | Vote voting ->
       Behaviour.vote voting
@@ -161,30 +160,6 @@ let eventsForMessage msg =
   | DecideNumberOfSlots number ->
       Behaviour.decideNumberOfSlots number
 
-let private updateWhatIf msg editor conference whatif =
-  updateWhatIfView
-    editor
-    conference
-    whatif
-    (commandEnvelopeForMessage conference.Id msg)
-    (eventsForMessage msg)
-
-let private withWsCmd command conference model =
-  let transaction =
-    transactionId()
-
-  let (ConferenceId eventSource) = conference.Id
-
-  let envelope =
-    {
-      Transaction = transaction
-      EventSource = eventSource
-      Command = command
-    }
-
-  model
-  |> withCommand (wsCmd (ClientMsg.Command envelope))
-
 let private eventEnvelopeAsNewNotification eventEnvelope =
   eventEnvelope.Event,eventEnvelope.Metadata.Transaction,Entered
 
@@ -200,7 +175,7 @@ let private withOpenCommands transactions model =
   transactions
   |> List.fold addedToOpenTransactions model
 
-let withoutTransaction transaction model =
+let private withoutTransaction transaction model =
   { model with OpenTransactions = model.OpenTransactions |> Map.remove transaction }
 
 let private makeItSo commandEnvelopes model =
@@ -214,7 +189,6 @@ let private makeItSo commandEnvelopes model =
     |> withOpenCommands (commandEnvelopes |> List.map (fun ee -> ee.Transaction))
 
   model,cmds
-
 
 let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
   match msg with
@@ -240,10 +214,10 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
   | ConferenceLoaded (Result.Error _) ->
       model |> withoutCmds
 
-  | Received (ServerMsg.Connected) ->
+  | Received (Connected) ->
       model, Cmd.batch [ queryConferences ; queryOrganizers ]
 
-  | Received (ServerMsg.Events events) ->
+  | Received (Events events) ->
       match model.View with
       | Edit (editor, conference, Live) ->
           let newConference =
@@ -263,11 +237,19 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
       match model.View with
       | Edit (_, conference, Live) ->
           model
-          |> withApiCommand (commandEnvelopeForMessage conference.Id msg)
+          |> withApiCommand (commandEnvelopeForMsg conference.Id msg)
 
       | Edit (editor, conference, WhatIf whatif) ->
+          let whatIfView =
+            updateWhatIfView
+              editor
+              conference
+              whatif
+              (commandEnvelopeForMsg conference.Id msg)
+              (producedEventsFor msg)
+
           model
-          |> withView (updateWhatIf msg editor conference whatif)
+          |> withView whatIfView
           |> withoutCmds
 
       | _ ->
@@ -317,13 +299,13 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
             match target with
             | AvailableEditor.ConferenceInformation ->
                 ConferenceInformation.State.init conference.Title (conference.AvailableSlotsForTalks |> string)
-                |> Editor.ConferenceInformation
+                |> ConferenceInformation
 
             | AvailableEditor.VotingPanel ->
-                Editor.VotingPanel
+                VotingPanel
 
             | AvailableEditor.Organizers ->
-                Editor.Organizers
+                Organizers
 
           model
           |> withView ((editor, conference, mode) |> Edit)
@@ -334,7 +316,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
 
   | SwitchToNewConference ->
       model
-      |> withView (ConferenceInformation.State.init "" "" |> CurrentView.ScheduleNewConference)
+      |> withView (ConferenceInformation.State.init "" "" |> ScheduleNewConference)
       |> withoutCmds
 
   | ResetConferenceInformation ->
@@ -342,7 +324,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
       | Edit (ConferenceInformation _, conference, mode) ->
           let editor =
             ConferenceInformation.State.init conference.Title (conference.AvailableSlotsForTalks |> string)
-            |> Editor.ConferenceInformation
+            |> ConferenceInformation
 
           model
           |> withView ((editor, conference, mode) |> Edit)
@@ -388,26 +370,23 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
       match model.View with
       | ScheduleNewConference submodel when submodel |> ConferenceInformation.Types.isValid ->
           let title =
-            submodel |> ConferenceInformation.Types.title
+            ConferenceInformation.Types.title submodel
 
           let availableSlotsForTalks =
-            submodel |> ConferenceInformation.Types.availableSlotsForTalks
+            ConferenceInformation.Types.availableSlotsForTalks submodel
 
           let conference =
             emptyConference()
             |> withTitle title
             |> withAvailableSlotsForTalks availableSlotsForTalks
 
-          let command =
-            conference |> Commands.ScheduleConference
-
           let editor =
             ConferenceInformation.State.init conference.Title (conference.AvailableSlotsForTalks |> string)
-            |> Editor.ConferenceInformation
+            |> ConferenceInformation
 
           model
           |> withView ((editor, conference, Live) |> Edit)
-          |> withWsCmd command conference
+          |> withApiCommand (API.Command.conferenceApi.ScheduleConference conference conference.Id)
 
       | _ ->
           model |> withoutCmds

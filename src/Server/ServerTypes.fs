@@ -24,7 +24,6 @@ type UserData =
 // Client to Server
 type ClientMsg<'Command> =
   | Connect
-  | Command of CommandEnvelope<'Command>
 
 // Server to Client
 type ServerMsg<'Event> =
