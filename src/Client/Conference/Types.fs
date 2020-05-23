@@ -42,9 +42,9 @@ type Msg =
   | ScheduleNewConference
   | UpdateConferenceInformation
   | ConferenceInformationMsg of ConferenceInformation.Types.Msg
-  | ConferenceLoaded of Result<Conference, QueryError>
-  | ConferencesLoaded of Result<Conferences, QueryError>
-  | OrganizersLoaded of Result<Organizer list, QueryError>
+  | ConferenceQuery of AsyncOperationStatus<Result<Conference, QueryError>>
+  | ConferencesQuery of AsyncOperationStatus<Result<Conferences, QueryError>>
+  | OrganizersLoaded of AsyncOperationStatus<Result<Organizer list, QueryError>>
   | CommandResponse of TransactionId * Result<EventEnvelope<Event> list, string>
 
 type WhatIf =

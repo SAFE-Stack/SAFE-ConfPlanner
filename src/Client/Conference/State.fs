@@ -81,26 +81,37 @@ let dispose () =
 
 let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
   match msg with
-  | OrganizersLoaded (Ok organizers) ->
+  | OrganizersLoaded Started ->
+      { model with Organizers = Deferred.InProgress}
+      |> withoutCmds
+
+  | OrganizersLoaded (AsyncOperationStatus.Finished (Ok organizers)) ->
       { model with Organizers = Resolved organizers }
       |> withoutCmds
 
-  | OrganizersLoaded (Result.Error _) ->
+  | OrganizersLoaded (AsyncOperationStatus.Finished (Result.Error _)) ->
       model |> withoutCmds
 
-  | ConferencesLoaded (Ok conferences) ->
+  | ConferencesQuery Started ->
+      { model with Conferences = Deferred.InProgress}
+      |> withoutCmds
+
+  | ConferencesQuery (AsyncOperationStatus.Finished (Ok conferences)) ->
       { model with Conferences = Resolved conferences }
       |> withoutCmds
 
-  | ConferencesLoaded (Result.Error _) ->
-      model |> withoutCmds
+  | ConferencesQuery (AsyncOperationStatus.Finished (Result.Error _)) ->
+      model |> withoutCmds // Todo Errors
 
-  | ConferenceLoaded (Ok conference) ->
+  | ConferenceQuery Started ->
+      model |> withoutCmds // Todo Deferred
+
+  | ConferenceQuery (AsyncOperationStatus.Finished (Ok conference)) ->
       model
-      |> withView ((VotingPanel,conference,Live) |> Edit)
+      |> withView (Edit (VotingPanel,conference,Live))
       |> withoutCmds
 
-  | ConferenceLoaded (Result.Error _) ->
+  | ConferenceQuery (AsyncOperationStatus.Finished (Result.Error _)) ->
       model |> withoutCmds
 
   | Received (Connected) ->

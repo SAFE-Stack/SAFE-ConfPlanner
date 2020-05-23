@@ -8,6 +8,8 @@ open EventSourced
 open Fable.Remoting.Client
 open Application
 open Elmish
+open Utils.Elmish
+open Utils
 
 let private conferenceApi =
   Remoting.createApi()
@@ -64,15 +66,22 @@ let commandEnvelopeForMsg conferenceId msg =
 
 
 let queryConference conferenceId =
-  // TODO react to query Error
-  Cmd.OfAsync.perform conferenceApi.conference conferenceId ConferenceLoaded
+  async {
+    let! result = conferenceApi.conference conferenceId
+    return ConferenceQuery (Finished result)
+  } |> Cmd.fromAsync
 
 let queryConferences =
-  Cmd.OfAsync.perform conferenceApi.conferences () ConferencesLoaded
+  async {
+    let! result = conferenceApi.conferences ()
+    return ConferencesQuery (Finished result)
+  } |> Cmd.fromAsync
 
 let queryOrganizers =
-  Cmd.OfAsync.perform organizerApi.organizers () OrganizersLoaded
-
+  async {
+    let! result = organizerApi.organizers ()
+    return OrganizersLoaded (Finished result)
+  } |> Cmd.fromAsync
 
 module Local =
   let behaviourFor msg =
