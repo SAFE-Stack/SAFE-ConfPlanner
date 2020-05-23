@@ -16,10 +16,6 @@ open Application
 let private eventIsForConference (ConferenceId conferenceId) envelope =
   envelope.Metadata.Source = conferenceId
 
-let private messageSendAfterMilliseconds timeout msg  =
-  fun dispatch -> Browser.Dom.window.setTimeout((fun _ -> msg |> dispatch), timeout) |> ignore
-  |> Cmd.ofSub
-
 let private withView view model =
   { model with View = view }
 
@@ -50,7 +46,7 @@ let private addedToOpenTransactions model transaction =
 let private withApiCommand commandEnvelope model =
   commandEnvelope.Transaction
   |> addedToOpenTransactions model
-  |> withCommand (Cmd.fromAsync (Api.sendCommand commandEnvelope))
+  |> withCmd (Cmd.fromAsync (Api.sendCommand commandEnvelope))
 
 let private withOpenCommands transactions model =
   transactions
@@ -156,7 +152,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
 
           model
           |> withView (Edit (editor,whatIf.Conference,Live))
-          |> withCommand (Cmd.batch [cmds ; Api.queryConference conference.Id])
+          |> withCmd (Cmd.batch [cmds ; Api.queryConference conference.Id])
 
       | _ ->
           model |> withoutCmds
@@ -254,7 +250,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
               Cmd.none
 
           model
-          |> withCommand (Cmd.batch [ titleCmd ; availableSlotsForTalksCmd ])
+          |> withCmd (Cmd.batch [ titleCmd ; availableSlotsForTalksCmd ])
 
       | _ ->
           model |> withoutCmds
@@ -315,7 +311,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
 
       model
       |> withoutTransaction transaction
-      |> withCommand notifications
+      |> withCmd notifications
 
     | CommandResponse (transaction, Result.Error error) ->
         model |> withoutCmds

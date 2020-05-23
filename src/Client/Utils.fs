@@ -62,11 +62,10 @@ module Elmish =
     | Started
     | Finished of 't
 
-  let withAdditionalCommand cmd (model, cmds) =
+  let withAdditionalCmd cmd (model, cmds) =
     model, (Cmd.batch [cmds ; cmd])
 
-
-  let withCommand (cmds : Cmd<'a>) model =
+  let withCmd (cmds : Cmd<'a>) model =
     model, cmds
 
   let withoutCmds model =
@@ -85,3 +84,9 @@ module Cmd =
       Async.StartImmediate delayedDispatch
 
     Cmd.ofSub delayedCmd
+
+
+  let  msgSendAfterMilliseconds timeout msg  =
+    fun dispatch -> Browser.Dom.window.setTimeout((fun _ -> msg |> dispatch), timeout) |> ignore
+    |> Cmd.ofSub
+

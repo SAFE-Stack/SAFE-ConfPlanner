@@ -85,7 +85,7 @@ let update f onSuccess (msg:Msg) model : Model*Cmd<'a> =
   | LoginSuccess user ->
       { model with State = LoggedIn user }
       |> withLogin { model.Login with Password = ""; PasswordId = Guid.NewGuid() }
-      |> withCommand (onSuccess user)
+      |> withCmd (onSuccess user)
 
   | SetUserName name ->
       model
@@ -102,7 +102,7 @@ let update f onSuccess (msg:Msg) model : Model*Cmd<'a> =
   | ClickLogIn ->
       model
       |> withoutError
-      |> withCommand (authUserCmd model.Login |> Cmd.map f)
+      |> withCmd (authUserCmd model.Login |> Cmd.map f)
 
   | AuthError exn ->
       model

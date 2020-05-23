@@ -25,7 +25,7 @@ let private withCurrentPage page model =
 
 let private navigateTo page model =
   model
-  |> withCommand (page |> toHash |> Navigation.newUrl)
+  |> withCmd (page |> toHash |> Navigation.newUrl)
 
 let urlUpdate (result : Page option) model =
   match result with
@@ -37,14 +37,14 @@ let urlUpdate (result : Page option) model =
   | Some Page.Login ->
       let m,cmd = Login.State.init model.User
       { model with CurrentPage = CurrentPage.Login m }
-      |> withCommand (Cmd.map LoginMsg cmd)
+      |> withCmd (Cmd.map LoginMsg cmd)
 
   | Some Page.Conference ->
       match model.User with
       | Some user ->
           let submodel,cmd = Conference.State.init user
           { model with CurrentPage = CurrentPage.Conference submodel }
-          |> withCommand (Cmd.map ConferenceMsg cmd)
+          |> withCmd (Cmd.map ConferenceMsg cmd)
 
       | None ->
           model |> navigateTo Page.Login
@@ -53,7 +53,7 @@ let urlUpdate (result : Page option) model =
       { model with CurrentPage = CurrentPage.About }
       |> withoutCmds
 
-  |> withAdditionalCommand (disposeCmd model.CurrentPage)
+  |> withAdditionalCmd (disposeCmd model.CurrentPage)
 
 let loadUser () : UserData option =
   let userDecoder = Decode.Auto.generateDecoder<UserData>()
@@ -83,7 +83,7 @@ let update msg model =
       let (conference, conferenceCmd) = Conference.State.update msg submodel
       model
       |> withCurrentPage (CurrentPage.Conference conference )
-      |> withCommand (Cmd.map ConferenceMsg conferenceCmd)
+      |> withCmd (Cmd.map ConferenceMsg conferenceCmd)
 
   | LoginMsg msg, CurrentPage.Login submodel ->
       let onSuccess newUser =
@@ -96,7 +96,7 @@ let update msg model =
 
       model
       |> withCurrentPage (CurrentPage.Login submodel)
-      |> withCommand cmd
+      |> withCmd cmd
 
   | LoggedIn newUser, _->
       { model with User = Some newUser }
@@ -112,7 +112,7 @@ let update msg model =
       model |> withoutCmds
 
   | Logout, _ ->
-      model |> withCommand deleteUserCmd
+      model |> withCmd deleteUserCmd
 
   | _ , _ ->
       model |> withoutCmds
