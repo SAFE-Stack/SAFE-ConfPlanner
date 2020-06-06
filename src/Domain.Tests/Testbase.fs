@@ -52,5 +52,8 @@ let proposedTalk() =
       Type = Talk
    }
 
-let heimeshoff =
-  organizer "Marco" "Heimeshoff" (Guid.NewGuid() |> string)
+let roman =
+  { Firstname = "Roman" ; Lastname = "Sachse" ; Id = Guid.NewGuid() |> OrganizerId }
+
+let marco =
+  { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }

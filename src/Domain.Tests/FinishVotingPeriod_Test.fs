@@ -8,11 +8,6 @@ open Domain.Commands
 open Domain.Events
 open Testbase
 
-// Scenario
-let roman = { Firstname = "Roman";  Lastname = "Sachse"; Id = OrganizerId <| Guid.NewGuid() }
-let marco = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }
-
-
 [<Test>]
 let ``Can finish voting period`` () =
   Given [
@@ -29,7 +24,7 @@ let ``Cannot finish an already finished voting period`` () =
     CallForPapersClosed
     VotingPeriodWasFinished]
   |> When FinishVotingPeriod
-  |> ThenExpect [FinishingDenied "Voting Period Already Finished" |> Error]
+  |> ThenExpect [FinishingDenied "Voting Period Already Finished" |> DomainError]
 
 
 [<Test>]
@@ -37,7 +32,7 @@ let ``Cannot finish a voting period when call for papers is not closed`` () =
   Given [
     CallForPapersOpened]
   |> When FinishVotingPeriod
-  |> ThenExpect [FinishingDenied "Call For Papers Not Closed" |> Error]
+  |> ThenExpect [FinishingDenied "Call For Papers Not Closed" |> DomainError]
 
 
 [<Test>]
@@ -47,7 +42,6 @@ let ``Cannot finish a voting period when not all abstracts have votes from every
   let talk3 = proposedTalk()
 
   Given [
-    OrganizerAddedToConference heimeshoff
     OrganizerAddedToConference roman
     OrganizerAddedToConference marco
 
@@ -57,9 +51,6 @@ let ``Cannot finish a voting period when not all abstracts have votes from every
     TalkWasProposed talk3
     CallForPapersClosed
 
-    VotingWasIssued (voteOne talk1 heimeshoff)
-    VotingWasIssued (voteOne talk2 heimeshoff)
-    VotingWasIssued (voteOne talk3 heimeshoff)
     VotingWasIssued (voteOne talk1 roman)
     VotingWasIssued (voteOne talk2 roman)
     VotingWasIssued (voteOne talk1 marco)
@@ -67,7 +58,7 @@ let ``Cannot finish a voting period when not all abstracts have votes from every
     VotingWasIssued (voteOne talk3 marco)]
 
   |> When FinishVotingPeriod
-  |> ThenExpect [ FinishingDenied "Not all abstracts have been voted for by all organisers" |> Error ]
+  |> ThenExpect [ FinishingDenied "Not all abstracts have been voted for by all organisers" |> DomainError ]
 
 
 [<Test>]
@@ -77,7 +68,6 @@ let ``Voting top x abstracts will be accepted, others will be rejected`` () =
   let talk3 = proposedTalk()
 
   Given [
-    OrganizerAddedToConference heimeshoff
     OrganizerAddedToConference roman
     OrganizerAddedToConference marco
     NumberOfSlotsDecided 2
@@ -88,13 +78,10 @@ let ``Voting top x abstracts will be accepted, others will be rejected`` () =
     TalkWasProposed talk3
     CallForPapersClosed
 
-    VotingWasIssued (voteZero talk3 heimeshoff)
     VotingWasIssued (voteZero talk3 roman)
     VotingWasIssued (voteZero talk3 marco)
-    VotingWasIssued (voteOne talk2 heimeshoff)
     VotingWasIssued (voteOne talk2 roman)
     VotingWasIssued (voteOne talk2 marco)
-    VotingWasIssued (voteZero talk1 heimeshoff)
     VotingWasIssued (voteOne talk1 roman)
     VotingWasIssued (voteOne talk1 marco)]
 
@@ -112,7 +99,6 @@ let ``A veto rejects talks that would otherwise be accepted`` () =
   let talk3 = proposedTalk()
 
   Given [
-    OrganizerAddedToConference heimeshoff
     OrganizerAddedToConference roman
     OrganizerAddedToConference marco
     NumberOfSlotsDecided 2
@@ -123,13 +109,13 @@ let ``A veto rejects talks that would otherwise be accepted`` () =
     TalkWasProposed talk3
     CallForPapersClosed
 
-    VotingWasIssued (voteTwo talk3 heimeshoff)
+    VotingWasIssued (voteTwo talk3 roman)
     VotingWasIssued (veto talk3 roman)
     VotingWasIssued (voteTwo talk3 marco)
-    VotingWasIssued (voteOne talk2 heimeshoff)
+    VotingWasIssued (voteOne talk2 roman)
     VotingWasIssued (voteOne talk2 roman)
     VotingWasIssued (voteOne talk2 marco)
-    VotingWasIssued (voteZero talk1 heimeshoff)
+    VotingWasIssued (voteZero talk1 roman)
     VotingWasIssued (voteZero talk1 roman)
     VotingWasIssued (voteZero talk1 marco)]
 

@@ -21,4 +21,4 @@ let conference = emptyConference()
 let ``Same conference can not be scheduled twice`` () =
   Given [ ConferenceScheduled conference ]
   |> When (ScheduleConference conference)
-  |> ThenExpect [ ConferenceAlreadyScheduled |> Error]
+  |> ThenExpect [ ConferenceAlreadyScheduled |> DomainError]
