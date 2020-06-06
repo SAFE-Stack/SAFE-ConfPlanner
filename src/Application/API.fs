@@ -20,6 +20,7 @@ module API =
 
   type CommandApi<'Command,'Event> = {
     Handle : CommandEnvelope<'Command> -> Async<Result<EventEnvelope<'Event> list,string>>
+    HandleBatch : CommandEnvelope<'Command> list -> Async<Result<EventEnvelope<'Event> list,string>>
   }
   with
     static member RouteBuilder _ m = sprintf "/api/command/%s" m
@@ -78,8 +79,9 @@ module API =
 module CQN =
   open API
 
-  let commandPort commandHandler: CommandApi<_,_> =
+  let commandPort commandHandler batchHandler : CommandApi<_,_> =
     {
       Handle = fun commandEnvelope -> commandHandler commandEnvelope
+      HandleBatch = fun commandEnvelopes -> batchHandler commandEnvelopes
     }
 

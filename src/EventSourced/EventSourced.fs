@@ -31,8 +31,11 @@ module EventSourced =
       eventStore.OnEvents.Add eventListener.Notify
       configuration.EventHandlers |> List.iter (eventListener.Subscribe >> ignore)
 
-    member __.HandleCommand (envelope : CommandEnvelope<_>) =
+    member __.HandleCommand envelope =
       commandHandler.Handle envelope
+
+    member __.HandleCommandBatch envelopes =
+      commandHandler.HandleBatch envelopes
 
     member __.HandleQuery query =
       queryHandler.Handle query

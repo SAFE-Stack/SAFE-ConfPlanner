@@ -63,10 +63,10 @@ let handleProposeAbstract proposed history =
       [AbstractWasProposed proposed]
 
   | NotOpened ->
-      [ProposingDenied "Call For Papers Not Opened" |> Error]
+      [ProposingDenied "Call For Papers Not Opened" |> DomainError]
 
   | Closed ->
-      [ProposingDenied "Call For Papers Closed" |> Error]
+      [ProposingDenied "Call For Papers Closed" |> DomainError]
 
 let score m (abstr : AbstractId) =
     match m |> Map.tryFind abstr with
@@ -131,12 +131,12 @@ let finishVotingPeriod conference =
         | 0 ->
             [VotingPeriodWasFinished]
             |> (@) (scoreAbstracts conference)
-        | _ -> [FinishingDenied "Not all abstracts have been voted for by all organisers" |> Error]
+        | _ -> [FinishingDenied "Not all abstracts have been voted for by all organisers" |> DomainError]
       events
 
-  | Closed,Finished -> [FinishingDenied "Voting Period Already Finished" |> Error]
+  | Closed,Finished -> [FinishingDenied "Voting Period Already Finished" |> DomainError]
 
-  | _,_ -> [FinishingDenied "Call For Papers Not Closed" |> Error]
+  | _,_ -> [FinishingDenied "Call For Papers Not Closed" |> DomainError]
 
 let handleFinishVotingPeriod history =
   history
@@ -149,7 +149,7 @@ let reopenVotingPeriod conference =
       [VotingPeriodWasReopened]
 
   | _,_ ->
-    [FinishingDenied "Call For Papers Not Closed" |> Error]
+    [FinishingDenied "Call For Papers Not Closed" |> DomainError]
 
 let handleReopenVotingPeriod history =
   history
@@ -159,12 +159,12 @@ let handleReopenVotingPeriod history =
 let vote voting conference =
   match conference.VotingPeriod with
   | Finished ->
-      [VotingDenied "Voting Period Already Finished"|> Error]
+      [VotingDenied "Voting Period Already Finished"|> DomainError]
 
   | InProgress ->
       match voting with
       | VoterIsNotAnOrganizer conference.Organizers _ ->
-          [VotingDenied "Voter Is Not An Organizer" |> Error]
+          [VotingDenied "Voter Is Not An Organizer" |> DomainError]
 
       | _ -> [VotingWasIssued voting]
 
@@ -177,12 +177,12 @@ let handleVote voting history =
 let revokeVoting voting conference =
   match conference.VotingPeriod with
   | Finished ->
-      [ RevocationOfVotingWasDenied (voting,"Voting Period Already Finished") |> Error ]
+      [ RevocationOfVotingWasDenied (voting,"Voting Period Already Finished") |> DomainError ]
 
   | InProgress ->
       match voting with
       | VotingisNotIssued conference.Votings _ ->
-          [ RevocationOfVotingWasDenied (voting,"Voting Not Issued") |> Error ]
+          [ RevocationOfVotingWasDenied (voting,"Voting Not Issued") |> DomainError ]
 
       | _ -> [ VotingWasRevoked voting ]
 
@@ -211,12 +211,12 @@ let handleScheduleConference conference history =
   if history |> List.isEmpty then
     [ConferenceScheduled conference]
   else
-    [ConferenceAlreadyScheduled |> Error]
+    [ConferenceAlreadyScheduled |> DomainError]
 
 let addOrganizerToConference organizer conference =
   match organizer with
   | OrganizerAlreadyInConference conference.Organizers _ ->
-      [OrganizerAlreadyAddedToConference organizer |> Error]
+      [OrganizerAlreadyAddedToConference organizer |> DomainError]
 
   | _ -> [OrganizerAddedToConference organizer]
 
@@ -228,7 +228,7 @@ let private handleAddOrganizerToConference organizer history =
 let removeOrganizerFromConference organizer conference =
   match organizer with
   | OrganizerNotInConference conference.Organizers _ ->
-      [OrganizerWasNotAddedToConference organizer |> Error]
+      [OrganizerWasNotAddedToConference organizer |> DomainError]
 
   | _ ->
     let revocations =

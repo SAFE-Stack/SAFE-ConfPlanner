@@ -85,6 +85,7 @@ type CommandEnvelope<'Command> =
 type CommandHandler<'Command, 'Event> =
   {
     Handle : CommandEnvelope<'Command> -> Async<Result<EventEnvelope<'Event> list,string>>
+    HandleBatch : CommandEnvelope<'Command> list -> Async<Result<EventEnvelope<'Event> list,string>>
     OnError : IEvent<exn>
   }
 

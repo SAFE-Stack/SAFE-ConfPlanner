@@ -54,7 +54,7 @@ module Conference =
                 Ok conference
 
             | None ->
-                Result.Error QueryError.ConferenceNotFound
+                Error ConferenceNotFound
       }
 
     let conferences conferenceReadModel () =

@@ -32,7 +32,7 @@ let eventSourced : EventSourced<Command,Event,QueryParameter> =
       EventStorage.InMemoryStorage.initialize
 
     CommandHandlerInit =
-      CommandHandler.initialize Behaviour.behaviour
+      CommandHandler.initialize Behaviour.behaviour Event.isAnError
 
     QueryHandler = QueryHandler.initialize []
 
@@ -55,21 +55,21 @@ let conferenceWebSocket : WebSocket -> HttpContext -> Async<Choice<unit,Sockets.
 
 let organizerApi : WebPart =
   Remoting.createApi()
-  |> Remoting.withRouteBuilder Application.API.OrganizerQueryApi.RouteBuilder
-  |> Remoting.fromValue Application.Organizers.api
+  |> Remoting.withRouteBuilder OrganizerQueryApi.RouteBuilder
+  |> Remoting.fromValue Organizers.api
   |> Remoting.buildWebPart
 
 let conferenceQueryApi : WebPart =
   Remoting.createApi()
-  |> Remoting.withRouteBuilder Application.API.ConferenceQueryApi.RouteBuilder
-  |> Remoting.fromValue (Application.Conference.Query.port conferenceReadmodel.State)
+  |> Remoting.withRouteBuilder ConferenceQueryApi.RouteBuilder
+  |> Remoting.fromValue (Conference.Query.port conferenceReadmodel.State)
   |> Remoting.buildWebPart
 
 
 let commandApi : WebPart =
   Remoting.createApi()
   |> Remoting.withRouteBuilder API.CommandApi<_,_>.RouteBuilder
-  |> Remoting.fromValue (Application.CQN.commandPort eventSourced.HandleCommand)
+  |> Remoting.fromValue (CQN.commandPort eventSourced.HandleCommand eventSourced.HandleCommandBatch)
   |> Remoting.buildWebPart
 
 

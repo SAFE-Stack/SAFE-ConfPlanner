@@ -2,7 +2,7 @@ module Domain.Events
 
 open Model
 
-type Error =
+type DomainError =
   | ConferenceAlreadyScheduled
   | OrganizerAlreadyAddedToConference of Organizer
   | OrganizerWasNotAddedToConference of Organizer
@@ -27,55 +27,66 @@ type Event =
   | AbstractWasProposed of ConferenceAbstract
   | AbstractWasAccepted of AbstractId
   | AbstractWasRejected of AbstractId
-  | Error of Error
+  | DomainError of DomainError
 
-let toString event =
-  match event with
-  | ConferenceScheduled conference ->
-      sprintf "Conference scheduled: %A" conference
+  with
+    static member ToString event =
+      match event with
+      | ConferenceScheduled conference ->
+          sprintf "Conference scheduled: %A" conference
 
-  | OrganizerAddedToConference organizer ->
-      sprintf "The organizer %s %s was added to the conference" organizer.Firstname organizer.Lastname
+      | OrganizerAddedToConference organizer ->
+          sprintf "The organizer %s %s was added to the conference" organizer.Firstname organizer.Lastname
 
-  | OrganizerRemovedFromConference organizer ->
-      sprintf "The organizer %s %s was removed from the conference" organizer.Firstname organizer.Lastname
+      | OrganizerRemovedFromConference organizer ->
+          sprintf "The organizer %s %s was removed from the conference" organizer.Firstname organizer.Lastname
 
-  | TalkWasProposed conferenceAbstract ->
-      sprintf "TalkWasProposed %A" conferenceAbstract
+      | TalkWasProposed conferenceAbstract ->
+          sprintf "TalkWasProposed %A" conferenceAbstract
 
-  | CallForPapersOpened ->
-      "Call for papers was opened"
+      | CallForPapersOpened ->
+          "Call for papers was opened"
 
-  | CallForPapersClosed ->
-      "Call for papers was closed"
+      | CallForPapersClosed ->
+          "Call for papers was closed"
 
-  | TitleChanged title ->
-      sprintf "The title of the conference was changed to %s" title
+      | TitleChanged title ->
+          sprintf "The title of the conference was changed to %s" title
 
-  | NumberOfSlotsDecided number ->
-      sprintf "The number of slots where changed to %i" number
+      | NumberOfSlotsDecided number ->
+          sprintf "The number of slots where changed to %i" number
 
-  | VotingWasIssued (Voting (_,_,points)) ->
-      sprintf "Voted: %s" (points |> pointsToString)
+      | VotingWasIssued (Voting (_,_,points)) ->
+          sprintf "Voted: %s" (points |> pointsToString)
 
-  | VotingWasRevoked voting ->
-       sprintf "Voting was revoked: %A" voting
+      | VotingWasRevoked voting ->
+           sprintf "Voting was revoked: %A" voting
 
-  | VotingPeriodWasFinished ->
-      "Voting period was finished"
+      | VotingPeriodWasFinished ->
+          "Voting period was finished"
 
-  | VotingPeriodWasReopened ->
-      "Voting period was reopened"
+      | VotingPeriodWasReopened ->
+          "Voting period was reopened"
 
-  | AbstractWasProposed conferenceAbstract ->
-      sprintf "AbstractWasProposed %A" conferenceAbstract
+      | AbstractWasProposed conferenceAbstract ->
+          sprintf "AbstractWasProposed %A" conferenceAbstract
 
-  | AbstractWasAccepted abstractId ->
-      sprintf "AbstractWasAccepted %A" abstractId
+      | AbstractWasAccepted abstractId ->
+          sprintf "AbstractWasAccepted %A" abstractId
 
-  | AbstractWasRejected abstractId ->
-      sprintf "AbstractWasRejected %A" abstractId
+      | AbstractWasRejected abstractId ->
+          sprintf "AbstractWasRejected %A" abstractId
 
-  | Error error ->
-      sprintf "Error: %A" error
+      | DomainError error ->
+          sprintf "Error: %A" error
+
+
+    static member isAnError event =
+      match event with
+      | DomainError _ -> true
+      | _ -> false
+
+
+
+
 

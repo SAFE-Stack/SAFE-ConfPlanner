@@ -73,7 +73,7 @@ let evolve (conference : Conference) event : Conference =
 
         { conference with Votings = votings }
 
-    | Error _ ->
+    | DomainError _ ->
         conference
 
 let private emptyConference : Conference =
