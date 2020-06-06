@@ -31,10 +31,24 @@ let sendCommand commandEnvelope : Async<Msg> =
     do! Async.Sleep 500
     match! commandPort.Handle commandEnvelope with
     | Ok eventEnvelopes ->
-        return CommandResponse (commandEnvelope.Transaction, Ok eventEnvelopes)
+        return CommandResponse ([commandEnvelope.Transaction], Ok eventEnvelopes)
 
-    | Result.Error error ->
-        return CommandResponse (commandEnvelope.Transaction, Result.Error error)
+    | Error error ->
+        return CommandResponse ([commandEnvelope.Transaction], Error error)
+  }
+
+let sendCommands commandEnvelopes : Async<Msg> =
+  async {
+    do! Async.Sleep 500
+    let transactions =
+      commandEnvelopes |> List.map (fun ce -> ce.Transaction)
+
+    match! commandPort.HandleBatch commandEnvelopes with
+    | Ok eventEnvelopes ->
+        return CommandResponse (transactions, Ok eventEnvelopes)
+
+    | Error error ->
+        return CommandResponse (transactions, Error error)
   }
 
 

@@ -9,6 +9,7 @@ open Fable.FontAwesome
 
 open Utils.Elmish
 open Domain
+open Domain.Events
 open Domain.Model
 
 open Fulma
@@ -21,7 +22,7 @@ let private renderMessageType messageType =
   match messageType with
   | NotificationType.Info -> "is-info"
   | NotificationType.Success -> "is-success"
-  | NotificationType.Error -> "is-danger"
+  | NotificationType.Warning -> "is-danger"
 
 let private messageWindow name content messageType =
   let mapper =
@@ -41,8 +42,8 @@ let private messageWindow name content messageType =
     ]
 
 let private messageWindowType events =
-  match events |> List.exists (function | Domain.Events.Error _ -> true | _ -> false) with
-  | true -> NotificationType.Error
+  match events |> List.exists (function | DomainError _ -> true | _ -> false) with
+  | true -> NotificationType.Warning
   | false -> NotificationType.Success
 
 let private renderSpeakers (speakers : Speaker list) =
@@ -302,7 +303,7 @@ let private viewActiveConference currentView =
   | Loading ->
       "Loading..."
 
-  | Error _ ->
+  | NotSuccessful _ ->
       "Error loading conference"
 
 let private viewConferenceList dispatch currentView conferences =
@@ -381,11 +382,23 @@ let private viewMakeItSo dispatch =
       span [] [ "Make It So" |> str ]
     ]
 
+let private viewAllOrNothing dispatch =
+  Button.a
+    [
+      Button.Color IsPrimary
+      Button.Props [ OnClick (fun _ -> AllOrNothing |> dispatch) ]
+    ]
+    [
+      Icon.icon [ Icon.Size IsSmall ] [ Fa.i [ Fa.Solid.CheckSquare ] [] ]
+      span [] [ "Make it so (all)" |> str ]
+    ]
+
 let private viewModeControls dispatch currentView =
   match currentView with
   | Edit (_,_,WhatIf _) ->
       [
         viewMakeItSo dispatch
+        viewAllOrNothing dispatch
         viewWhatIfSwitch dispatch true
       ]
 

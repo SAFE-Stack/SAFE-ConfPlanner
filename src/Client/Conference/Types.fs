@@ -13,7 +13,7 @@ open Utils.Elmish
 type NotificationType =
   | Info
   | Success
-  | Error
+  | Warning
 
 type AvailableEditor =
   | VotingPanel
@@ -35,6 +35,7 @@ type Msg =
   | WhatIfMsg of WhatIfMsg
   | ToggleMode
   | MakeItSo
+  | AllOrNothing
   | SwitchToConference of ConferenceId
   | SwitchToNewConference
   | SwitchToEditor of AvailableEditor
@@ -45,7 +46,7 @@ type Msg =
   | ConferenceQuery of AsyncOperationStatus<Result<Conference, QueryError>>
   | ConferencesQuery of AsyncOperationStatus<Result<Conferences, QueryError>>
   | OrganizersLoaded of AsyncOperationStatus<Result<Organizer list, QueryError>>
-  | CommandResponse of TransactionId * Result<EventEnvelope<Event> list, string>
+  | CommandResponse of TransactionId list * Result<EventEnvelope<Event> list, string>
 
 type WhatIf =
   {
@@ -66,7 +67,7 @@ type Editor =
 type CurrentView =
   | NotAsked
   | Loading
-  | Error of string
+  | NotSuccessful of string
   | ScheduleNewConference of ConferenceInformation.Types.Model
   | Edit of Editor * Domain.Model.Conference * Mode
 

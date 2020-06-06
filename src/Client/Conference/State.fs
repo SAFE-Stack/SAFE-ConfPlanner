@@ -49,16 +49,29 @@ let private withApiCommand commandEnvelope model =
   |> withCmd (Cmd.fromAsync (Api.sendCommand commandEnvelope))
 
 let private withOpenCommands transactions model =
-  transactions
-  |> List.fold addedToOpenTransactions model
+  (model,transactions)
+  ||> List.fold addedToOpenTransactions
 
-let private withoutTransaction transaction model =
-  { model with OpenTransactions = model.OpenTransactions |> Map.remove transaction }
+let private withoutTransactions transactions model =
+  (model, transactions)
+  ||> List.fold (fun model transaction -> { model with OpenTransactions = model.OpenTransactions |> Map.remove transaction })
+
 
 let private makeItSo commandEnvelopes model =
   let cmds =
     commandEnvelopes
     |> List.collect (Api.sendCommand >> Cmd.fromAsync)
+
+  let model =
+    model
+    |> withOpenCommands (commandEnvelopes |> List.map (fun ee -> ee.Transaction))
+
+  model,cmds
+
+let private allOrNothing commandEnvelopes model =
+  let cmds =
+    commandEnvelopes
+    |> (Api.sendCommands >> Cmd.fromAsync)
 
   let model =
     model
@@ -89,7 +102,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
       { model with Organizers = Resolved organizers }
       |> withoutCmds
 
-  | OrganizersLoaded (AsyncOperationStatus.Finished (Result.Error _)) ->
+  | OrganizersLoaded (AsyncOperationStatus.Finished (Error _)) ->
       model |> withoutCmds
 
   | ConferencesQuery Started ->
@@ -100,7 +113,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
       { model with Conferences = Resolved conferences }
       |> withoutCmds
 
-  | ConferencesQuery (AsyncOperationStatus.Finished (Result.Error _)) ->
+  | ConferencesQuery (AsyncOperationStatus.Finished (Error _)) ->
       model |> withoutCmds // Todo Errors
 
   | ConferenceQuery Started ->
@@ -111,7 +124,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
       |> withView (Edit (VotingPanel,conference,Live))
       |> withoutCmds
 
-  | ConferenceQuery (AsyncOperationStatus.Finished (Result.Error _)) ->
+  | ConferenceQuery (AsyncOperationStatus.Finished (Error _)) ->
       model |> withoutCmds
 
   | Received (Connected) ->
@@ -160,6 +173,19 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
       | Edit (editor, conference, WhatIf whatIf)  ->
           let model,cmds =
             makeItSo whatIf.Commands model
+
+          model
+          |> withView (Edit (editor,whatIf.Conference,Live))
+          |> withCmd (Cmd.batch [cmds ; Api.queryConference conference.Id])
+
+      | _ ->
+          model |> withoutCmds
+
+  | AllOrNothing ->
+      match model.View with
+      | Edit (editor, conference, WhatIf whatIf)  ->
+          let model,cmds =
+            allOrNothing whatIf.Commands model
 
           model
           |> withView (Edit (editor,whatIf.Conference,Live))
@@ -314,17 +340,17 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
       | _ ->
           model |> withoutCmds
 
-  | CommandResponse (transaction, Ok eventEnvelopes) ->
+  | CommandResponse (transactions, Ok eventEnvelopes) ->
       let notifications =
         eventEnvelopes
         |> List.map Notifications.fromEventEnvelopes
         |> Cmd.batch
 
       model
-      |> withoutTransaction transaction
+      |> withoutTransactions transactions
       |> withCmd notifications
 
-    | CommandResponse (transaction, Result.Error error) ->
+    | CommandResponse (transaction, Error error) ->
         model |> withoutCmds
         // TODO: damit umgehen
 
