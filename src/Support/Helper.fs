@@ -4,16 +4,16 @@ open System
 open Domain.Model
 
 let voteTwo (abstr: ConferenceAbstract) (organizer: Organizer) =
-   Voting.Voting (abstr.Id,organizer.Id, Two)
+   Voting (abstr.Id,organizer.Id, Two)
 
 let voteOne (abstr: ConferenceAbstract) (organizer: Organizer) =
-   Voting.Voting (abstr.Id,organizer.Id, One)
+   Voting (abstr.Id,organizer.Id, One)
 
 let voteZero (abstr: ConferenceAbstract) (organizer: Organizer) =
-   Voting.Voting (abstr.Id,organizer.Id, Zero)
+   Voting (abstr.Id,organizer.Id, Zero)
 
 let veto (abstr: ConferenceAbstract) (organizer: Organizer) =
-   Voting.Voting (abstr.Id,organizer.Id, Veto)
+   Voting (abstr.Id,organizer.Id, Veto)
 
 let proposedTalk title firstname lastname =
   let speaker =

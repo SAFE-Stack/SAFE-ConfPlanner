@@ -12,7 +12,7 @@ let view =
           Content.content []
             [
               h1 [] [ str "SAFE-ConfPlanner" ]
-              Image.image [ Image.Is128x128 ] [ img [ Src "img/safe_logo.png" ] ]
+              // Image.image [ Image.Is128x128 ] [ img [ Src "img/safe_logo.png" ] ]
               p []
                 [
                   str "This is the sample project that is used in the talk "

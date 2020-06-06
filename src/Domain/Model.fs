@@ -55,13 +55,6 @@ type Organizer = {
 type Organizers =
   Organizer list
 
-let organizer firstname lastname (guid : string) =
-  {
-    Id = OrganizerId <| Guid.Parse guid
-    Firstname = firstname
-    Lastname = lastname
-  }
-
 type Voting =
   Voting of AbstractId * OrganizerId * Points
 

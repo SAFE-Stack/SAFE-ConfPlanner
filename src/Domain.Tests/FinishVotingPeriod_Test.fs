@@ -9,8 +9,8 @@ open Domain.Events
 open Testbase
 
 // Scenario
-let fellien = { Firstname = "Janek";  Lastname = "Fellien"; Id = OrganizerId <| Guid.NewGuid() }
-let poepke = { Firstname = "Conrad";  Lastname = "Poepke"; Id = OrganizerId <| Guid.NewGuid() }
+let roman = { Firstname = "Roman";  Lastname = "Sachse"; Id = OrganizerId <| Guid.NewGuid() }
+let marco = { Firstname = "Marco";  Lastname = "Heimeshoff"; Id = OrganizerId <| Guid.NewGuid() }
 
 
 [<Test>]
@@ -48,8 +48,8 @@ let ``Cannot finish a voting period when not all abstracts have votes from every
 
   Given [
     OrganizerAddedToConference heimeshoff
-    OrganizerAddedToConference fellien
-    OrganizerAddedToConference poepke
+    OrganizerAddedToConference roman
+    OrganizerAddedToConference marco
 
     CallForPapersOpened
     TalkWasProposed talk1
@@ -60,11 +60,11 @@ let ``Cannot finish a voting period when not all abstracts have votes from every
     VotingWasIssued (voteOne talk1 heimeshoff)
     VotingWasIssued (voteOne talk2 heimeshoff)
     VotingWasIssued (voteOne talk3 heimeshoff)
-    VotingWasIssued (voteOne talk1 fellien)
-    VotingWasIssued (voteOne talk2 fellien)
-    VotingWasIssued (voteOne talk1 poepke)
-    VotingWasIssued (voteOne talk2 poepke)
-    VotingWasIssued (voteOne talk3 poepke)]
+    VotingWasIssued (voteOne talk1 roman)
+    VotingWasIssued (voteOne talk2 roman)
+    VotingWasIssued (voteOne talk1 marco)
+    VotingWasIssued (voteOne talk2 marco)
+    VotingWasIssued (voteOne talk3 marco)]
 
   |> When FinishVotingPeriod
   |> ThenExpect [ FinishingDenied "Not all abstracts have been voted for by all organisers" |> Error ]
@@ -78,8 +78,8 @@ let ``Voting top x abstracts will be accepted, others will be rejected`` () =
 
   Given [
     OrganizerAddedToConference heimeshoff
-    OrganizerAddedToConference fellien
-    OrganizerAddedToConference poepke
+    OrganizerAddedToConference roman
+    OrganizerAddedToConference marco
     NumberOfSlotsDecided 2
 
     CallForPapersOpened
@@ -89,14 +89,14 @@ let ``Voting top x abstracts will be accepted, others will be rejected`` () =
     CallForPapersClosed
 
     VotingWasIssued (voteZero talk3 heimeshoff)
-    VotingWasIssued (voteZero talk3 fellien)
-    VotingWasIssued (voteZero talk3 poepke)
+    VotingWasIssued (voteZero talk3 roman)
+    VotingWasIssued (voteZero talk3 marco)
     VotingWasIssued (voteOne talk2 heimeshoff)
-    VotingWasIssued (voteOne talk2 fellien)
-    VotingWasIssued (voteOne talk2 poepke)
+    VotingWasIssued (voteOne talk2 roman)
+    VotingWasIssued (voteOne talk2 marco)
     VotingWasIssued (voteZero talk1 heimeshoff)
-    VotingWasIssued (voteOne talk1 fellien)
-    VotingWasIssued (voteOne talk1 poepke)]
+    VotingWasIssued (voteOne talk1 roman)
+    VotingWasIssued (voteOne talk1 marco)]
 
   |> When FinishVotingPeriod
   |> ThenExpect [
@@ -113,8 +113,8 @@ let ``A veto rejects talks that would otherwise be accepted`` () =
 
   Given [
     OrganizerAddedToConference heimeshoff
-    OrganizerAddedToConference fellien
-    OrganizerAddedToConference poepke
+    OrganizerAddedToConference roman
+    OrganizerAddedToConference marco
     NumberOfSlotsDecided 2
 
     CallForPapersOpened
@@ -124,14 +124,14 @@ let ``A veto rejects talks that would otherwise be accepted`` () =
     CallForPapersClosed
 
     VotingWasIssued (voteTwo talk3 heimeshoff)
-    VotingWasIssued (veto talk3 fellien)
-    VotingWasIssued (voteTwo talk3 poepke)
+    VotingWasIssued (veto talk3 roman)
+    VotingWasIssued (voteTwo talk3 marco)
     VotingWasIssued (voteOne talk2 heimeshoff)
-    VotingWasIssued (voteOne talk2 fellien)
-    VotingWasIssued (voteOne talk2 poepke)
+    VotingWasIssued (voteOne talk2 roman)
+    VotingWasIssued (voteOne talk2 marco)
     VotingWasIssued (voteZero talk1 heimeshoff)
-    VotingWasIssued (voteZero talk1 fellien)
-    VotingWasIssued (voteZero talk1 poepke)]
+    VotingWasIssued (voteZero talk1 roman)
+    VotingWasIssued (voteZero talk1 marco)]
 
   |> When FinishVotingPeriod
   |> ThenExpect [
