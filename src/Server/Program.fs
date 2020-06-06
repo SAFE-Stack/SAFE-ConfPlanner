@@ -22,13 +22,14 @@ let main args =
             clientPath
 
         | _ ->
-            let devPath = Path.Combine("..","Client")
-            printfn "dev path: %A" devPath
-            printfn "full path : %A" <| Path.GetFullPath devPath
-            if Directory.Exists devPath then
-              devPath
+            let clientPath1 = Path.Combine("..","Client")
+            let clientPath2 = Path.Combine("src","Client")
+            if Directory.Exists clientPath1 then
+              clientPath1
+            elif Directory.Exists clientPath2 then
+              clientPath2
             else
-              @"C:/src/ConfPlanner/src/Client"
+              failwithf "Could not find path to Client directory (tried %s and %s)" clientPath1 clientPath2
 
     WebServer.start (Path.GetFullPath clientPath) (getPortsOrDefault 8085us)
     0
