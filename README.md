@@ -21,12 +21,10 @@ The application showcases a couple of things:
 * It shows the nice fit of and similarity between CQRS/Event-Sourcing on the backend and the Elm-Architecture on the frontend.
 * It reuses projections from the backend in the update function of the elmish app. The backend is sending domain events to the frontend and the (Elm-)model is updated with the help of projections defined in the backend (on all clients that are connected via websockets).
 * It shows an easy way of implementing "Whatif"-Scenarios, i.e. scenarios that enable the user try out different actions. When the user is happy with the result the system sends a batch of commands to the server. When "Whatif-Mode" is enabled the client reuses not only the projections but also the domain behaviour defined on the server to create the events needed by the update function. The potential commands are also stored.
+* There is also an "All or nothing" mode for whatifs. If one command does not succeeds, none of them succeeds
 * It uses the awesome [Fulma](https://mangelmaxime.github.io/Fulma/) library for styling
 * It has BDD Style tests that show how nice the behaviour of Event-Sourced systems can be tested.
 * Websockets with Elmish/Suave
-
-## Playground
-Up to now there is no working version available online. Any help would be appreciated. If you want to try it locally, please run the fixtures (see [Demo Data](#demo-data) section below). Otherwise you will not be able to login or see any kind of data.
 
 ## Content
 This project consists of 6 dotnetcore subprojects
@@ -34,69 +32,33 @@ This project consists of 6 dotnetcore subprojects
 * `Domain.Tests` - BDD-Style Tests for the `Domain`
 * `Client` - [Fable](http://fable.io/) Project that uses the Elm-Architecture (with [Fable-Elmish](https://elmish.github.io/elmish/)). It reuses the projections of the `Domain` project. Furthermore it and can also reuse the behaviour of the Domain (when switched to `WhatIf-Mode`)
 * `Server` - A Suave Webserver that allows the Client to connect via Websockets.
-* `Infrastructure` - This is where all the backend infrastructure is implemented. It contains a simple (file based) event store, command and query handlers and the types that hold everything together. Most of the infrastructure is implemented asynchronously with the help of F# awesome [Mailbox Processors](https://fsharpforfunandprofit.com/posts/concurrency-actor-model/)
+* `EventSourced` - This is where all the backend infrastructure is implemented. It contains an event store with a simple in-memory storage, command and query handlers and the types that hold everything together. Most of the infrastructure is implemented asynchronously with the help of F#s awesome [Mailbox Processors](https://fsharpforfunandprofit.com/posts/concurrency-actor-model/)
 * `Support` - A simple project to fill the EventStore with some initial values.
 
 ## Requirements
 
-- [Mono](http://www.mono-project.com/) on MacOS/Linux
-- [.NET Framework 4.6.2](https://support.microsoft.com/en-us/help/3151800/the--net-framework-4-6-2-offline-installer-for-windows) on Windows
+- [dotnet core SDK 3.1.x](https://dotnet.microsoft.com/download) The .NET Core SDK
 - [node.js](https://nodejs.org/) - JavaScript runtime
 - [yarn](https://yarnpkg.com/) - Package manager for npm modules
-- [dotnet SDK 2.1.3](https://github.com/dotnet/core/blob/master/release-notes/download-archives/2.0.4-download.md) The .NET Core SDK (will be installed by build script)
-- Other tools like [Paket](https://fsprojects.github.io/Paket/) or [FAKE](https://fake.build/) will also be installed by the build script.
 
-## Development mode
-
+## Installation/Development mode
 This development stack is designed to be used with minimal tooling. An instance of Visual Studio Code together with the excellent [Ionide](http://ionide.io/) plugin should be enough.
 
-Start the development mode with:
+- Clone the repository
+- In the cloned directory
+  - install paket: `dotnet tool restore`
+  - install dotnet packages: `dotnet paket install`
+  - install js packages: `yarn install`
+- for the tests
+  - run `dotnet test`in the root dir
+- for the client
+  - run `yarn watch` in the root dir
+- for the server
+  - open another terminal and go to `src\Server`
+  - run `dotnet run` for the server (or `dotnet watch run` for watchmode)
+- go to `localhost:8080`
+- enjoy
 
-    > build.cmd run // on windows
-    $ ./build.sh run // on unix
-
-This will start Suave on port 8085 and the webpack-dev-server on port 8080. Then it will open localhost:8080 in your browser.
-
-Enjoy.
-
-**NOTE**
-Currently there is a [bug](https://github.com/rommsen/ConfPlanner/issues/30) that might prevent Fable and the server to be started in parallel.
-
-If this is happening:
-  * open a terminal
-  * go to `src/Server`
-  * run `dotnet run`
-  * open another terminal
-  * go to `src/Client`
-  * run `dotnet fable yarn-run`
-
-
-## Testing
-
-With FAKE (does a full dotnet restore etc.)
-
-    > build.cmd RunTests // on windows
-    $ ./build.sh RunTests // on unix
-
-On the CLI (without building everything) in `src/Domain.Tests`:
-
-    > dotnet test
-
-or in watch mode
-
-    > dotnet watch test
-
-You can now edit files in `src/Domain` or `src/Domain.Tests` and recompile + testing will be triggered automatically.
-
-## Demo Data
-If you want prefill the conference Event-Store with some demo data you can run:
-
-    > build.cmd RunFixtures // on windows
-    $ ./build.sh RunFixtures // on unix
-
-The events will be written to `src/Server/conference_eventstore.json`
-
-Currently you do want this, because there is no way to add abstracts or organizers.
 
 ## Plans for the future
 From the top of my head. If anyone wants to chip in, feel welcome.
@@ -110,9 +72,11 @@ From the top of my head. If anyone wants to chip in, feel welcome.
 * implement projections that can send notifications
 
 ### Server
+* switch to giraffe
 * implement a proper autohrization system
 
 ### Domain
+* would build the domain a bit differently nowadays
 * build an actual Conference Planner
 
 ## Known Issues
