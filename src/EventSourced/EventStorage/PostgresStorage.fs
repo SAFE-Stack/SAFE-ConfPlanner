@@ -29,7 +29,7 @@ module PostgresStorage =
             return eventEnvelope
         }
 
-    let private get (DB_Connection_String dbConnection): Async<Result<EventEnvelope<'Event> list, string>> =
+    let private get (DB_Connection_String dbConnection) =
         async {
             let result =
                 dbConnection
@@ -45,7 +45,7 @@ module PostgresStorage =
             | Error ex -> return Error ex
         }
 
-    let private getStream (DB_Connection_String dbConnection) source: Async<EventResult<'Event>> =
+    let private getStream (DB_Connection_String dbConnection) source =
         async {
             let result =
                 dbConnection
